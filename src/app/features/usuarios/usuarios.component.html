@@ -1,0 +1,131 @@
+<div class="usuarios">
+  <header class="page-header">
+    <div>
+      <h1>Usuarios</h1>
+      <p>Gestión de usuarios del sistema</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="openCreate()">+ Nuevo usuario</button>
+  </header>
+
+  @if (error()) {
+    <div class="alert">{{ error() }}</div>
+  }
+
+  @if (showForm()) {
+    <section class="form-panel">
+      <h2>{{ editingId() ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="form-grid">
+          <div class="field">
+            <label>Username</label>
+            <input type="text" formControlName="username" />
+            @if (usernameAvailable() === true) {
+              <span class="hint ok">Disponible</span>
+            }
+            @if (usernameAvailable() === false) {
+              <span class="hint err">No disponible</span>
+            }
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" />
+          </div>
+          <div class="field">
+            <label>Contraseña {{ editingId() ? '(opcional)' : '' }}</label>
+            <input type="password" formControlName="password" />
+          </div>
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" formControlName="nombre" />
+          </div>
+          <div class="field">
+            <label>Apellido</label>
+            <input type="text" formControlName="apellido" />
+          </div>
+          <div class="field">
+            <label>Rol</label>
+            <select formControlName="rolId">
+              <option [value]="0" disabled>Seleccionar rol</option>
+              @for (rol of roles(); track rol.id) {
+                <option [value]="rol.id">{{ rol.nombre }} ({{ rol.codigo }})</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label>Comercio ID</label>
+            <input type="number" formControlName="comercioId" />
+          </div>
+          <div class="field checkbox">
+            <label>
+              <input type="checkbox" formControlName="activo" />
+              Activo
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="table-panel">
+    @if (loading()) {
+      <p class="loading">Cargando...</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>USERNAME</th>
+            <th>EMAIL</th>
+            <th>ROL</th>
+            <th>COMERCIO</th>
+            <th>ESTADO</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="mono">{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td><span class="chip">{{ user.rol }}</span></td>
+              <td>{{ user.comercioNombre ?? '—' }}</td>
+              <td>
+                <span class="chip" [class.chip-success]="user.activo" [class.chip-error]="!user.activo">
+                  {{ user.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" class="btn-icon" (click)="openEdit(user)">✎</button>
+                <button type="button" class="btn-icon danger" (click)="deleteUser(user)">🗑</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty">No hay usuarios</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        <button type="button" class="btn-secondary" (click)="prevPage()" [disabled]="currentPage() === 0">
+          Anterior
+        </button>
+        <span>Página {{ currentPage() + 1 }} de {{ totalPages() || 1 }}</span>
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="nextPage()"
+          [disabled]="currentPage() >= totalPages() - 1"
+        >
+          Siguiente
+        </button>
+      </div>
+    }
+  </section>
+</div>

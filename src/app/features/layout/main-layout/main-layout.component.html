@@ -1,0 +1,45 @@
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">S</div>
+      <span class="brand-name">Shalom</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/app/inicio" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="nav-icon">⌂</span>
+        Inicio
+      </a>
+      <a routerLink="/app/usuarios" routerLinkActive="active">
+        <span class="nav-icon">👤</span>
+        Usuarios
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      @if (auth.currentUser(); as user) {
+        <div class="user-avatar">{{ user.nombre?.charAt(0) ?? user.username.charAt(0) | uppercase }}</div>
+        <div class="user-info">
+          <strong>{{ user.nombre ?? user.username }}</strong>
+          <span>{{ user.rol }}</span>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="search-bar">
+        <span class="search-icon">⌕</span>
+        <input type="search" placeholder="Buscar..." disabled />
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn-outline" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

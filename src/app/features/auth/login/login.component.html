@@ -1,0 +1,36 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-icon">S</div>
+      <h1>Shalom</h1>
+      <p>Control de operaciones</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label for="username">Usuario</label>
+        <input id="username" type="text" formControlName="username" placeholder="Ingrese su usuario" />
+      </div>
+
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" formControlName="password" placeholder="Ingrese su contraseña" />
+      </div>
+
+      @if (error()) {
+        <div class="alert" [class.alert-warning]="sessionConflict()">
+          {{ error() }}
+          @if (sessionConflict()) {
+            <button type="button" class="btn-link" (click)="submit(true)">
+              Cerrar sesión anterior e ingresar
+            </button>
+          }
+        </div>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }}
+      </button>
+    </form>
+  </div>
+</div>
