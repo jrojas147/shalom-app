@@ -29,6 +29,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/app/public",
+                "output": "/"
               }
             ],
             "styles": [
@@ -94,6 +99,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/app/public",
+                "output": "/"
               }
             ],
             "styles": [

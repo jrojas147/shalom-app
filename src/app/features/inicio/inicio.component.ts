@@ -17,6 +17,11 @@ export class InicioComponent {
   readonly healthError = signal<string | null>(null);
   readonly loading = signal(false);
 
+  shopping = '$580.000';
+  shoppingWeek = '$898.000';
+  cashBalance = '$3.840.000';
+  pendingPayments = '$1.200,00';
+
   checkHealth(): void {
     this.loading.set(true);
     this.healthError.set(null);

@@ -15,38 +15,33 @@
 
   <div class="rp-metrics-grid">
     <div class="rp-metric-card">
-      <span class="metric-label">Usuario activo</span>
-      @if (auth.currentUser(); as user) {
-        <strong class="metric-value">{{ user.username }}</strong>
-        <span class="rp-badge rp-badge--primary">{{ user.rol }}</span>
-      }
+      <div class="metric-header">
+        <span class="metric-label">Compras hoy</span>
+      </div>
+      <strong class="metric-value">{{ shopping }}</strong>
     </div>
 
     <div class="rp-metric-card">
-      <span class="metric-label">Comercio</span>
-      @if (auth.currentUser(); as user) {
-        <strong class="metric-value">{{ user.comercioNombre ?? '—' }}</strong>
-        <span class="metric-meta">ID: {{ user.comercioId ?? 'N/A' }}</span>
-      }
+      <div class="metric-header">
+        <span class="metric-label">Compras en semana</span>
+      </div>
+      <strong class="metric-value">{{ shoppingWeek }}</strong>
     </div>
 
     <div class="rp-metric-card">
-      <span class="metric-label">Sesión</span>
-      <strong class="metric-value">Activa</strong>
-      <span class="rp-badge rp-badge--success">Disponible</span>
+      <div class="metric-header">
+        <span class="metric-label">Saldo en caja</span>
+        <span class="rp-badge rp-badge--disponible">Disponible</span>
+      </div>
+      <strong class="metric-value">{{ cashBalance }}</strong>
     </div>
 
     <div class="rp-metric-card">
-      <span class="metric-label">Core API</span>
-      <button type="button" class="rp-btn rp-btn--primary" (click)="checkHealth()" [disabled]="loading()">
-        {{ loading() ? 'Validando...' : 'Probar /api/health' }}
-      </button>
-      @if (health(); as h) {
-        <span class="metric-meta" style="color: var(--rp-success)">✓ {{ h.status }} — userId: {{ h.userId }}</span>
-      }
-      @if (healthError()) {
-        <span class="metric-meta" style="color: var(--rp-danger)">{{ healthError() }}</span>
-      }
+      <div class="metric-header">
+        <span class="metric-label">Pagos pendientes</span>
+        <span class="rp-badge rp-badge--presupuestado">Presupuestado</span>
+      </div>
+      <strong class="metric-value">{{ pendingPayments }}</strong>
     </div>
   </div>
 
