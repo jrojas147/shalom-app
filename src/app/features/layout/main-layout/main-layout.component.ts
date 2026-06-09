@@ -12,6 +12,11 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class MainLayoutComponent {
   readonly auth = inject(AuthService);
+  readonly today = new Intl.DateTimeFormat('es-AR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date());
 
   logout(): void {
     this.auth.logout().subscribe();

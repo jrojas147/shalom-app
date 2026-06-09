@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, finalize, of, tap } from 'rxjs';
 import { API_AUTH_URL } from '../config/api.config';
 import { LoginRequest, LoginResponse, RefreshRequest, User } from '../models/user.model';
 
@@ -24,6 +24,10 @@ export class AuthService {
       .pipe(tap((response) => this.persistSession(response)));
   }
 
+  closeActiveSession(username: string, password: string): Observable<void> {
+    return this.http.post<void>(`${API_AUTH_URL}/api/auth/close-session`, { username, password });
+  }
+
   refresh(): Observable<LoginResponse> {
     const refreshToken = localStorage.getItem(REFRESH_KEY);
     const body: RefreshRequest = { refreshToken: refreshToken ?? '' };
@@ -33,20 +37,15 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
-    const token = this.getToken();
-    const request$ = token
-      ? this.http.post<void>(`${API_AUTH_URL}/api/auth/logout`, null, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      : new Observable<void>((observer) => {
-          observer.next();
-          observer.complete();
-        });
+    const request$ = this.getToken()
+      ? this.http.post<void>(`${API_AUTH_URL}/api/auth/logout`, null)
+      : of(void 0);
 
     return request$.pipe(
-      tap(() => {
+      catchError(() => of(void 0)),
+      finalize(() => {
         this.clearSession();
-        this.router.navigate(['/login']);
+        void this.router.navigate(['/login']);
       })
     );
   }
@@ -62,7 +61,7 @@ export class AuthService {
 
   forceLogout(): void {
     this.clearSession();
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 
   private persistSession(response: LoginResponse): void {

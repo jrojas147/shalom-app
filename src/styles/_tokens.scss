@@ -1,0 +1,46 @@
+// Renovando planeta — design tokens
+:root {
+  --rp-bg: #f4f7f8;
+  --rp-surface: #ffffff;
+  --rp-surface-muted: #f0f3f4;
+  --rp-border: #e2e8ec;
+  --rp-border-strong: #d0d9de;
+
+  --rp-text: #1e2a2e;
+  --rp-text-secondary: #5c6b73;
+  --rp-text-muted: #8a969c;
+
+  --rp-primary: #0a6b77;
+  --rp-primary-hover: #085a64;
+  --rp-primary-light: #e6f3f5;
+  --rp-on-primary: #ffffff;
+
+  --rp-success: #2e8b57;
+  --rp-success-bg: #e8f5ec;
+  --rp-warning: #c47a2c;
+  --rp-warning-bg: #fdf0e4;
+  --rp-danger: #c0392b;
+  --rp-danger-bg: #fdecea;
+  --rp-info-bg: #e8f4f8;
+
+  --rp-shadow-sm: 0 1px 3px rgba(30, 42, 46, 0.06);
+  --rp-shadow-md: 0 4px 14px rgba(30, 42, 46, 0.08);
+
+  --font-headline: 'Hanken Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --sidebar-width: 248px;
+  --header-height: 64px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}

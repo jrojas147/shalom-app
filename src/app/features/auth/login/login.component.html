@@ -1,24 +1,29 @@
 <div class="login-page">
   <div class="login-card">
     <div class="login-brand">
-      <div class="brand-icon">S</div>
-      <h1>Shalom</h1>
+      <span class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M7 19h10M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <h1>Renovando planeta</h1>
       <p>Control de operaciones</p>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="field">
+      <div class="rp-field">
         <label for="username">Usuario</label>
         <input id="username" type="text" formControlName="username" placeholder="Ingrese su usuario" />
       </div>
 
-      <div class="field">
+      <div class="rp-field">
         <label for="password">Contraseña</label>
         <input id="password" type="password" formControlName="password" placeholder="Ingrese su contraseña" />
       </div>
 
       @if (error()) {
-        <div class="alert" [class.alert-warning]="sessionConflict()">
+        <div class="rp-alert" [class.rp-alert--warning]="sessionConflict()" [class.rp-alert--error]="!sessionConflict()">
           {{ error() }}
           @if (sessionConflict()) {
             <button type="button" class="btn-link" (click)="submit(true)">
@@ -28,7 +33,7 @@
         </div>
       }
 
-      <button type="submit" class="btn-primary" [disabled]="loading()">
+      <button type="submit" class="rp-btn rp-btn--primary login-submit" [disabled]="loading()">
         {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }}
       </button>
     </form>

@@ -9,7 +9,10 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const isAuthEndpoint =
-        req.url.includes('/api/auth/login') || req.url.includes('/api/auth/refresh');
+        req.url.includes('/api/auth/login') ||
+        req.url.includes('/api/auth/refresh') ||
+        req.url.includes('/api/auth/logout') ||
+        req.url.includes('/api/auth/close-session');
 
       if (error.status === 401 && !isAuthEndpoint && auth.isLoggedIn()) {
         auth.forceLogout();

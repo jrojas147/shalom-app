@@ -1,42 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
 
-:root {
-  --color-surface: #f6fafb;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f0f4f5;
-  --color-surface-container: #ebefef;
-  --color-surface-container-high: #e5e9ea;
-  --color-on-surface: #181c1d;
-  --color-on-surface-variant: #3e494b;
-  --color-inverse-surface: #2c3132;
-  --color-inverse-on-surface: #edf1f2;
-  --color-outline: #6e797b;
-  --color-outline-variant: #bdc9cb;
-  --color-primary: #006671;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #00818e;
-  --color-secondary: #566511;
-  --color-secondary-container: #d7e887;
-  --color-on-secondary-container: #5b6916;
-  --color-tertiary: #8a4c15;
-  --color-error: #ba1a1a;
-  --color-error-container: #ffdad6;
-  --color-on-error-container: #93000a;
-
-  --font-headline: 'Hanken Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-label: 'JetBrains Mono', monospace;
-
-  --radius-default: 0.25rem;
-  --radius-lg: 0.5rem;
-  --radius-full: 9999px;
-
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-}
+@import 'styles/tokens';
+@import 'styles/components';
 
 *,
 *::before,
@@ -52,8 +17,8 @@ body {
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.5;
-  color: var(--color-on-surface);
-  background: var(--color-surface);
+  color: var(--rp-text);
+  background: var(--rp-bg);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -73,4 +38,5 @@ textarea {
 
 a {
   color: inherit;
+  text-decoration: none;
 }

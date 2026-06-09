@@ -1,48 +1,50 @@
 <div class="usuarios">
-  <header class="page-header">
+  <header class="rp-page-header">
     <div>
       <h1>Usuarios</h1>
       <p>Gestión de usuarios del sistema</p>
     </div>
-    <button type="button" class="btn-primary" (click)="openCreate()">+ Nuevo usuario</button>
+    <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">+ Nuevo usuario</button>
   </header>
 
   @if (error()) {
-    <div class="alert">{{ error() }}</div>
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
 
   @if (showForm()) {
-    <section class="form-panel">
-      <h2>{{ editingId() ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>{{ editingId() ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+      </div>
       <form [formGroup]="form" (ngSubmit)="save()">
-        <div class="form-grid">
-          <div class="field">
+        <div class="rp-form-grid">
+          <div class="rp-field">
             <label>Username</label>
             <input type="text" formControlName="username" />
             @if (usernameAvailable() === true) {
-              <span class="hint ok">Disponible</span>
+              <span class="rp-hint ok">Disponible</span>
             }
             @if (usernameAvailable() === false) {
-              <span class="hint err">No disponible</span>
+              <span class="rp-hint err">No disponible</span>
             }
           </div>
-          <div class="field">
+          <div class="rp-field">
             <label>Email</label>
             <input type="email" formControlName="email" />
           </div>
-          <div class="field">
+          <div class="rp-field">
             <label>Contraseña {{ editingId() ? '(opcional)' : '' }}</label>
             <input type="password" formControlName="password" />
           </div>
-          <div class="field">
+          <div class="rp-field">
             <label>Nombre</label>
             <input type="text" formControlName="nombre" />
           </div>
-          <div class="field">
+          <div class="rp-field">
             <label>Apellido</label>
             <input type="text" formControlName="apellido" />
           </div>
-          <div class="field">
+          <div class="rp-field">
             <label>Rol</label>
             <select formControlName="rolId">
               <option [value]="0" disabled>Seleccionar rol</option>
@@ -51,20 +53,20 @@
               }
             </select>
           </div>
-          <div class="field">
+          <div class="rp-field">
             <label>Comercio ID</label>
             <input type="number" formControlName="comercioId" />
           </div>
-          <div class="field checkbox">
+          <div class="rp-field checkbox">
             <label>
               <input type="checkbox" formControlName="activo" />
               Activo
             </label>
           </div>
         </div>
-        <div class="form-actions">
-          <button type="button" class="btn-secondary" (click)="cancelForm()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="saving()">
+        <div class="rp-form-actions">
+          <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
             {{ saving() ? 'Guardando...' : 'Guardar' }}
           </button>
         </div>
@@ -72,54 +74,65 @@
     </section>
   }
 
-  <section class="table-panel">
+  <section class="rp-panel">
+    <div class="panel-header">
+      <h2>Listado de usuarios</h2>
+    </div>
+
     @if (loading()) {
-      <p class="loading">Cargando...</p>
+      <p class="rp-loading">Cargando...</p>
     } @else {
-      <table>
+      <table class="rp-table">
         <thead>
           <tr>
-            <th>USERNAME</th>
-            <th>EMAIL</th>
-            <th>ROL</th>
-            <th>COMERCIO</th>
-            <th>ESTADO</th>
+            <th>Usuario</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Comercio</th>
+            <th>Estado</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           @for (user of users(); track user.id) {
             <tr>
-              <td class="mono">{{ user.username }}</td>
-              <td>{{ user.email }}</td>
-              <td><span class="chip">{{ user.rol }}</span></td>
-              <td>{{ user.comercioNombre ?? '—' }}</td>
               <td>
-                <span class="chip" [class.chip-success]="user.activo" [class.chip-error]="!user.activo">
+                <span class="row-icon">👤</span>
+                <span class="cell-primary cell-mono">{{ user.username }}</span>
+              </td>
+              <td class="cell-secondary">{{ user.email }}</td>
+              <td><span class="rp-badge rp-badge--primary">{{ user.rol }}</span></td>
+              <td class="cell-secondary">{{ user.comercioNombre ?? '—' }}</td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--success]="user.activo"
+                  [class.rp-badge--danger]="!user.activo"
+                >
                   {{ user.activo ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
-              <td class="actions">
-                <button type="button" class="btn-icon" (click)="openEdit(user)">✎</button>
-                <button type="button" class="btn-icon danger" (click)="deleteUser(user)">🗑</button>
+              <td class="cell-actions">
+                <button type="button" class="rp-btn rp-btn--icon" (click)="openEdit(user)" title="Editar">✎</button>
+                <button type="button" class="rp-btn rp-btn--icon danger" (click)="deleteUser(user)" title="Eliminar">🗑</button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="empty">No hay usuarios</td>
+              <td colspan="6" class="rp-empty">No hay usuarios</td>
             </tr>
           }
         </tbody>
       </table>
 
-      <div class="pagination">
-        <button type="button" class="btn-secondary" (click)="prevPage()" [disabled]="currentPage() === 0">
+      <div class="rp-pagination">
+        <button type="button" class="rp-btn rp-btn--secondary" (click)="prevPage()" [disabled]="currentPage() === 0">
           Anterior
         </button>
         <span>Página {{ currentPage() + 1 }} de {{ totalPages() || 1 }}</span>
         <button
           type="button"
-          class="btn-secondary"
+          class="rp-btn rp-btn--secondary"
           (click)="nextPage()"
           [disabled]="currentPage() >= totalPages() - 1"
         >

@@ -37,24 +37,38 @@ export class LoginComponent {
 
     const { username, password } = this.form.getRawValue();
 
+    if (cerrarSesionPrevia) {
+      this.auth.closeActiveSession(username, password).subscribe({
+        next: () => this.login(username, password, false),
+        error: (err: HttpErrorResponse) => this.handleError(err),
+      });
+      return;
+    }
+
+    this.login(username, password, false);
+  }
+
+  private login(username: string, password: string, cerrarSesionPrevia: boolean): void {
     this.auth.login({ username, password, cerrarSesionPrevia }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/app/inicio']);
+        void this.router.navigate(['/app/inicio']);
       },
-      error: (err: HttpErrorResponse) => {
-        this.loading.set(false);
-        if (err.status === 409) {
-          this.sessionConflict.set(true);
-          this.error.set('Ya existe una sesión activa para este usuario.');
-        } else if (err.status === 423) {
-          this.error.set('La cuenta está inactiva.');
-        } else if (err.status === 401) {
-          this.error.set('Credenciales inválidas.');
-        } else {
-          this.error.set('No se pudo iniciar sesión. Intente nuevamente.');
-        }
-      },
+      error: (err: HttpErrorResponse) => this.handleError(err),
     });
+  }
+
+  private handleError(err: HttpErrorResponse): void {
+    this.loading.set(false);
+    if (err.status === 409) {
+      this.sessionConflict.set(true);
+      this.error.set('Ya existe una sesión activa para este usuario.');
+    } else if (err.status === 423) {
+      this.error.set('La cuenta está inactiva.');
+    } else if (err.status === 401) {
+      this.error.set('Credenciales inválidas.');
+    } else {
+      this.error.set('No se pudo iniciar sesión. Intente nuevamente.');
+    }
   }
 }

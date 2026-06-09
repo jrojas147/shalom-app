@@ -1,41 +1,53 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon">S</div>
-      <span class="brand-name">Shalom</span>
+      <span class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 19h10M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="brand-name">Renovando planeta</span>
     </div>
 
     <nav class="sidebar-nav">
       <a routerLink="/app/inicio" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <span class="nav-icon">⌂</span>
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </span>
         Inicio
       </a>
       <a routerLink="/app/usuarios" routerLinkActive="active">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
         Usuarios
       </a>
     </nav>
 
-    <div class="sidebar-user">
-      @if (auth.currentUser(); as user) {
+    @if (auth.currentUser(); as user) {
+      <div class="sidebar-user">
         <div class="user-avatar">{{ user.nombre?.charAt(0) ?? user.username.charAt(0) | uppercase }}</div>
         <div class="user-info">
           <strong>{{ user.nombre ?? user.username }}</strong>
           <span>{{ user.rol }}</span>
         </div>
-      }
-    </div>
+      </div>
+    }
   </aside>
 
   <div class="main">
-    <header class="header">
-      <div class="search-bar">
-        <span class="search-icon">⌕</span>
-        <input type="search" placeholder="Buscar..." disabled />
+    <header class="topbar">
+      <div class="topbar-actions">
+        <button type="button" class="topbar-btn" aria-label="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 17H9c-2 0-3-.8-3-2.5V10a6 6 0 1112 0v4.5c0 1.7-1 2.5-3 2.5zM10 20h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="topbar-btn" aria-label="Ayuda">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9.2a2.5 2.5 0 014.8.8c0 1.6-2.3 1.8-2.3 3.2M12 16.8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <span class="topbar-date">{{ today }}</span>
       </div>
-      <div class="header-actions">
-        <button type="button" class="btn-outline" (click)="logout()">Cerrar sesión</button>
-      </div>
+      <button type="button" class="rp-btn rp-btn--ghost" (click)="logout()">Cerrar sesión</button>
     </header>
 
     <main class="content">

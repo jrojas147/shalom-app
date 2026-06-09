@@ -1,37 +1,92 @@
 <div class="inicio">
-  <header class="page-header">
-    <h1>Inicio</h1>
-    <p>Bienvenido al panel de control Shalom</p>
+  <header class="rp-page-header">
+    <div>
+      <h1>Panel de Control Renovando planeta</h1>
+      <p>Resumen de actividad y estado del sistema</p>
+    </div>
+    <div class="rp-filter-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Fecha: Últimos 30 días
+    </div>
   </header>
 
-  <div class="cards">
-    <div class="card">
-      <span class="card-label">USUARIO</span>
+  <div class="rp-metrics-grid">
+    <div class="rp-metric-card">
+      <span class="metric-label">Usuario activo</span>
       @if (auth.currentUser(); as user) {
-        <strong class="card-value">{{ user.username }}</strong>
-        <span class="card-meta">{{ user.rol }}</span>
+        <strong class="metric-value">{{ user.username }}</strong>
+        <span class="rp-badge rp-badge--primary">{{ user.rol }}</span>
       }
     </div>
 
-    <div class="card">
-      <span class="card-label">COMERCIO</span>
+    <div class="rp-metric-card">
+      <span class="metric-label">Comercio</span>
       @if (auth.currentUser(); as user) {
-        <strong class="card-value">{{ user.comercioNombre ?? '—' }}</strong>
-        <span class="card-meta">ID: {{ user.comercioId ?? 'N/A' }}</span>
+        <strong class="metric-value">{{ user.comercioNombre ?? '—' }}</strong>
+        <span class="metric-meta">ID: {{ user.comercioId ?? 'N/A' }}</span>
       }
     </div>
 
-    <div class="card card-primary">
-      <span class="card-label">CORE API</span>
-      <button type="button" class="btn-primary-sm" (click)="checkHealth()" [disabled]="loading()">
+    <div class="rp-metric-card">
+      <span class="metric-label">Sesión</span>
+      <strong class="metric-value">Activa</strong>
+      <span class="rp-badge rp-badge--success">Disponible</span>
+    </div>
+
+    <div class="rp-metric-card">
+      <span class="metric-label">Core API</span>
+      <button type="button" class="rp-btn rp-btn--primary" (click)="checkHealth()" [disabled]="loading()">
         {{ loading() ? 'Validando...' : 'Probar /api/health' }}
       </button>
       @if (health(); as h) {
-        <span class="card-meta success">✓ {{ h.status }} — userId: {{ h.userId }}</span>
+        <span class="metric-meta" style="color: var(--rp-success)">✓ {{ h.status }} — userId: {{ h.userId }}</span>
       }
       @if (healthError()) {
-        <span class="card-meta error">{{ healthError() }}</span>
+        <span class="metric-meta" style="color: var(--rp-danger)">{{ healthError() }}</span>
       }
     </div>
   </div>
+
+  <section class="rp-panel">
+    <div class="panel-header">
+      <h2>Actividad reciente</h2>
+      <button type="button" class="link">Ver todo</button>
+    </div>
+
+    <table class="rp-table">
+      <thead>
+        <tr>
+          <th>Transacción</th>
+          <th>Detalles</th>
+          <th>Estado</th>
+          <th>Hora</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="row-icon">⌂</span>
+            <span class="cell-primary">Inicio de sesión</span>
+          </td>
+          <td class="cell-secondary">Acceso al panel de control</td>
+          <td><span class="rp-badge rp-badge--success">Completado</span></td>
+          <td class="cell-secondary">Ahora</td>
+        </tr>
+        @if (health(); as h) {
+          <tr>
+            <td>
+              <span class="row-icon">⚡</span>
+              <span class="cell-primary">Health check</span>
+            </td>
+            <td class="cell-secondary">Validación JWT en shalom-core</td>
+            <td><span class="rp-badge rp-badge--success">{{ h.status }}</span></td>
+            <td class="cell-secondary">Reciente</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
 </div>
