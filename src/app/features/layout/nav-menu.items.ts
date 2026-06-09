@@ -1,0 +1,22 @@
+import { NavIconName } from './nav-icon/nav-icon.component';
+
+export interface NavMenuItem {
+  label: string;
+  route: string;
+  icon: NavIconName;
+}
+
+export const NAV_MENU_ITEMS: NavMenuItem[] = [
+  { label: 'Inicio', route: '/app/inicio', icon: 'inicio' },
+  { label: 'Compra', route: '/app/compra', icon: 'compra' },
+  { label: 'Caja', route: '/app/caja', icon: 'caja' },
+  { label: 'Venta', route: '/app/venta', icon: 'venta' },
+  { label: 'Liquidacion', route: '/app/liquidacion', icon: 'liquidacion' },
+  { label: 'Productos', route: '/app/productos', icon: 'productos' },
+  { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
+  { label: 'Proveedores', route: '/app/proveedores', icon: 'proveedores' },
+  { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },
+  { label: 'Aliados', route: '/app/aliados', icon: 'aliados' },
+  { label: 'Usuarios', route: '/app/usuarios', icon: 'usuarios' },
+  { label: 'Perfil', route: '/app/perfil', icon: 'perfil' },
+];

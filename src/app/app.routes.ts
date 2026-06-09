@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
+const loadInicio = () =>
+  import('./features/inicio/inicio.component').then((m) => m.InicioComponent);
+
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
@@ -18,11 +21,17 @@ export const routes: Routes = [
       ),
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
-      {
-        path: 'inicio',
-        loadComponent: () =>
-          import('./features/inicio/inicio.component').then((m) => m.InicioComponent),
-      },
+      { path: 'inicio', loadComponent: loadInicio },
+      { path: 'compra', loadComponent: loadInicio },
+      { path: 'caja', loadComponent: loadInicio },
+      { path: 'venta', loadComponent: loadInicio },
+      { path: 'liquidacion', loadComponent: loadInicio },
+      { path: 'productos', loadComponent: loadInicio },
+      { path: 'inventario', loadComponent: loadInicio },
+      { path: 'proveedores', loadComponent: loadInicio },
+      { path: 'clientes', loadComponent: loadInicio },
+      { path: 'aliados', loadComponent: loadInicio },
+      { path: 'perfil', loadComponent: loadInicio },
       {
         path: 'usuarios',
         canActivate: [roleGuard(['ADMIN', 'DIRECCION', 'OPERADOR'])],
