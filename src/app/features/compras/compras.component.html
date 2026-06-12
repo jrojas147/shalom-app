@@ -74,14 +74,15 @@
       <div class="compras-grid">
         @for (producto of productosFiltrados(); track producto.id) {
           <button type="button" class="product-card" (click)="agregarProducto(producto)">
-            <div class="product-image">
-              <img [src]="producto.imagenUrl" [alt]="producto.nombre" loading="lazy" />
-              <span class="rp-badge rp-badge--disponible">Disponible</span>
+            <div class="product-image-wrap">
+              <div class="product-image">
+                <img [src]="producto.imagenUrl" [alt]="producto.nombre" loading="lazy" />
+              </div>
             </div>
             <div class="product-body">
               <h3>{{ producto.nombre }}</h3>
-              <p class="product-stock">{{ formatStock(producto) }}</p>
               <p class="product-price">{{ formatPrecioKg(producto.precioPorKg) }} /kg</p>
+              <p class="product-stock">{{ formatStock(producto) }}</p>
             </div>
           </button>
         } @empty {
