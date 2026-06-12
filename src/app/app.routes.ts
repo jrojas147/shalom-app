@@ -22,7 +22,11 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
       { path: 'inicio', loadComponent: loadInicio },
-      { path: 'compra', loadComponent: loadInicio },
+      {
+        path: 'compras',
+        loadComponent: () =>
+          import('./features/compras/compras.component').then((m) => m.ComprasComponent),
+      },
       { path: 'caja', loadComponent: loadInicio },
       { path: 'venta', loadComponent: loadInicio },
       { path: 'liquidacion', loadComponent: loadInicio },

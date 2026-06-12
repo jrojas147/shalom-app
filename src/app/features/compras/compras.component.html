@@ -1,0 +1,230 @@
+<div class="compras-pos">
+  <section class="compras-main">
+    <div class="compras-search">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M9 12h6"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </svg>
+      <input
+        type="search"
+        placeholder="Escanear código de barras..."
+        [ngModel]="busqueda()"
+        (ngModelChange)="onBusqueda($event)"
+      />
+    </div>
+
+    <div class="compras-tabs">
+      @for (cat of categorias; track cat.id) {
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="categoriaActiva() === cat.id"
+          (click)="setCategoria(cat.id)"
+        >
+          @switch (cat.icon) {
+            @case ('todos') {
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            }
+            @case ('plasticos') {
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3l2 4h4l-3 3 1 5-4-2-4 2 1-5-3-3h4l2-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              </svg>
+            }
+            @case ('metales') {
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M8 7h8v10H8zM10 4h4v3h-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              </svg>
+            }
+            @case ('papel') {
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 4h10v16H7zM9 8h6M9 12h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            }
+            @case ('vidrio') {
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M8 4h8l2 16H6l2-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              </svg>
+            }
+          }
+          {{ cat.label }}
+        </button>
+      }
+    </div>
+
+    @if (error() && !showClienteModal()) {
+      <div class="compras-alert">{{ error() }}</div>
+    }
+
+    @if (mensaje()) {
+      <div class="compras-success">{{ mensaje() }}</div>
+    }
+
+    @if (loading()) {
+      <p class="compras-loading">Cargando productos...</p>
+    } @else {
+      <div class="compras-grid">
+        @for (producto of productosFiltrados(); track producto.id) {
+          <button type="button" class="product-card" (click)="agregarProducto(producto)">
+            <div class="product-image">
+              <img [src]="producto.imagenUrl" [alt]="producto.nombre" loading="lazy" />
+              <span class="rp-badge rp-badge--disponible">Disponible</span>
+            </div>
+            <div class="product-body">
+              <h3>{{ producto.nombre }}</h3>
+              <p class="product-stock">{{ formatStock(producto) }}</p>
+              <p class="product-price">{{ formatPrecioKg(producto.precioPorKg) }} /kg</p>
+            </div>
+          </button>
+        } @empty {
+          <p class="compras-empty">No hay productos para mostrar</p>
+        }
+      </div>
+    }
+  </section>
+
+  <aside class="compras-detail">
+    <header class="detail-header">
+      <div class="detail-client">
+        <span class="detail-label">Cliente:</span>
+        @if (clienteSeleccionado(); as cliente) {
+          <strong>{{ cliente.nombre }}</strong>
+        } @else {
+          <strong class="muted">Sin cliente</strong>
+        }
+        <button type="button" class="btn-agregar" (click)="abrirModalCliente()">Agregar</button>
+      </div>
+      <div class="detail-meta">
+        <span>Factura: <strong>{{ factura() }}</strong></span>
+        <span class="items-badge">{{ cantidadItems() }} ítems</span>
+      </div>
+    </header>
+
+    <div class="detail-items">
+      @for (item of items(); track item.productoId) {
+        <article class="detail-item">
+          <div class="item-top">
+            <span class="item-icon">{{ categoriaIcono(item.producto.categoria) }}</span>
+            <div class="item-info">
+              <span class="item-class">{{ item.producto.clasificacion }}</span>
+              <strong class="item-name">{{ item.producto.nombre }}</strong>
+            </div>
+            <select
+              class="item-empaque"
+              [ngModel]="item.empaque"
+              (ngModelChange)="setEmpaque(item.productoId, $event)"
+            >
+              @for (op of empaqueOpciones; track op.value) {
+                <option [value]="op.value">{{ op.label }}</option>
+              }
+            </select>
+            <button
+              type="button"
+              class="item-delete"
+              (click)="eliminarItem(item.productoId)"
+              aria-label="Eliminar"
+            >
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 7h12M10 7V5h4v2M9 11v6M15 11v6M8 7l1 12h6l1-12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="item-bottom">
+            <div class="weight-control">
+              <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
+              <input
+                type="text"
+                [value]="formatPeso(item.pesoKg)"
+                (change)="onPesoInput(item.productoId, $any($event.target).value)"
+              />
+              <button type="button" (click)="ajustarPeso(item.productoId, 0.5)" aria-label="Más peso">+</button>
+              <span class="weight-unit">KG</span>
+            </div>
+            <div class="item-pricing">
+              <span class="price-kg">{{ formatPrecioKg(item.producto.precioPorKg) }} /kg</span>
+              <strong class="price-total">{{ formatCurrency(itemTotal(item)) }}</strong>
+            </div>
+          </div>
+        </article>
+      } @empty {
+        <div class="detail-empty">
+          <p>Seleccione productos del catálogo para agregar a la compra</p>
+        </div>
+      }
+    </div>
+
+    <footer class="detail-footer">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>{{ formatCurrency(subtotal()) }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Peso Bruto Total</span>
+        <span>{{ formatPeso(pesoTotal()) }} KG</span>
+      </div>
+      <div class="summary-total">
+        <span>Total a Pagar</span>
+        <strong>{{ formatCurrency(subtotal()) }}</strong>
+      </div>
+
+      <div class="action-row">
+        <button type="button" class="rp-btn rp-btn--secondary action-ticket" [disabled]="procesando()" (click)="procesar('TICKET')">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 9V5a2 2 0 012-2h8a2 2 0 012 2v4M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          Ticket
+        </button>
+        <button type="button" class="rp-btn action-credito" [disabled]="procesando()" (click)="procesar('CREDITO')">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 10a4 4 0 018 0v1h2v5H4v-5h2v-1zM12 7V5M8 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          Crédito
+        </button>
+      </div>
+      <button type="button" class="rp-btn rp-btn--primary action-pago" [disabled]="procesando()" (click)="procesar('PAGO')">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/>
+        </svg>
+        {{ procesando() ? 'Procesando...' : 'PROCESAR PAGO' }}
+      </button>
+    </footer>
+  </aside>
+</div>
+
+@if (showClienteModal()) {
+  <div class="modal-overlay" (click)="cerrarModalCliente()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <h2>Seleccionar cliente</h2>
+        <button type="button" class="modal-close" (click)="cerrarModalCliente()" aria-label="Cerrar">×</button>
+      </header>
+      <ul class="cliente-list">
+        @for (cliente of clientes(); track cliente.id) {
+          <li>
+            <button
+              type="button"
+              class="cliente-item"
+              [class.selected]="clienteSeleccionado()?.id === cliente.id"
+              (click)="seleccionarCliente(cliente)"
+            >
+              <span class="cliente-avatar">{{ cliente.nombre.charAt(0) }}</span>
+              <span class="cliente-nombre">{{ cliente.nombre }}</span>
+              @if (clienteSeleccionado()?.id === cliente.id) {
+                <span class="cliente-check">✓</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+}

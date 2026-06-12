@@ -8,7 +8,7 @@ export interface NavMenuItem {
 
 export const NAV_MENU_ITEMS: NavMenuItem[] = [
   { label: 'Inicio', route: '/app/inicio', icon: 'inicio' },
-  { label: 'Compra', route: '/app/compra', icon: 'compra' },
+  { label: 'Compras', route: '/app/compras', icon: 'compra' },
   { label: 'Caja', route: '/app/caja', icon: 'caja' },
   { label: 'Venta', route: '/app/venta', icon: 'venta' },
   { label: 'Liquidacion', route: '/app/liquidacion', icon: 'liquidacion' },
