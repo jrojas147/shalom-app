@@ -42,6 +42,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
       },
+      {
+        path: 'parametrizacion',
+        loadComponent: () =>
+          import('./features/parametrizacion/parametrizacion.component').then(
+            (m) => m.ParametrizacionComponent
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },

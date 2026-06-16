@@ -114,7 +114,7 @@ export class ComprasComponent implements OnInit {
       productoId: producto.id,
       producto,
       pesoKg: 1,
-      empaque: 'GRANEL',
+      empaque: 'Globo Grande',
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);

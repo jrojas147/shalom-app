@@ -18,5 +18,6 @@ export const NAV_MENU_ITEMS: NavMenuItem[] = [
   { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },
   { label: 'Aliados', route: '/app/aliados', icon: 'aliados' },
   { label: 'Usuarios', route: '/app/usuarios', icon: 'usuarios' },
+  { label: 'Parametrizacion', route: '/app/parametrizacion', icon: 'parametrizacion' },
   { label: 'Perfil', route: '/app/perfil', icon: 'perfil' },
 ];

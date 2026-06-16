@@ -12,6 +12,7 @@ export type NavIconName =
   | 'clientes'
   | 'aliados'
   | 'usuarios'
+  | 'parametrizacion'
   | 'perfil';
 
 @Component({
@@ -131,6 +132,15 @@ export type NavIconName =
             d="M17 15.2v1.6M17 18.2v1.6M15.2 17h1.6M18.2 17h1.6"
             stroke="currentColor"
             stroke-width="1.2"
+            stroke-linecap="round"
+          />
+        }
+        @case ('parametrizacion') {
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />
+          <path
+            d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+            stroke="currentColor"
+            stroke-width="1.8"
             stroke-linecap="round"
           />
         }
