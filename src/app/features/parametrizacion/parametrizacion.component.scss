@@ -1,9 +1,9 @@
 .parametrizacion {
-  max-width: 1200px;
+  max-width: 960px;
 }
 
-.cell-actions {
+.parametrizacion__sections {
   display: flex;
-  gap: var(--spacing-xs);
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 }

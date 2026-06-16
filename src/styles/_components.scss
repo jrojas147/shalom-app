@@ -422,3 +422,27 @@
   color: var(--rp-text-muted);
   padding: var(--spacing-xl);
 }
+
+// Secciones de parametrización (formulario inline + lista)
+.param-block {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--rp-shadow-sm);
+}
+
+.param-block__title {
+  margin: 0 0 var(--spacing-sm);
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--rp-text);
+}
+
+.param-block__desc {
+  margin: 0 0 var(--spacing-md);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--rp-text-secondary);
+}
