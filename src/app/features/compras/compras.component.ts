@@ -170,11 +170,11 @@ export class ComprasComponent implements OnInit {
   }
 
   formatPrecioKg(value: number): string {
-    const display = value / 1000;
-    return `$${display.toLocaleString('es-CL', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      maximumFractionDigits: 0,
+    }).format(value);
   }
 
   formatCurrency(value: number): string {
@@ -188,7 +188,7 @@ export class ComprasComponent implements OnInit {
   formatPeso(value: number): string {
     return value.toLocaleString('es-CL', {
       minimumFractionDigits: value % 1 === 0 ? 0 : 1,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 1,
     });
   }
 

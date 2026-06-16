@@ -109,7 +109,8 @@
 .compras-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 220px);
-  gap: var(--spacing-md);
+  column-gap: var(--spacing-md);
+  row-gap: var(--spacing-sm);
   flex: 1;
 }
 

@@ -89,6 +89,18 @@ const MOCK_PRODUCTOS: Producto[] = [
   },
   {
     id: 9,
+    nombre: 'Bronce',
+    clasificacion: 'METALES',
+    categoria: 'METALES',
+    stock: 520,
+    stockUnidad: 'kg',
+    precioPorKg: 730,
+    estado: 'ACTIVO',
+    imagenUrl:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZxRIVYadxmZhvgCjA2mK6fG1bEB2mi7WpzA&s',
+  },
+  {
+    id: 9,
     nombre: 'PVC',
     clasificacion: 'PLÁSTICOS',
     categoria: 'PLASTICOS',
@@ -99,6 +111,66 @@ const MOCK_PRODUCTOS: Producto[] = [
     imagenUrl:
       'https://gester.es/img/cms/pvc-reciclaje-y-proceso.jpg',
   },
+  {
+    id: 9,
+    nombre: 'PVC',
+    clasificacion: 'PLÁSTICOS',
+    categoria: 'PLASTICOS',
+    stock: 520,
+    stockUnidad: 'kg',
+    precioPorKg: 730,
+    estado: 'ACTIVO',
+    imagenUrl:
+      'https://gester.es/img/cms/pvc-reciclaje-y-proceso.jpg',
+  },
+  {
+    id: 9,
+    nombre: 'PVC',
+    clasificacion: 'PLÁSTICOS',
+    categoria: 'PLASTICOS',
+    stock: 520,
+    stockUnidad: 'kg',
+    precioPorKg: 730,
+    estado: 'ACTIVO',
+    imagenUrl:
+      'https://gester.es/img/cms/pvc-reciclaje-y-proceso.jpg',
+  },
+  {
+    id: 9,
+    nombre: 'PVC',
+    clasificacion: 'PLÁSTICOS',
+    categoria: 'PLASTICOS',
+    stock: 520,
+    stockUnidad: 'kg',
+    precioPorKg: 730,
+    estado: 'ACTIVO',
+    imagenUrl:
+      'https://gester.es/img/cms/pvc-reciclaje-y-proceso.jpg',
+  },
+  {
+    id: 9,
+    nombre: 'PVC',
+    clasificacion: 'PLÁSTICOS',
+    categoria: 'PLASTICOS',
+    stock: 520,
+    stockUnidad: 'kg',
+    precioPorKg: 730,
+    estado: 'ACTIVO',
+    imagenUrl:
+      'https://gester.es/img/cms/pvc-reciclaje-y-proceso.jpg',
+  },
+  {
+    id: 9,
+    nombre: 'PVC',
+    clasificacion: 'PLÁSTICOS',
+    categoria: 'PLASTICOS',
+    stock: 520,
+    stockUnidad: 'kg',
+    precioPorKg: 730,
+    estado: 'ACTIVO',
+    imagenUrl:
+      'https://gester.es/img/cms/pvc-reciclaje-y-proceso.jpg',
+  }
 
 ];
 

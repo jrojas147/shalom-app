@@ -1,6 +1,6 @@
 import { Producto } from './producto.model';
 
-export type EmpaqueTipo = 'BOLSA' | 'CAJA' | 'GRANEL' | 'OTRO';
+export type EmpaqueTipo = 'Globo Grande' | 'Globo Mediano' | 'Globo Pequeño' |  'OTRO';
 
 export interface CompraDetalleItem {
   productoId: number;
@@ -10,8 +10,8 @@ export interface CompraDetalleItem {
 }
 
 export const EMPAQUE_OPCIONES: { value: EmpaqueTipo; label: string }[] = [
-  { value: 'GRANEL', label: 'Granel' },
-  { value: 'BOLSA', label: 'Bolsa' },
-  { value: 'CAJA', label: 'Caja' },
+  { value: 'Globo Grande', label: 'Globo Grande' },
+  { value: 'Globo Mediano', label: 'Globo Mediano' },
+  { value: 'Globo Pequeño', label: 'Globo Pequeño' },
   { value: 'OTRO', label: 'Otro' },
 ];
