@@ -2,16 +2,94 @@
   <header class="rp-page-header">
     <div>
       <h1>Parametrización</h1>
-      <p>Configuración general del sistema</p>
+      <p>Configuración de parámetros del comercio</p>
     </div>
+    <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+      + Nuevo tipo de empaque
+    </button>
   </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (showForm()) {
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>{{ editingId() ? 'Editar tipo de empaque' : 'Nuevo tipo de empaque' }}</h2>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="rp-form-grid">
+          <div class="rp-field">
+            <label for="nombre">Nombre</label>
+            <input id="nombre" type="text" formControlName="nombre" maxlength="100" />
+            @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+              <span class="rp-hint err">El nombre es obligatorio</span>
+            }
+          </div>
+          <div class="rp-field">
+            <label for="peso">Peso (kg)</label>
+            <input id="peso" type="number" formControlName="peso" step="0.001" min="0.001" />
+            @if (form.controls.peso.touched && form.controls.peso.invalid) {
+              <span class="rp-hint err">El peso debe ser mayor a 0</span>
+            }
+          </div>
+        </div>
+        <div class="rp-form-actions">
+          <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
 
   <section class="rp-panel">
     <div class="panel-header">
-      <h2>Parámetros</h2>
+      <h2>Tipos de empaque</h2>
     </div>
-    <p class="placeholder-text">
-      Módulo en construcción. Aquí podrás gestionar la configuración del sistema.
-    </p>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Peso</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tipo of tiposEmpaque(); track tipo.id) {
+            <tr>
+              <td>
+                <span class="row-icon">📦</span>
+                <span class="cell-primary">{{ tipo.nombre }}</span>
+              </td>
+              <td class="cell-secondary">{{ formatPeso(tipo.peso) }}</td>
+              <td class="cell-actions">
+                <button type="button" class="rp-btn rp-btn--icon" (click)="openEdit(tipo)" title="Editar">
+                  ✎
+                </button>
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon danger"
+                  (click)="deleteTipo(tipo)"
+                  title="Eliminar"
+                >
+                  🗑
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="rp-empty">No hay tipos de empaque registrados</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </section>
 </div>

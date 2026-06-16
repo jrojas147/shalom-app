@@ -8,6 +8,7 @@ import { LoginRequest, LoginResponse, RefreshRequest, User } from '../models/use
 const TOKEN_KEY = 'shofi_token';
 const REFRESH_KEY = 'shofi_refresh';
 const USER_KEY = 'shofi_user';
+const COMERCIO_KEY = 'shofi_comercio';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -57,6 +58,26 @@ export class AuthService {
   hasRole(...roles: string[]): boolean {
     const user = this.currentUserSignal();
     return !!user && roles.includes(user.rol);
+  }
+
+  /** Comercio efectivo: del usuario o, para DIRECCION, el seleccionado (default demo = 1). */
+  getEffectiveComercioId(): number | null {
+    const user = this.currentUserSignal();
+    if (!user) {
+      return null;
+    }
+    if (user.comercioId != null) {
+      return user.comercioId;
+    }
+    if (user.rol === 'DIRECCION') {
+      const stored = localStorage.getItem(COMERCIO_KEY);
+      return stored ? Number(stored) : 1;
+    }
+    return null;
+  }
+
+  setSelectedComercioId(comercioId: number): void {
+    localStorage.setItem(COMERCIO_KEY, String(comercioId));
   }
 
   forceLogout(): void {
