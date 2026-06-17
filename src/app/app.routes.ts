@@ -32,7 +32,11 @@ export const routes: Routes = [
       { path: 'liquidacion', loadComponent: loadInicio },
       { path: 'productos', loadComponent: loadInicio },
       { path: 'inventario', loadComponent: loadInicio },
-      { path: 'proveedores', loadComponent: loadInicio },
+      {
+        path: 'proveedores',
+        loadComponent: () =>
+          import('./features/proveedores/proveedores.component').then((m) => m.ProveedoresComponent),
+      },
       { path: 'clientes', loadComponent: loadInicio },
       { path: 'aliados', loadComponent: loadInicio },
       { path: 'perfil', loadComponent: loadInicio },

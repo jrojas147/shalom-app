@@ -1,0 +1,139 @@
+<div class="proveedores">
+  <header class="rp-page-header">
+    <div>
+      <h1>Proveedores</h1>
+      <p>Gestión de proveedores del comercio</p>
+    </div>
+    <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+      + Nuevo proveedor
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (showForm()) {
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>{{ editingId() ? 'Editar proveedor' : 'Nuevo proveedor' }}</h2>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="rp-form-grid">
+          <div class="rp-field">
+            <label for="nombre">Nombre / Razón social</label>
+            <input id="nombre" type="text" formControlName="nombre" maxlength="150" />
+            @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+              <span class="rp-hint err">El nombre es obligatorio</span>
+            }
+          </div>
+          <div class="rp-field">
+            <label for="documento">CUIT / Documento</label>
+            <input id="documento" type="text" formControlName="documento" maxlength="20" />
+          </div>
+          <div class="rp-field">
+            <label for="telefono">Teléfono</label>
+            <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
+          </div>
+          <div class="rp-field">
+            <label for="email">Email</label>
+            <input id="email" type="email" formControlName="email" maxlength="150" />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <span class="rp-hint err">Ingrese un email válido</span>
+            }
+          </div>
+          <div class="rp-field checkbox">
+            <label>
+              <input type="checkbox" formControlName="activo" />
+              Activo
+            </label>
+          </div>
+        </div>
+        <div class="rp-form-actions">
+          <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
+            Cancelar
+          </button>
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="rp-panel">
+    <div class="panel-header proveedores__toolbar">
+      <h2>Listado de proveedores</h2>
+      <input
+        type="search"
+        class="proveedores__search"
+        placeholder="Buscar por nombre, documento, teléfono o email..."
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Proveedor</th>
+            <th>Documento</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (proveedor of proveedoresFiltrados(); track proveedor.id) {
+            <tr>
+              <td>
+                <span class="row-icon">🏭</span>
+                <span class="cell-primary">{{ proveedor.nombre }}</span>
+              </td>
+              <td class="cell-secondary cell-mono">{{ proveedor.documento ?? '—' }}</td>
+              <td class="cell-secondary">{{ proveedor.telefono ?? '—' }}</td>
+              <td class="cell-secondary">{{ proveedor.email ?? '—' }}</td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--success]="proveedor.activo"
+                  [class.rp-badge--danger]="!proveedor.activo"
+                >
+                  {{ proveedor.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon"
+                  (click)="openEdit(proveedor)"
+                  title="Editar"
+                >
+                  ✎
+                </button>
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon danger"
+                  (click)="deleteProveedor(proveedor)"
+                  title="Eliminar"
+                >
+                  🗑
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="rp-empty">
+                {{ busqueda() ? 'No hay proveedores que coincidan con la búsqueda' : 'No hay proveedores registrados' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
