@@ -1,6 +1,12 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Proveedor, ProveedorRequest } from '../../core/models/proveedor.model';
+import {
+  PROVEEDOR_TABS,
+  Proveedor,
+  ProveedorRequest,
+  ProveedorTabConfig,
+  TipoProveedor,
+} from '../../core/models/proveedor.model';
 import { ProveedoresService } from '../../core/services/proveedores.service';
 
 @Component({
@@ -14,7 +20,9 @@ export class ProveedoresComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly proveedoresService = inject(ProveedoresService);
 
+  readonly tabs = PROVEEDOR_TABS;
   readonly proveedores = signal<Proveedor[]>([]);
+  readonly tabActiva = signal<TipoProveedor>('INTERNO');
   readonly busqueda = signal('');
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -22,18 +30,36 @@ export class ProveedoresComponent implements OnInit {
   readonly showForm = signal(false);
   readonly editingId = signal<number | null>(null);
 
+  readonly tabConfig = computed(
+    () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
+  );
+
   readonly proveedoresFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
-    if (!q) {
-      return this.proveedores();
+    const tipo = this.tabActiva();
+
+    return this.proveedores()
+      .filter((p) => p.tipo === tipo)
+      .filter(
+        (p) =>
+          !q ||
+          p.nombre.toLowerCase().includes(q) ||
+          p.documento?.toLowerCase().includes(q) ||
+          p.telefono?.toLowerCase().includes(q) ||
+          p.email?.toLowerCase().includes(q)
+      );
+  });
+
+  readonly conteoPorTab = computed(() => {
+    const counts: Record<TipoProveedor, number> = {
+      INTERNO: 0,
+      EXTERNO: 0,
+      EMPRESA: 0,
+    };
+    for (const proveedor of this.proveedores()) {
+      counts[proveedor.tipo]++;
     }
-    return this.proveedores().filter(
-      (p) =>
-        p.nombre.toLowerCase().includes(q) ||
-        p.documento?.toLowerCase().includes(q) ||
-        p.telefono?.toLowerCase().includes(q) ||
-        p.email?.toLowerCase().includes(q)
-    );
+    return counts;
   });
 
   readonly form = this.fb.nonNullable.group({
@@ -64,6 +90,15 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
+  setTab(tab: ProveedorTabConfig): void {
+    if (this.tabActiva() === tab.id) {
+      return;
+    }
+    this.tabActiva.set(tab.id);
+    this.busqueda.set('');
+    this.cancelForm();
+  }
+
   onBusquedaChange(value: string): void {
     this.busqueda.set(value);
   }
@@ -82,6 +117,7 @@ export class ProveedoresComponent implements OnInit {
   }
 
   openEdit(proveedor: Proveedor): void {
+    this.tabActiva.set(proveedor.tipo);
     this.editingId.set(proveedor.id);
     this.form.reset({
       nombre: proveedor.nombre,
@@ -108,6 +144,7 @@ export class ProveedoresComponent implements OnInit {
 
     const raw = this.form.getRawValue();
     const request: ProveedorRequest = {
+      tipo: this.tabActiva(),
       nombre: raw.nombre.trim(),
       documento: raw.documento.trim() || undefined,
       telefono: raw.telefono.trim() || undefined,

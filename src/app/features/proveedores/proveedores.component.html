@@ -2,72 +2,98 @@
   <header class="rp-page-header">
     <div>
       <h1>Proveedores</h1>
-      <p>Gestión de proveedores del comercio</p>
+      <p>Gestión de proveedores internos, externos y empresas</p>
     </div>
-    <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
-      + Nuevo proveedor
-    </button>
   </header>
 
   @if (error()) {
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
 
-  @if (showForm()) {
-    <section class="rp-panel">
-      <div class="panel-header">
-        <h2>{{ editingId() ? 'Editar proveedor' : 'Nuevo proveedor' }}</h2>
-      </div>
-      <form [formGroup]="form" (ngSubmit)="save()">
-        <div class="rp-form-grid">
-          <div class="rp-field">
-            <label for="nombre">Nombre / Razón social</label>
-            <input id="nombre" type="text" formControlName="nombre" maxlength="150" />
-            @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
-              <span class="rp-hint err">El nombre es obligatorio</span>
-            }
-          </div>
-          <div class="rp-field">
-            <label for="documento">CUIT / Documento</label>
-            <input id="documento" type="text" formControlName="documento" maxlength="20" />
-          </div>
-          <div class="rp-field">
-            <label for="telefono">Teléfono</label>
-            <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
-          </div>
-          <div class="rp-field">
-            <label for="email">Email</label>
-            <input id="email" type="email" formControlName="email" maxlength="150" />
-            @if (form.controls.email.touched && form.controls.email.invalid) {
-              <span class="rp-hint err">Ingrese un email válido</span>
-            }
-          </div>
-          <div class="rp-field checkbox">
-            <label>
-              <input type="checkbox" formControlName="activo" />
-              Activo
-            </label>
-          </div>
-        </div>
-        <div class="rp-form-actions">
-          <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
-            Cancelar
-          </button>
-          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
-            {{ saving() ? 'Guardando...' : 'Guardar' }}
-          </button>
-        </div>
-      </form>
-    </section>
-  }
+  <div class="proveedores-tabs" role="tablist" aria-label="Tipos de proveedor">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="proveedores-tab"
+        role="tab"
+        [class.active]="tabActiva() === tab.id"
+        [attr.aria-selected]="tabActiva() === tab.id"
+        (click)="setTab(tab)"
+      >
+        {{ tab.label }}
+        <span class="proveedores-tab__count">{{ conteoPorTab()[tab.id] }}</span>
+      </button>
+    }
+  </div>
 
-  <section class="rp-panel">
+  <section class="rp-panel proveedores-panel">
     <div class="panel-header proveedores__toolbar">
-      <h2>Listado de proveedores</h2>
+      <div>
+        <h2>{{ tabConfig().label }}</h2>
+        <p class="proveedores-panel__desc">{{ tabConfig().descripcion }}</p>
+      </div>
+      <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+        + Nuevo {{ tabConfig().label.toLowerCase() }}
+      </button>
+    </div>
+
+    @if (showForm()) {
+      <div class="proveedores-form">
+        <h3>{{ editingId() ? 'Editar proveedor' : 'Nuevo proveedor' }}</h3>
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <div class="rp-form-grid">
+            <div class="rp-field">
+              <label for="nombre">{{ tabConfig().nombreLabel }}</label>
+              <input
+                id="nombre"
+                type="text"
+                formControlName="nombre"
+                [placeholder]="tabConfig().nombrePlaceholder"
+                maxlength="150"
+              />
+              @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+                <span class="rp-hint err">El nombre es obligatorio</span>
+              }
+            </div>
+            <div class="rp-field">
+              <label for="documento">{{ tabConfig().documentoLabel }}</label>
+              <input id="documento" type="text" formControlName="documento" maxlength="20" />
+            </div>
+            <div class="rp-field">
+              <label for="telefono">Teléfono</label>
+              <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
+            </div>
+            <div class="rp-field">
+              <label for="email">Email</label>
+              <input id="email" type="email" formControlName="email" maxlength="150" />
+              @if (form.controls.email.touched && form.controls.email.invalid) {
+                <span class="rp-hint err">Ingrese un email válido</span>
+              }
+            </div>
+            <div class="rp-field checkbox">
+              <label>
+                <input type="checkbox" formControlName="activo" />
+                Activo
+              </label>
+            </div>
+          </div>
+          <div class="rp-form-actions">
+            <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
+              Cancelar
+            </button>
+            <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+              {{ saving() ? 'Guardando...' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <div class="proveedores__search-row">
       <input
         type="search"
         class="proveedores__search"
-        placeholder="Buscar por nombre, documento, teléfono o email..."
+        placeholder="Buscar en {{ tabConfig().label.toLowerCase() }}..."
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
@@ -79,8 +105,8 @@
       <table class="rp-table">
         <thead>
           <tr>
-            <th>Proveedor</th>
-            <th>Documento</th>
+            <th>{{ tabConfig().nombreLabel }}</th>
+            <th>{{ tabConfig().documentoLabel }}</th>
             <th>Teléfono</th>
             <th>Email</th>
             <th>Estado</th>
@@ -91,7 +117,7 @@
           @for (proveedor of proveedoresFiltrados(); track proveedor.id) {
             <tr>
               <td>
-                <span class="row-icon">🏭</span>
+                <span class="row-icon">{{ tabActiva() === 'EMPRESA' ? '🏭' : '👤' }}</span>
                 <span class="cell-primary">{{ proveedor.nombre }}</span>
               </td>
               <td class="cell-secondary cell-mono">{{ proveedor.documento ?? '—' }}</td>
@@ -128,7 +154,11 @@
           } @empty {
             <tr>
               <td colspan="6" class="rp-empty">
-                {{ busqueda() ? 'No hay proveedores que coincidan con la búsqueda' : 'No hay proveedores registrados' }}
+                {{
+                  busqueda()
+                    ? 'No hay proveedores que coincidan con la búsqueda'
+                    : 'No hay proveedores ' + tabConfig().label.toLowerCase() + ' registrados'
+                }}
               </td>
             </tr>
           }

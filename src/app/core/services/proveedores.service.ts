@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable, delay, map, of } from 'rxjs';
-import { Proveedor, ProveedorRequest } from '../models/proveedor.model';
+import { Proveedor, ProveedorRequest, TipoProveedor } from '../models/proveedor.model';
 
 const MOCK_PROVEEDORES: Proveedor[] = [
   {
     id: 1,
+    tipo: 'EMPRESA',
     nombre: 'Reciclados del Sur SRL',
     documento: '30-71234567-8',
     telefono: '11-4567-8901',
@@ -13,6 +14,7 @@ const MOCK_PROVEEDORES: Proveedor[] = [
   },
   {
     id: 2,
+    tipo: 'EMPRESA',
     nombre: 'Metalúrgica Norte',
     documento: '30-70987654-3',
     telefono: '351-555-0192',
@@ -21,6 +23,7 @@ const MOCK_PROVEEDORES: Proveedor[] = [
   },
   {
     id: 3,
+    tipo: 'EXTERNO',
     nombre: 'Juan Carlos Pérez',
     documento: '20-33445566-7',
     telefono: '11-2233-4455',
@@ -28,11 +31,37 @@ const MOCK_PROVEEDORES: Proveedor[] = [
   },
   {
     id: 4,
+    tipo: 'EMPRESA',
     nombre: 'EcoPlásticos SA',
     documento: '30-70112233-4',
     telefono: '221-444-5566',
     email: 'info@ecoplasticos.com',
     activo: false,
+  },
+  {
+    id: 5,
+    tipo: 'INTERNO',
+    nombre: 'María González',
+    documento: '27-12345678-9',
+    telefono: '11-9988-7766',
+    activo: true,
+  },
+  {
+    id: 6,
+    tipo: 'INTERNO',
+    nombre: 'Luis Fernández',
+    documento: '20-98765432-1',
+    telefono: '11-5544-3322',
+    activo: true,
+  },
+  {
+    id: 7,
+    tipo: 'EXTERNO',
+    nombre: 'Ana Martínez',
+    documento: '27-55667788-0',
+    telefono: '351-777-8899',
+    email: 'ana.martinez@email.com',
+    activo: true,
   },
 ];
 
@@ -45,13 +74,22 @@ export class ProveedoresService {
     return of(this.sortByNombre([...this.proveedores])).pipe(delay(150));
   }
 
-  getActivos(): Observable<Proveedor[]> {
-    return this.getAll().pipe(map((items) => items.filter((p) => p.activo)));
+  getByTipo(tipo: TipoProveedor): Observable<Proveedor[]> {
+    return this.getAll().pipe(map((items) => items.filter((p) => p.tipo === tipo)));
+  }
+
+  getActivos(tipo?: TipoProveedor): Observable<Proveedor[]> {
+    return this.getAll().pipe(
+      map((items) =>
+        items.filter((p) => p.activo && (tipo == null || p.tipo === tipo))
+      )
+    );
   }
 
   create(request: ProveedorRequest): Observable<Proveedor> {
     const entity: Proveedor = {
       id: this.nextId++,
+      tipo: request.tipo,
       nombre: request.nombre.trim(),
       documento: request.documento?.trim() || undefined,
       telefono: request.telefono?.trim() || undefined,
@@ -70,6 +108,7 @@ export class ProveedoresService {
 
     const updated: Proveedor = {
       ...this.proveedores[index],
+      tipo: request.tipo,
       nombre: request.nombre.trim(),
       documento: request.documento?.trim() || undefined,
       telefono: request.telefono?.trim() || undefined,
