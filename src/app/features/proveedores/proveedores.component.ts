@@ -8,11 +8,12 @@ import {
   TipoProveedor,
 } from '../../core/models/proveedor.model';
 import { ProveedoresService } from '../../core/services/proveedores.service';
+import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 @Component({
   selector: 'app-proveedores',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RpModalComponent],
   templateUrl: './proveedores.component.html',
   styleUrl: './proveedores.component.scss',
 })
@@ -33,6 +34,11 @@ export class ProveedoresComponent implements OnInit {
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
   );
+
+  readonly modalTitle = computed(() => {
+    const verbo = this.editingId() ? 'Editar' : 'Nuevo';
+    return `${verbo} proveedor — ${this.tabConfig().label}`;
+  });
 
   readonly proveedoresFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();

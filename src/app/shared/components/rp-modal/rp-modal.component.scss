@@ -1,0 +1,72 @@
+.rp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 42, 46, 0.45);
+  padding: var(--spacing-md);
+}
+
+.rp-modal-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 2rem);
+  background: var(--rp-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--rp-shadow-md);
+  overflow: hidden;
+
+  &--wide {
+    max-width: 720px;
+  }
+}
+
+.rp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--rp-border);
+
+  h2 {
+    margin: 0;
+    font-family: var(--font-headline);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rp-text);
+  }
+}
+
+.rp-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--rp-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--rp-surface-muted);
+    color: var(--rp-text);
+  }
+}
+
+.rp-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+
+  .rp-form-actions {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--rp-border);
+  }
+}

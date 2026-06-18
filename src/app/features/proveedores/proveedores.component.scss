@@ -74,24 +74,6 @@
   align-items: flex-start;
 }
 
-.proveedores-form {
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--rp-border);
-
-  h3 {
-    margin: 0 0 var(--spacing-md);
-    font-family: var(--font-headline);
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--rp-text);
-  }
-
-  .rp-field {
-    margin-bottom: 0;
-  }
-}
-
 .proveedores__search-row {
   margin-bottom: var(--spacing-md);
 }

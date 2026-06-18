@@ -37,58 +37,6 @@
       </button>
     </div>
 
-    @if (showForm()) {
-      <div class="proveedores-form">
-        <h3>{{ editingId() ? 'Editar proveedor' : 'Nuevo proveedor' }}</h3>
-        <form [formGroup]="form" (ngSubmit)="save()">
-          <div class="rp-form-grid">
-            <div class="rp-field">
-              <label for="nombre">{{ tabConfig().nombreLabel }}</label>
-              <input
-                id="nombre"
-                type="text"
-                formControlName="nombre"
-                [placeholder]="tabConfig().nombrePlaceholder"
-                maxlength="150"
-              />
-              @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
-                <span class="rp-hint err">El nombre es obligatorio</span>
-              }
-            </div>
-            <div class="rp-field">
-              <label for="documento">{{ tabConfig().documentoLabel }}</label>
-              <input id="documento" type="text" formControlName="documento" maxlength="20" />
-            </div>
-            <div class="rp-field">
-              <label for="telefono">Teléfono</label>
-              <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
-            </div>
-            <div class="rp-field">
-              <label for="email">Email</label>
-              <input id="email" type="email" formControlName="email" maxlength="150" />
-              @if (form.controls.email.touched && form.controls.email.invalid) {
-                <span class="rp-hint err">Ingrese un email válido</span>
-              }
-            </div>
-            <div class="rp-field checkbox">
-              <label>
-                <input type="checkbox" formControlName="activo" />
-                Activo
-              </label>
-            </div>
-          </div>
-          <div class="rp-form-actions">
-            <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
-              Cancelar
-            </button>
-            <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
-              {{ saving() ? 'Guardando...' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    }
-
     <div class="proveedores__search-row">
       <input
         type="search"
@@ -167,3 +115,54 @@
     }
   </section>
 </div>
+
+@if (showForm()) {
+  <app-rp-modal [title]="modalTitle()" (closed)="cancelForm()">
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="rp-form-grid">
+        <div class="rp-field">
+          <label for="nombre">{{ tabConfig().nombreLabel }}</label>
+          <input
+            id="nombre"
+            type="text"
+            formControlName="nombre"
+            [placeholder]="tabConfig().nombrePlaceholder"
+            maxlength="150"
+          />
+          @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+            <span class="rp-hint err">El nombre es obligatorio</span>
+          }
+        </div>
+        <div class="rp-field">
+          <label for="documento">{{ tabConfig().documentoLabel }}</label>
+          <input id="documento" type="text" formControlName="documento" maxlength="20" />
+        </div>
+        <div class="rp-field">
+          <label for="telefono">Teléfono</label>
+          <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
+        </div>
+        <div class="rp-field">
+          <label for="email">Email</label>
+          <input id="email" type="email" formControlName="email" maxlength="150" />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <span class="rp-hint err">Ingrese un email válido</span>
+          }
+        </div>
+        <div class="rp-field checkbox">
+          <label>
+            <input type="checkbox" formControlName="activo" />
+            Activo
+          </label>
+        </div>
+      </div>
+      <div class="rp-form-actions">
+        <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
+          Cancelar
+        </button>
+        <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+          {{ saving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </app-rp-modal>
+}
