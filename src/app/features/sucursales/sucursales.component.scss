@@ -15,7 +15,7 @@
   gap: 0.5rem;
   padding: 0.5625rem 1rem;
   border: 1px solid var(--rp-border);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   background: var(--rp-surface);
   color: var(--rp-text-secondary);
   font-family: var(--font-headline);
@@ -56,17 +56,33 @@
 }
 
 .sucursales-panel__desc {
-  margin: 0.25rem 0 0;
+  margin: var(--spacing-xs) 0 0;
   color: var(--rp-text-muted);
   font-size: 0.875rem;
+  line-height: 1.5;
 }
 
-.sucursales__toolbar {
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
+.sucursales__header {
+  margin-bottom: var(--spacing-md);
+}
 
-  .panel-header h2 {
+.sucursales__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+
+  h2 {
     margin: 0;
+    font-family: var(--font-headline);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rp-text);
+  }
+
+  .rp-btn {
+    flex-shrink: 0;
   }
 }
 

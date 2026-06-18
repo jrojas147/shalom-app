@@ -37,17 +37,17 @@
 
   @if (tabActiva() === 'conjuntos') {
     <section class="rp-panel">
-      <div class="panel-header sucursales__toolbar">
-        <div>
+      <div class="sucursales__header">
+        <div class="sucursales__header-row">
           <h2>Conjuntos residenciales</h2>
-          <p class="sucursales-panel__desc">
-            Cada conjunto tiene un administrador activo. Registre administradores en la pestaña
-            correspondiente antes de crear un conjunto.
-          </p>
+          <button type="button" class="rp-btn rp-btn--primary" (click)="openCreateConjunto()">
+            + Nuevo conjunto
+          </button>
         </div>
-        <button type="button" class="rp-btn rp-btn--primary" (click)="openCreateConjunto()">
-          + Nuevo conjunto
-        </button>
+        <p class="sucursales-panel__desc">
+          Cada conjunto tiene un administrador activo. Registre administradores en la pestaña
+          correspondiente antes de crear un conjunto.
+        </p>
       </div>
 
       <div class="sucursales__search-row">
@@ -135,16 +135,16 @@
     </section>
   } @else {
     <section class="rp-panel">
-      <div class="panel-header sucursales__toolbar">
-        <div>
+      <div class="sucursales__header">
+        <div class="sucursales__header-row">
           <h2>Administradores de conjuntos</h2>
-          <p class="sucursales-panel__desc">
-            Un administrador puede gestionar varios conjuntos. Los datos se reutilizan al asignarlos.
-          </p>
+          <button type="button" class="rp-btn rp-btn--primary" (click)="openCreateAdministrador()">
+            + Nuevo administrador
+          </button>
         </div>
-        <button type="button" class="rp-btn rp-btn--primary" (click)="openCreateAdministrador()">
-          + Nuevo administrador
-        </button>
+        <p class="sucursales-panel__desc">
+          Un administrador puede gestionar varios conjuntos. Los datos se reutilizan al asignarlos.
+        </p>
       </div>
 
       <div class="sucursales__search-row">
