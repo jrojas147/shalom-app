@@ -11,6 +11,7 @@ export type NavIconName =
   | 'proveedores'
   | 'clientes'
   | 'aliados'
+  | 'sucursales'
   | 'usuarios'
   | 'parametrizacion'
   | 'perfil';
@@ -134,6 +135,15 @@ export type NavIconName =
             stroke-width="1.2"
             stroke-linecap="round"
           />
+        }
+        @case ('sucursales') {
+          <path
+            d="M4 20h16M6 20V9l6-4 6 4v11"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+          <path d="M10 13h4v7h-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
         }
         @case ('parametrizacion') {
           <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />

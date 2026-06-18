@@ -47,6 +47,11 @@ export const routes: Routes = [
           import('./features/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
       },
       {
+        path: 'sucursales',
+        loadComponent: () =>
+          import('./features/sucursales/sucursales.component').then((m) => m.SucursalesComponent),
+      },
+      {
         path: 'parametrizacion',
         loadComponent: () =>
           import('./features/parametrizacion/parametrizacion.component').then(

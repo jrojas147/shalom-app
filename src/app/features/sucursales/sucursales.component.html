@@ -1,0 +1,140 @@
+<div class="sucursales">
+  <header class="rp-page-header">
+    <div>
+      <h1>Sucursales</h1>
+      <p>Gestión de puntos de operación del comercio</p>
+    </div>
+    <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+      + Nueva sucursal
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (showForm()) {
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>{{ editingId() ? 'Editar sucursal' : 'Nueva sucursal' }}</h2>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="rp-form-grid">
+          <div class="rp-field">
+            <label for="nombre">Nombre</label>
+            <input id="nombre" type="text" formControlName="nombre" maxlength="150" />
+            @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+              <span class="rp-hint err">El nombre es obligatorio</span>
+            }
+          </div>
+          <div class="rp-field">
+            <label for="codigo">Código</label>
+            <input id="codigo" type="text" formControlName="codigo" maxlength="20" placeholder="Ej. CC-001" />
+          </div>
+          <div class="rp-field">
+            <label for="direccion">Dirección</label>
+            <input id="direccion" type="text" formControlName="direccion" maxlength="200" />
+          </div>
+          <div class="rp-field">
+            <label for="telefono">Teléfono</label>
+            <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
+          </div>
+          <div class="rp-field checkbox">
+            <label>
+              <input type="checkbox" formControlName="activo" />
+              Activa
+            </label>
+          </div>
+        </div>
+        <div class="rp-form-actions">
+          <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
+            Cancelar
+          </button>
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="rp-panel">
+    <div class="panel-header sucursales__toolbar">
+      <h2>Listado de sucursales</h2>
+      <input
+        type="search"
+        class="sucursales__search"
+        placeholder="Buscar por nombre, código, dirección o teléfono..."
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Sucursal</th>
+            <th>Código</th>
+            <th>Dirección</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sucursal of sucursalesFiltradas(); track sucursal.id) {
+            <tr>
+              <td>
+                <span class="row-icon">🏢</span>
+                <span class="cell-primary">{{ sucursal.nombre }}</span>
+              </td>
+              <td class="cell-secondary cell-mono">{{ sucursal.codigo ?? '—' }}</td>
+              <td class="cell-secondary">{{ sucursal.direccion ?? '—' }}</td>
+              <td class="cell-secondary">{{ sucursal.telefono ?? '—' }}</td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--success]="sucursal.activo"
+                  [class.rp-badge--danger]="!sucursal.activo"
+                >
+                  {{ sucursal.activo ? 'Activa' : 'Inactiva' }}
+                </span>
+              </td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon"
+                  (click)="openEdit(sucursal)"
+                  title="Editar"
+                >
+                  ✎
+                </button>
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon danger"
+                  (click)="deleteSucursal(sucursal)"
+                  title="Eliminar"
+                >
+                  🗑
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="rp-empty">
+                {{
+                  busqueda()
+                    ? 'No hay sucursales que coincidan con la búsqueda'
+                    : 'No hay sucursales registradas'
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
