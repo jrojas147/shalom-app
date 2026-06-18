@@ -56,18 +56,6 @@ export class ProveedoresComponent implements OnInit {
       );
   });
 
-  readonly conteoPorTab = computed(() => {
-    const counts: Record<TipoProveedor, number> = {
-      INTERNO: 0,
-      EXTERNO: 0,
-      EMPRESA: 0,
-    };
-    for (const proveedor of this.proveedores()) {
-      counts[proveedor.tipo]++;
-    }
-    return counts;
-  });
-
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     documento: [''],
