@@ -15,8 +15,10 @@ import {
   TIPOS_CUENTA,
   TipoCuenta,
 } from '../../core/models/sucursal.model';
+import { Departamento, Municipio } from '../../core/models/ubicacion.model';
 import { AdministradoresConjuntoService } from '../../core/services/administradores-conjunto.service';
 import { SucursalesService } from '../../core/services/sucursales.service';
+import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 type SucursalesTab = 'conjuntos' | 'administradores';
@@ -32,6 +34,7 @@ export class SucursalesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly administradoresService = inject(AdministradoresConjuntoService);
+  private readonly ubicacionesService = inject(UbicacionesService);
 
   readonly tiposDocumento = TIPOS_DOCUMENTO;
   readonly tiposCuenta = TIPOS_CUENTA;
@@ -46,6 +49,8 @@ export class SucursalesComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly editingId = signal<number | null>(null);
+  readonly departamentos = signal<Departamento[]>([]);
+  readonly municipios = signal<Municipio[]>([]);
 
   readonly administradoresActivos = computed(() =>
     this.administradores().filter((a) => a.activo)
@@ -81,8 +86,8 @@ export class SucursalesComponent implements OnInit {
     nombre: ['', Validators.required],
     numApartamentos: [null as number | null, [Validators.required, Validators.min(1)]],
     email: ['', Validators.email],
-    departamento: ['', Validators.required],
-    municipio: ['', Validators.required],
+    departamentoId: [null as number | null, Validators.required],
+    municipioId: [null as number | null, Validators.required],
     direccion: ['', Validators.required],
     banco: [''],
     numeroCuenta: [''],
@@ -93,7 +98,10 @@ export class SucursalesComponent implements OnInit {
 
   readonly administradorForm = this.fb.nonNullable.group({
     tipoDocumento: ['CC' as TipoDocumento, Validators.required],
-    documento: ['', Validators.required],
+    documento: [
+      '',
+      [Validators.required, Validators.maxLength(10), Validators.pattern(/^\d+$/)],
+    ],
     nombre: ['', Validators.required],
     telefono: [''],
     email: ['', Validators.email],
@@ -103,6 +111,7 @@ export class SucursalesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+    this.loadDepartamentos();
   }
 
   setTab(tab: SucursalesTab): void {
@@ -138,16 +147,41 @@ export class SucursalesComponent implements OnInit {
     this.busqueda.set(value);
   }
 
+  loadDepartamentos(): void {
+    this.ubicacionesService.getDepartamentos().subscribe({
+      next: (departamentos) => this.departamentos.set(departamentos),
+      error: () => this.departamentos.set([]),
+    });
+  }
+
+  onDepartamentoChange(resetMunicipio = true): void {
+    const departamentoId = this.conjuntoForm.controls.departamentoId.value;
+    if (resetMunicipio) {
+      this.conjuntoForm.patchValue({ municipioId: null });
+    }
+    this.municipios.set([]);
+    if (!departamentoId) {
+      this.conjuntoForm.controls.municipioId.disable();
+      return;
+    }
+    this.conjuntoForm.controls.municipioId.enable();
+    this.ubicacionesService.getMunicipiosByDepartamento(departamentoId).subscribe({
+      next: (municipios) => this.municipios.set(municipios),
+      error: () => this.municipios.set([]),
+    });
+  }
+
   openCreateConjunto(): void {
     this.editingId.set(null);
+    this.municipios.set([]);
     this.conjuntoForm.reset({
       administradorId: this.administradoresActivos()[0]?.id ?? null,
       nit: '',
       nombre: '',
       numApartamentos: null,
       email: '',
-      departamento: '',
-      municipio: '',
+      departamentoId: null,
+      municipioId: null,
       direccion: '',
       banco: '',
       numeroCuenta: '',
@@ -155,20 +189,22 @@ export class SucursalesComponent implements OnInit {
       fechaAlta: this.todayIso(),
       activo: true,
     });
+    this.conjuntoForm.controls.municipioId.disable();
     this.showForm.set(true);
     this.error.set(null);
   }
 
   openEditConjunto(sucursal: Sucursal): void {
     this.editingId.set(sucursal.id);
+    this.municipios.set([]);
     this.conjuntoForm.reset({
       administradorId: sucursal.administradorId,
       nit: sucursal.nit,
       nombre: sucursal.nombre,
       numApartamentos: sucursal.numApartamentos,
       email: sucursal.email ?? '',
-      departamento: sucursal.departamento,
-      municipio: sucursal.municipio,
+      departamentoId: null,
+      municipioId: null,
       direccion: sucursal.direccion,
       banco: sucursal.banco ?? '',
       numeroCuenta: sucursal.numeroCuenta ?? '',
@@ -176,6 +212,8 @@ export class SucursalesComponent implements OnInit {
       fechaAlta: sucursal.fechaAlta,
       activo: sucursal.activo,
     });
+    this.conjuntoForm.controls.municipioId.disable();
+    this.patchConjuntoUbicacion(sucursal.departamento, sucursal.municipio);
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -230,14 +268,21 @@ export class SucursalesComponent implements OnInit {
     }
 
     const raw = this.conjuntoForm.getRawValue();
+    const departamento = this.departamentos().find((d) => d.id === raw.departamentoId);
+    const municipio = this.municipios().find((m) => m.id === raw.municipioId);
+    if (!departamento || !municipio) {
+      this.error.set('Seleccione un departamento y un municipio válidos.');
+      return;
+    }
+
     const request: SucursalRequest = {
       administradorId: raw.administradorId!,
       nit: raw.nit.trim(),
       nombre: raw.nombre.trim(),
       numApartamentos: raw.numApartamentos!,
       email: raw.email.trim() || undefined,
-      departamento: raw.departamento.trim(),
-      municipio: raw.municipio.trim(),
+      departamento: departamento.nombre,
+      municipio: municipio.nombre,
       direccion: raw.direccion.trim(),
       banco: raw.banco.trim() || undefined,
       numeroCuenta: raw.numeroCuenta.trim() || undefined,
@@ -277,7 +322,7 @@ export class SucursalesComponent implements OnInit {
     const request: AdministradorConjuntoRequest = {
       tipoDocumento: raw.tipoDocumento,
       documento: raw.documento.trim(),
-      nombre: raw.nombre.trim(),
+      nombre: raw.nombre.trim().toUpperCase(),
       telefono: raw.telefono.trim() || undefined,
       email: raw.email.trim() || undefined,
       fechaCumpleanos: raw.fechaCumpleanos || undefined,
@@ -303,6 +348,22 @@ export class SucursalesComponent implements OnInit {
         this.error.set(err.error?.message ?? 'No se pudo guardar el administrador.');
       },
     });
+  }
+
+  normalizarNombreAdministrador(): void {
+    const control = this.administradorForm.controls.nombre;
+    const normalizado = control.value.trim().toUpperCase();
+    if (normalizado !== control.value) {
+      control.setValue(normalizado);
+    }
+  }
+
+  limitarDocumentoAdministrador(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const soloDigitos = input.value.replace(/\D/g, '').slice(0, 10);
+    if (soloDigitos !== input.value) {
+      this.administradorForm.controls.documento.setValue(soloDigitos);
+    }
   }
 
   deleteConjunto(sucursal: Sucursal): void {
@@ -353,6 +414,27 @@ export class SucursalesComponent implements OnInit {
 
   private todayIso(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  private patchConjuntoUbicacion(departamentoNombre: string, municipioNombre: string): void {
+    const departamento = this.departamentos().find(
+      (d) => d.nombre.toLowerCase() === departamentoNombre.toLowerCase()
+    );
+    if (!departamento) {
+      return;
+    }
+
+    this.conjuntoForm.patchValue({ departamentoId: departamento.id });
+    this.conjuntoForm.controls.municipioId.enable();
+    this.ubicacionesService.getMunicipiosByDepartamento(departamento.id).subscribe({
+      next: (municipios) => {
+        this.municipios.set(municipios);
+        const municipio = municipios.find(
+          (m) => m.nombre.toLowerCase() === municipioNombre.toLowerCase()
+        );
+        this.conjuntoForm.patchValue({ municipioId: municipio?.id ?? null });
+      },
+    });
   }
 
   private matchesConjuntoSearch(s: Sucursal, q: string): boolean {

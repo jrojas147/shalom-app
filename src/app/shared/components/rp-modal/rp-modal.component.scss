@@ -21,7 +21,11 @@
   overflow: hidden;
 
   &--wide {
-    max-width: 720px;
+    max-width: 880px;
+
+    .rp-modal-body {
+      padding: var(--spacing-md) var(--spacing-lg);
+    }
   }
 }
 

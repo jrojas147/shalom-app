@@ -43,8 +43,8 @@
           </button>
         </div>
         <p class="sucursales-panel__desc">
-          Cada conjunto tiene un administrador activo. Registre administradores en la pestaña
-          correspondiente antes de crear un conjunto.
+          Conjuntos residenciales asociados a programa reciclaje <strong>Renovando Planeta.</strong>
+          Registre administradores en la pestaña correspondiente antes de crear un conjunto.
         </p>
       </div>
 
@@ -65,11 +65,9 @@
           <thead>
             <tr>
               <th>Conjunto</th>
-              <th>NIT</th>
-              <th>Ubicación</th>
+              <th>Municipio</th>
               <th>Administrador</th>
               <th>Apartamentos</th>
-              <th>Alta</th>
               <th>Estado</th>
               <th></th>
             </tr>
@@ -81,13 +79,11 @@
                   <span class="row-icon">🏢</span>
                   <span class="cell-primary">{{ sucursal.nombre }}</span>
                 </td>
-                <td class="cell-secondary cell-mono">{{ sucursal.nit }}</td>
                 <td class="cell-secondary">
-                  {{ sucursal.municipio }}, {{ sucursal.departamento }}
+                  {{ sucursal.municipio }}
                 </td>
                 <td class="cell-secondary">{{ administradorNombre(sucursal) }}</td>
                 <td class="cell-secondary">{{ sucursal.numApartamentos }}</td>
-                <td class="cell-secondary">{{ formatFecha(sucursal.fechaAlta) }}</td>
                 <td>
                   <span
                     class="rp-badge"
@@ -141,7 +137,7 @@
           </button>
         </div>
         <p class="sucursales-panel__desc">
-          Un administrador puede gestionar varios conjuntos. Los datos se reutilizan al asignarlos.
+          Visualiza y registra administradores de conjuntos asociados al programa reciclaje <strong>Renovando Planeta.</strong>
         </p>
       </div>
 
@@ -240,7 +236,7 @@
 
 @if (showForm() && tabActiva() === 'conjuntos') {
   <app-rp-modal [title]="conjuntoModalTitle()" [wide]="true" (closed)="cancelForm()">
-    <form [formGroup]="conjuntoForm" (ngSubmit)="saveConjunto()">
+    <form class="conjunto-modal-form" [formGroup]="conjuntoForm" (ngSubmit)="saveConjunto()">
       <div class="rp-form-grid">
         <div class="rp-field rp-field--full">
           <label for="administradorId">Administrador</label>
@@ -303,19 +299,39 @@
           }
         </div>
         <div class="rp-field">
-          <label for="departamento">Departamento</label>
-          <input id="departamento" type="text" formControlName="departamento" maxlength="100" />
+          <label for="departamentoId">Departamento</label>
+          <select
+            id="departamentoId"
+            formControlName="departamentoId"
+            (change)="onDepartamentoChange()"
+          >
+            <option [ngValue]="null" disabled>Seleccione un departamento</option>
+            @for (dept of departamentos(); track dept.id) {
+              <option [ngValue]="dept.id">{{ dept.nombre }}</option>
+            }
+          </select>
           @if (
-            conjuntoForm.controls.departamento.touched &&
-            conjuntoForm.controls.departamento.invalid
+            conjuntoForm.controls.departamentoId.touched &&
+            conjuntoForm.controls.departamentoId.invalid
           ) {
             <span class="rp-hint err">El departamento es obligatorio</span>
           }
         </div>
         <div class="rp-field">
-          <label for="municipio">Municipio</label>
-          <input id="municipio" type="text" formControlName="municipio" maxlength="100" />
-          @if (conjuntoForm.controls.municipio.touched && conjuntoForm.controls.municipio.invalid) {
+          <label for="municipioId">Municipio</label>
+          <select id="municipioId" formControlName="municipioId">
+            <option [ngValue]="null" disabled>
+              {{
+                conjuntoForm.controls.departamentoId.value
+                  ? 'Seleccione un municipio'
+                  : 'Seleccione primero un departamento'
+              }}
+            </option>
+            @for (muni of municipios(); track muni.id) {
+              <option [ngValue]="muni.id">{{ muni.nombre }}</option>
+            }
+          </select>
+          @if (conjuntoForm.controls.municipioId.touched && conjuntoForm.controls.municipioId.invalid) {
             <span class="rp-hint err">El municipio es obligatorio</span>
           }
         </div>
@@ -371,8 +387,8 @@
 }
 
 @if (showForm() && tabActiva() === 'administradores') {
-  <app-rp-modal [title]="administradorModalTitle()" (closed)="cancelForm()">
-    <form [formGroup]="administradorForm" (ngSubmit)="saveAdministrador()">
+  <app-rp-modal [title]="administradorModalTitle()" [wide]="true" (closed)="cancelForm()">
+    <form class="administrador-modal-form" [formGroup]="administradorForm" (ngSubmit)="saveAdministrador()">
       <div class="rp-form-grid">
         <div class="rp-field">
           <label for="tipoDocumento">Tipo de documento</label>
@@ -384,17 +400,36 @@
         </div>
         <div class="rp-field">
           <label for="documento">Documento</label>
-          <input id="documento" type="text" formControlName="documento" maxlength="30" />
+          <input
+            id="documento"
+            type="text"
+            formControlName="documento"
+            maxlength="10"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            (input)="limitarDocumentoAdministrador($event)"
+          />
           @if (
             administradorForm.controls.documento.touched &&
             administradorForm.controls.documento.invalid
           ) {
-            <span class="rp-hint err">El documento es obligatorio</span>
+            @if (administradorForm.controls.documento.hasError('required')) {
+              <span class="rp-hint err">El documento es obligatorio</span>
+            } @else {
+              <span class="rp-hint err">Máximo 10 dígitos numéricos</span>
+            }
           }
         </div>
         <div class="rp-field">
           <label for="adminNombre">Nombre</label>
-          <input id="adminNombre" type="text" formControlName="nombre" maxlength="150" />
+          <input
+            id="adminNombre"
+            type="text"
+            formControlName="nombre"
+            maxlength="150"
+            class="admin-nombre-uppercase"
+            (blur)="normalizarNombreAdministrador()"
+          />
           @if (
             administradorForm.controls.nombre.touched &&
             administradorForm.controls.nombre.invalid
