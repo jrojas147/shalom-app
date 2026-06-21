@@ -42,6 +42,31 @@
     }
   }
 
+  .administrador-estado-field {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+
+    &__label {
+      flex: 0 0 auto;
+      min-width: 5.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--rp-text-secondary);
+    }
+
+    &__control {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 400;
+      color: var(--rp-text);
+      cursor: pointer;
+    }
+  }
+
   .rp-form-actions {
     margin-top: var(--spacing-sm);
     padding-top: var(--spacing-sm);

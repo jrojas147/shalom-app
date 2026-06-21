@@ -426,7 +426,7 @@
             id="adminNombre"
             type="text"
             formControlName="nombre"
-            maxlength="150"
+            maxlength="50"
             class="admin-nombre-uppercase"
             (blur)="normalizarNombreAdministrador()"
           />
@@ -434,7 +434,11 @@
             administradorForm.controls.nombre.touched &&
             administradorForm.controls.nombre.invalid
           ) {
-            <span class="rp-hint err">El nombre es obligatorio</span>
+            @if (administradorForm.controls.nombre.hasError('required')) {
+              <span class="rp-hint err">El nombre es obligatorio</span>
+            } @else {
+              <span class="rp-hint err">Máximo 50 caracteres</span>
+            }
           }
         </div>
         <div class="rp-field">
@@ -469,9 +473,10 @@
           <label for="fechaCumpleanos">Fecha de cumpleaños</label>
           <input id="fechaCumpleanos" type="date" formControlName="fechaCumpleanos" />
         </div>
-        <div class="rp-field checkbox">
-          <label>
-            <input type="checkbox" formControlName="activo" />
+        <div class="rp-field administrador-estado-field">
+          <span class="administrador-estado-field__label">Estado</span>
+          <label class="administrador-estado-field__control" for="adminActivo">
+            <input id="adminActivo" type="checkbox" formControlName="activo" />
             Activo
           </label>
         </div>

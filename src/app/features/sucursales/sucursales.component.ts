@@ -102,7 +102,7 @@ export class SucursalesComponent implements OnInit {
       '',
       [Validators.required, Validators.maxLength(10), Validators.pattern(/^\d+$/)],
     ],
-    nombre: ['', Validators.required],
+    nombre: ['', [Validators.required, Validators.maxLength(50)]],
     telefono: ['', [Validators.maxLength(10), Validators.pattern(/^$|^3\d{0,9}$/)]],
     email: ['', Validators.email],
     fechaCumpleanos: [''],
