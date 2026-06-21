@@ -103,7 +103,7 @@ export class SucursalesComponent implements OnInit {
       [Validators.required, Validators.maxLength(10), Validators.pattern(/^\d+$/)],
     ],
     nombre: ['', Validators.required],
-    telefono: [''],
+    telefono: ['', [Validators.maxLength(10), Validators.pattern(/^$|^3\d{0,9}$/)]],
     email: ['', Validators.email],
     fechaCumpleanos: [''],
     activo: [true],
@@ -363,6 +363,17 @@ export class SucursalesComponent implements OnInit {
     const soloDigitos = input.value.replace(/\D/g, '').slice(0, 10);
     if (soloDigitos !== input.value) {
       this.administradorForm.controls.documento.setValue(soloDigitos);
+    }
+  }
+
+  limitarTelefonoAdministrador(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let soloDigitos = input.value.replace(/\D/g, '').slice(0, 10);
+    if (soloDigitos.length > 0 && soloDigitos[0] !== '3') {
+      soloDigitos = '';
+    }
+    if (soloDigitos !== input.value) {
+      this.administradorForm.controls.telefono.setValue(soloDigitos);
     }
   }
 

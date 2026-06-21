@@ -439,7 +439,21 @@
         </div>
         <div class="rp-field">
           <label for="telefono">Teléfono</label>
-          <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
+          <input
+            id="telefono"
+            type="text"
+            formControlName="telefono"
+            maxlength="10"
+            inputmode="numeric"
+            pattern="3[0-9]{0,9}"
+            (input)="limitarTelefonoAdministrador($event)"
+          />
+          @if (
+            administradorForm.controls.telefono.touched &&
+            administradorForm.controls.telefono.invalid
+          ) {
+            <span class="rp-hint err">Debe iniciar con 3 y tener máximo 10 dígitos</span>
+          }
         </div>
         <div class="rp-field">
           <label for="adminEmail">Correo</label>
