@@ -469,9 +469,29 @@
             <span class="rp-hint err">Ingrese un correo válido</span>
           }
         </div>
-        <div class="rp-field">
+        <div
+          class="rp-field"
+          [class.rp-field--invalid]="administradorForm.controls.fechaCumpleanos.invalid"
+        >
           <label for="fechaCumpleanos">Fecha de cumpleaños</label>
-          <input id="fechaCumpleanos" type="date" formControlName="fechaCumpleanos" />
+          <input
+            id="fechaCumpleanos"
+            type="date"
+            formControlName="fechaCumpleanos"
+            [max]="fechaMaximaCumpleanosAdministrador()"
+            [class.rp-input--invalid]="administradorForm.controls.fechaCumpleanos.invalid"
+            (change)="onFechaCumpleanosAdministradorChange()"
+          />
+          @if (
+            administradorForm.controls.fechaCumpleanos.touched &&
+            administradorForm.controls.fechaCumpleanos.invalid
+          ) {
+            @if (administradorForm.controls.fechaCumpleanos.hasError('required')) {
+              <span class="rp-hint err">La fecha de cumpleaños es obligatoria</span>
+            } @else {
+              <span class="rp-hint err">Debe ser mayor de 18 años</span>
+            }
+          }
         </div>
         <div class="rp-field administrador-estado-field">
           <span class="administrador-estado-field__label">Estado</span>
@@ -485,7 +505,11 @@
         <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
           Cancelar
         </button>
-        <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+        <button
+          type="submit"
+          class="rp-btn rp-btn--primary"
+          [disabled]="saving() || administradorForm.invalid"
+        >
           {{ saving() ? 'Guardando...' : 'Guardar' }}
         </button>
       </div>

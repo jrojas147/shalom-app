@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import {
   AdministradorConjunto,
@@ -22,6 +22,30 @@ import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 type SucursalesTab = 'conjuntos' | 'administradores';
+
+function fechaLimiteMayorDeEdad(): string {
+  const hoy = new Date();
+  const y = hoy.getFullYear() - 18;
+  const m = String(hoy.getMonth() + 1).padStart(2, '0');
+  const d = String(hoy.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function fechaCumpleanosAdministradorValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = (control.value as string)?.trim();
+
+    if (!value) {
+      return { required: true };
+    }
+
+    if (value > fechaLimiteMayorDeEdad()) {
+      return { menorDeEdad: true };
+    }
+
+    return null;
+  };
+}
 
 @Component({
   selector: 'app-sucursales',
@@ -105,7 +129,7 @@ export class SucursalesComponent implements OnInit {
     nombre: ['', [Validators.required, Validators.maxLength(50)]],
     telefono: ['', [Validators.maxLength(10), Validators.pattern(/^$|^3\d{0,9}$/)]],
     email: ['', Validators.email],
-    fechaCumpleanos: [''],
+    fechaCumpleanos: ['', fechaCumpleanosAdministradorValidator()],
     activo: [true],
   });
 
@@ -350,6 +374,12 @@ export class SucursalesComponent implements OnInit {
     });
   }
 
+  onFechaCumpleanosAdministradorChange(): void {
+    const control = this.administradorForm.controls.fechaCumpleanos;
+    control.markAsTouched();
+    control.updateValueAndValidity();
+  }
+
   normalizarNombreAdministrador(): void {
     const control = this.administradorForm.controls.nombre;
     const normalizado = control.value.trim().toUpperCase();
@@ -417,6 +447,10 @@ export class SucursalesComponent implements OnInit {
     }
     const [year, month, day] = fecha.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString('es-CO');
+  }
+
+  fechaMaximaCumpleanosAdministrador(): string {
+    return fechaLimiteMayorDeEdad();
   }
 
   administradorNombre(sucursal: Sucursal): string {

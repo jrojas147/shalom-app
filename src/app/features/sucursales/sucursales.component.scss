@@ -67,6 +67,19 @@
     }
   }
 
+  .rp-field--invalid label {
+    color: var(--rp-danger);
+  }
+
+  .rp-input--invalid {
+    border-color: var(--rp-danger);
+
+    &:focus {
+      outline-color: var(--rp-danger-bg);
+      border-color: var(--rp-danger);
+    }
+  }
+
   .rp-form-actions {
     margin-top: var(--spacing-sm);
     padding-top: var(--spacing-sm);
