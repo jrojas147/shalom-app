@@ -107,8 +107,11 @@ export class SucursalesComponent implements OnInit {
   readonly conjuntoForm = this.fb.nonNullable.group({
     administradorId: [null as number | null, Validators.required],
     nit: ['', Validators.required],
-    nombre: ['', Validators.required],
-    numApartamentos: [null as number | null, [Validators.required, Validators.min(1)]],
+    nombre: ['', [Validators.required, Validators.maxLength(50)]],
+    numApartamentos: [
+      null as number | null,
+      [Validators.required, Validators.min(1), Validators.max(999)],
+    ],
     email: ['', Validators.email],
     departamentoId: [null as number | null, Validators.required],
     municipioId: [null as number | null, Validators.required],
@@ -302,7 +305,7 @@ export class SucursalesComponent implements OnInit {
     const request: SucursalRequest = {
       administradorId: raw.administradorId!,
       nit: raw.nit.trim(),
-      nombre: raw.nombre.trim(),
+      nombre: raw.nombre.trim().toUpperCase(),
       numApartamentos: raw.numApartamentos!,
       email: raw.email.trim() || undefined,
       departamento: departamento.nombre,
@@ -380,12 +383,31 @@ export class SucursalesComponent implements OnInit {
     control.updateValueAndValidity();
   }
 
+  normalizarNombreConjunto(): void {
+    const control = this.conjuntoForm.controls.nombre;
+    const normalizado = control.value.trim().toUpperCase();
+    if (normalizado !== control.value) {
+      control.setValue(normalizado);
+    }
+  }
+
   normalizarNombreAdministrador(): void {
     const control = this.administradorForm.controls.nombre;
     const normalizado = control.value.trim().toUpperCase();
     if (normalizado !== control.value) {
       control.setValue(normalizado);
     }
+  }
+
+  limitarNumApartamentos(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const soloDigitos = input.value.replace(/\D/g, '').slice(0, 3);
+    if (soloDigitos !== input.value) {
+      input.value = soloDigitos;
+    }
+    this.conjuntoForm.controls.numApartamentos.setValue(
+      soloDigitos === '' ? null : Number(soloDigitos)
+    );
   }
 
   limitarDocumentoAdministrador(event: Event): void {

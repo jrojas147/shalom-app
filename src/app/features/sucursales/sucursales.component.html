@@ -160,7 +160,6 @@
               <th>Administrador</th>
               <th>Documento</th>
               <th>Contacto</th>
-              <th>Cumpleaños</th>
               <th>Conjuntos</th>
               <th>Estado</th>
               <th></th>
@@ -186,7 +185,6 @@
                     —
                   }
                 </td>
-                <td class="cell-secondary">{{ formatFecha(admin.fechaCumpleanos) }}</td>
                 <td class="cell-secondary">{{ admin.cantidadConjuntos }}</td>
                 <td>
                   <span
@@ -270,25 +268,44 @@
         </div>
         <div class="rp-field">
           <label for="nombre">Nombre del conjunto</label>
-          <input id="nombre" type="text" formControlName="nombre" maxlength="150" />
+          <input
+            id="nombre"
+            type="text"
+            formControlName="nombre"
+            maxlength="50"
+            class="conjunto-nombre-uppercase"
+            (blur)="normalizarNombreConjunto()"
+          />
           @if (conjuntoForm.controls.nombre.touched && conjuntoForm.controls.nombre.invalid) {
-            <span class="rp-hint err">El nombre es obligatorio</span>
+            @if (conjuntoForm.controls.nombre.hasError('required')) {
+              <span class="rp-hint err">El nombre es obligatorio</span>
+            } @else {
+              <span class="rp-hint err">Máximo 50 caracteres</span>
+            }
           }
         </div>
         <div class="rp-field">
           <label for="numApartamentos">Número de apartamentos</label>
           <input
             id="numApartamentos"
-            type="number"
+            type="text"
             formControlName="numApartamentos"
-            min="1"
-            step="1"
+            maxlength="3"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            (input)="limitarNumApartamentos($event)"
           />
           @if (
             conjuntoForm.controls.numApartamentos.touched &&
             conjuntoForm.controls.numApartamentos.invalid
           ) {
-            <span class="rp-hint err">Ingrese un número válido (mínimo 1)</span>
+            @if (conjuntoForm.controls.numApartamentos.hasError('required')) {
+              <span class="rp-hint err">El número de apartamentos es obligatorio</span>
+            } @else if (conjuntoForm.controls.numApartamentos.hasError('min')) {
+              <span class="rp-hint err">Debe ser al menos 1</span>
+            } @else {
+              <span class="rp-hint err">Máximo 999 apartamentos (3 dígitos)</span>
+            }
           }
         </div>
         <div class="rp-field">
