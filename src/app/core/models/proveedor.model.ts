@@ -32,15 +32,15 @@ export const PROVEEDOR_TABS: ProveedorTabConfig[] = [
   {
     id: 'INTERNO',
     label: 'Internos',
-    descripcion: 'Personal o colaboradores vinculados al comercio que proveen material.',
+    descripcion: 'Recicladores vinculados con sucursales asociados.',
     nombreLabel: 'Nombre completo',
-    documentoLabel: 'DNI',
+    documentoLabel: 'Documento',
     nombrePlaceholder: 'Nombre del colaborador',
   },
   {
     id: 'EXTERNO',
     label: 'Externos',
-    descripcion: 'Personas o terceros independientes que entregan material al comercio.',
+    descripcion: 'Asociado que permite realizar facturacion de compras a recicladores de calle.',
     nombreLabel: 'Nombre completo',
     documentoLabel: 'Documento',
     nombrePlaceholder: 'Nombre del proveedor',
@@ -48,7 +48,7 @@ export const PROVEEDOR_TABS: ProveedorTabConfig[] = [
   {
     id: 'EMPRESA',
     label: 'Empresa',
-    descripcion: 'Empresas o razones sociales registradas como proveedoras.',
+    descripcion: 'Empresas asociadas proveedoreas de Renovando Planeta.',
     nombreLabel: 'Razón social',
     documentoLabel: 'CUIT',
     nombrePlaceholder: 'Nombre de la empresa',
