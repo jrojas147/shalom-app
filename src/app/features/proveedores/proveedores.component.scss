@@ -180,32 +180,50 @@
   width: 100%;
 }
 
-.proveedores-hijo-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+.proveedores-hijos-list {
+  list-style: none;
+  margin: 0 0 var(--spacing-md);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.proveedores-hijos-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-sm);
-  align-items: end;
-  padding-bottom: var(--spacing-md);
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+}
+
+.proveedores-hijos-list__info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.proveedores-hijos-list__nombre {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--rp-text);
+}
+
+.proveedores-hijos-list__meta {
+  font-size: 0.75rem;
+  color: var(--rp-text-secondary);
+}
+
+.proveedores-hijos-list__actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.proveedores-hijo-modal__error {
   margin-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--rp-border);
-
-  &:last-of-type {
-    border-bottom: none;
-    margin-bottom: var(--spacing-sm);
-  }
-}
-
-.proveedores-hijo-row__remove {
-  margin-bottom: 0.25rem;
-}
-
-@media (max-width: 768px) {
-  .proveedores-hijo-row {
-    grid-template-columns: 1fr 1fr;
-
-    .proveedores-hijo-row__remove {
-      grid-column: 1 / -1;
-      justify-self: end;
-    }
-  }
 }

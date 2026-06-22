@@ -50,7 +50,10 @@ export class ProveedoresComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly showForm = signal(false);
+  readonly showHijoForm = signal(false);
   readonly editingId = signal<number | null>(null);
+  readonly editingHijoIndex = signal<number | null>(null);
+  readonly hijoFormError = signal<string | null>(null);
   readonly hijosSectionOpen = signal(false);
   readonly departamentos = signal<Departamento[]>([]);
   readonly municipios = signal<Municipio[]>([]);
@@ -65,6 +68,10 @@ export class ProveedoresComponent implements OnInit {
     const verbo = this.editingId() ? 'Editar' : 'Nuevo';
     return `${verbo} proveedor interno`;
   });
+
+  readonly hijoModalTitle = computed(() =>
+    this.editingHijoIndex() !== null ? 'Editar hijo' : 'Registrar hijo'
+  );
 
   readonly internosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
@@ -101,6 +108,13 @@ export class ProveedoresComponent implements OnInit {
     telefonoContacto: [''],
     activo: [true],
     hijos: this.fb.array<FormGroup>([]),
+  });
+
+  readonly hijoForm = this.fb.nonNullable.group({
+    documento: ['', Validators.required],
+    nombre: ['', Validators.required],
+    sexo: ['' as Sexo | ''],
+    fechaNacimiento: [''],
   });
 
   ngOnInit(): void {
@@ -172,13 +186,100 @@ export class ProveedoresComponent implements OnInit {
     this.hijosSectionOpen.update((open) => !open);
   }
 
-  addHijoRow(): void {
-    this.hijosArray.push(this.createHijoGroup());
+  openHijoModal(index?: number): void {
+    this.hijoFormError.set(null);
+    this.editingHijoIndex.set(index ?? null);
+
+    if (index !== undefined) {
+      const raw = this.hijosArray.at(index).getRawValue();
+      this.hijoForm.reset({
+        documento: raw.documento,
+        nombre: raw.nombre,
+        sexo: raw.sexo,
+        fechaNacimiento: raw.fechaNacimiento,
+      });
+    } else {
+      this.hijoForm.reset({
+        documento: '',
+        nombre: '',
+        sexo: '',
+        fechaNacimiento: '',
+      });
+    }
+
+    this.showHijoForm.set(true);
+  }
+
+  cancelHijoModal(): void {
+    this.showHijoForm.set(false);
+    this.editingHijoIndex.set(null);
+    this.hijoFormError.set(null);
+    this.hijoForm.reset({
+      documento: '',
+      nombre: '',
+      sexo: '',
+      fechaNacimiento: '',
+    });
+  }
+
+  saveHijoModal(): void {
+    if (this.hijoForm.invalid) {
+      this.hijoForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.hijoForm.getRawValue();
+    const documento = raw.documento.trim();
+    const docKey = documento.toLowerCase();
+    const editIndex = this.editingHijoIndex();
+
+    const duplicate = this.hijosArray.controls.some((ctrl, i) => {
+      if (editIndex !== null && i === editIndex) {
+        return false;
+      }
+      return ctrl.getRawValue().documento.trim().toLowerCase() === docKey;
+    });
+
+    if (duplicate) {
+      this.hijoFormError.set('Ya hay un hijo registrado con ese documento.');
+      return;
+    }
+
+    const group = this.createHijoGroup({
+      documento,
+      nombre: raw.nombre.trim(),
+      sexo: raw.sexo || undefined,
+      fechaNacimiento: raw.fechaNacimiento || undefined,
+    });
+
+    if (editIndex !== null) {
+      this.hijosArray.setControl(editIndex, group);
+    } else {
+      this.hijosArray.push(group);
+    }
+
     this.hijosSectionOpen.set(true);
+    this.cancelHijoModal();
   }
 
   removeHijoRow(index: number): void {
+    if (this.editingHijoIndex() === index) {
+      this.cancelHijoModal();
+    }
     this.hijosArray.removeAt(index);
+  }
+
+  getHijoSexoLabel(sexo: string): string {
+    return this.sexos.find((s) => s.value === sexo)?.label ?? '—';
+  }
+
+  getHijoAt(index: number): {
+    documento: string;
+    nombre: string;
+    sexo: string;
+    fechaNacimiento: string;
+  } {
+    return this.hijosArray.at(index).getRawValue();
   }
 
   openCreate(): void {
@@ -221,6 +322,7 @@ export class ProveedoresComponent implements OnInit {
   }
 
   cancelForm(): void {
+    this.cancelHijoModal();
     this.showForm.set(false);
     this.editingId.set(null);
     this.hijosSectionOpen.set(false);

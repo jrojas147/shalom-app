@@ -133,7 +133,12 @@
 </div>
 
 @if (showForm()) {
-  <app-rp-modal [title]="modalTitle()" [wide]="true" (closed)="cancelForm()">
+  <app-rp-modal
+    [title]="modalTitle()"
+    [wide]="true"
+    [closeOnOverlay]="!showHijoForm()"
+    (closed)="cancelForm()"
+  >
     <form [formGroup]="internoForm" (ngSubmit)="saveInterno()">
       <div class="rp-form-grid proveedores-form-grid">
         <div class="rp-field">
@@ -276,48 +281,51 @@
         @if (hijosSectionOpen()) {
           <div class="proveedores-hijos__body">
             <p class="proveedores-hijos__desc">
-              Agregue los hijos del proveedor. Se guardan junto con el registro principal.
+              Registre los hijos del reciclador. Se guardan al confirmar el proveedor.
             </p>
 
             @if (hijosArray.length === 0) {
-              <p class="proveedores-hijos__empty">No hay hijos agregados.</p>
+              <p class="proveedores-hijos__empty">No hay hijos registrados.</p>
+            } @else {
+              <ul class="proveedores-hijos-list">
+                @for (hijoGroup of hijosArray.controls; track $index; let i = $index) {
+                  <li class="proveedores-hijos-list__item">
+                    <div class="proveedores-hijos-list__info">
+                      <span class="proveedores-hijos-list__nombre">
+                        {{ getHijoAt(i).nombre }}
+                      </span>
+                      <span class="proveedores-hijos-list__meta">
+                        Doc. {{ getHijoAt(i).documento }}
+                        · {{ getHijoSexoLabel(getHijoAt(i).sexo) }}
+                        @if (getHijoAt(i).fechaNacimiento) {
+                          · {{ getHijoAt(i).fechaNacimiento }}
+                        }
+                      </span>
+                    </div>
+                    <div class="proveedores-hijos-list__actions">
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--icon"
+                        (click)="openHijoModal(i)"
+                        title="Editar hijo"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--icon danger"
+                        (click)="removeHijoRow(i)"
+                        title="Quitar hijo"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
             }
 
-            @for (hijoGroup of hijosArray.controls; track $index; let i = $index) {
-              <div class="proveedores-hijo-row" [formGroup]="hijoGroup">
-                <div class="rp-field">
-                  <label [for]="'hijo-doc-' + i">Documento</label>
-                  <input [id]="'hijo-doc-' + i" type="text" formControlName="documento" maxlength="30" />
-                </div>
-                <div class="rp-field">
-                  <label [for]="'hijo-nombre-' + i">Nombre</label>
-                  <input [id]="'hijo-nombre-' + i" type="text" formControlName="nombre" maxlength="150" />
-                </div>
-                <div class="rp-field">
-                  <label [for]="'hijo-sexo-' + i">Sexo</label>
-                  <select [id]="'hijo-sexo-' + i" formControlName="sexo">
-                    <option value="">—</option>
-                    @for (item of sexos; track item.value) {
-                      <option [value]="item.value">{{ item.label }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="rp-field">
-                  <label [for]="'hijo-fn-' + i">Fecha nacimiento</label>
-                  <input [id]="'hijo-fn-' + i" type="date" formControlName="fechaNacimiento" />
-                </div>
-                <button
-                  type="button"
-                  class="rp-btn rp-btn--icon danger proveedores-hijo-row__remove"
-                  (click)="removeHijoRow(i)"
-                  title="Quitar hijo"
-                >
-                  ✕
-                </button>
-              </div>
-            }
-
-            <button type="button" class="rp-btn rp-btn--secondary proveedores-hijos__add" (click)="addHijoRow()">
+            <button type="button" class="rp-btn rp-btn--secondary proveedores-hijos__add" (click)="openHijoModal()">
               + Agregar hijo
             </button>
           </div>
@@ -330,6 +338,62 @@
         </button>
         <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
           {{ saving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </app-rp-modal>
+}
+
+@if (showHijoForm()) {
+  <app-rp-modal
+    [title]="hijoModalTitle()"
+    [stacked]="true"
+    (closed)="cancelHijoModal()"
+  >
+    <form [formGroup]="hijoForm" (ngSubmit)="saveHijoModal()">
+      @if (hijoFormError()) {
+        <div class="rp-alert rp-alert--error proveedores-hijo-modal__error">{{ hijoFormError() }}</div>
+      }
+
+      <div class="rp-form-grid">
+        <div class="rp-field">
+          <label for="hijoDocumento">Número documento</label>
+          <input id="hijoDocumento" type="text" formControlName="documento" maxlength="30" />
+          @if (hijoForm.controls.documento.touched && hijoForm.controls.documento.invalid) {
+            <span class="rp-hint err">El documento es obligatorio</span>
+          }
+        </div>
+
+        <div class="rp-field">
+          <label for="hijoNombre">Nombre completo</label>
+          <input id="hijoNombre" type="text" formControlName="nombre" maxlength="150" />
+          @if (hijoForm.controls.nombre.touched && hijoForm.controls.nombre.invalid) {
+            <span class="rp-hint err">El nombre es obligatorio</span>
+          }
+        </div>
+
+        <div class="rp-field">
+          <label for="hijoSexo">Sexo</label>
+          <select id="hijoSexo" formControlName="sexo">
+            <option value="">— Seleccionar —</option>
+            @for (item of sexos; track item.value) {
+              <option [value]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="hijoFechaNacimiento">Fecha nacimiento</label>
+          <input id="hijoFechaNacimiento" type="date" formControlName="fechaNacimiento" />
+        </div>
+      </div>
+
+      <div class="rp-form-actions proveedores-modal-actions">
+        <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelHijoModal()">
+          Cancelar
+        </button>
+        <button type="submit" class="rp-btn rp-btn--primary">
+          {{ editingHijoIndex() !== null ? 'Actualizar' : 'Agregar' }}
         </button>
       </div>
     </form>

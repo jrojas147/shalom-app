@@ -4,7 +4,11 @@ import { Component, input, output } from '@angular/core';
   selector: 'app-rp-modal',
   standalone: true,
   template: `
-    <div class="rp-modal-overlay" (click)="onOverlayClick()">
+    <div
+      class="rp-modal-overlay"
+      [class.rp-modal-overlay--stacked]="stacked()"
+      (click)="onOverlayClick()"
+    >
       <div
         class="rp-modal-panel"
         [class.rp-modal-panel--wide]="wide()"
@@ -29,6 +33,7 @@ import { Component, input, output } from '@angular/core';
 export class RpModalComponent {
   title = input.required<string>();
   wide = input(false);
+  stacked = input(false);
   closeOnOverlay = input(true);
 
   closed = output<void>();
