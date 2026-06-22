@@ -31,122 +31,228 @@
         <h2>{{ tabConfig().label }}</h2>
         <p class="proveedores-panel__desc">{{ tabConfig().descripcion }}</p>
       </div>
-      <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
-        + Nuevo {{ tabConfig().label.toLowerCase() }}
-      </button>
+      @if (esTabIntegrada()) {
+        <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+          + Nuevo proveedor
+        </button>
+      }
     </div>
 
-    <div class="proveedores__search-row">
-      <input
-        type="search"
-        class="proveedores__search"
-        placeholder="Buscar en {{ tabConfig().label.toLowerCase() }}..."
-        [value]="busqueda()"
-        (input)="onBusquedaChange($any($event.target).value)"
-      />
-    </div>
+    @if (esTabIntegrada()) {
+      <div class="proveedores__search-row">
+        <input
+          type="search"
+          class="proveedores__search"
+          placeholder="Buscar por nombre, documento, teléfono o email..."
+          [value]="busqueda()"
+          (input)="onBusquedaChange($any($event.target).value)"
+        />
+      </div>
 
-    @if (loading()) {
-      <p class="rp-loading">Cargando...</p>
+      @if (loading()) {
+        <p class="rp-loading">Cargando...</p>
+      } @else {
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Documento</th>
+              <th>Teléfono</th>
+              <th>Email</th>
+              <th>Hijos</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (proveedor of internosFiltrados(); track proveedor.id) {
+              <tr>
+                <td>
+                  <span class="row-icon">👤</span>
+                  <span class="cell-primary">{{ proveedor.nombre }}</span>
+                </td>
+                <td class="cell-secondary cell-mono">{{ formatDocumento(proveedor) }}</td>
+                <td class="cell-secondary">{{ proveedor.telefono ?? '—' }}</td>
+                <td class="cell-secondary">{{ proveedor.email ?? '—' }}</td>
+                <td class="cell-secondary">
+                  @if (proveedor.hijos.length > 0) {
+                    <span class="rp-badge rp-badge--neutral">{{ proveedor.hijos.length }}</span>
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>
+                  <span
+                    class="rp-badge"
+                    [class.rp-badge--success]="proveedor.activo"
+                    [class.rp-badge--danger]="!proveedor.activo"
+                  >
+                    {{ proveedor.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon"
+                    (click)="openEdit(proveedor)"
+                    title="Editar"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon danger"
+                    (click)="deleteInterno(proveedor)"
+                    title="Eliminar"
+                  >
+                    🗑
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="rp-empty">
+                  {{
+                    busqueda()
+                      ? 'No hay proveedores que coincidan con la búsqueda'
+                      : 'No hay proveedores internos registrados'
+                  }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
     } @else {
-      <table class="rp-table">
-        <thead>
-          <tr>
-            <th>{{ tabConfig().nombreLabel }}</th>
-            <th>{{ tabConfig().documentoLabel }}</th>
-            <th>Teléfono</th>
-            <th>Email</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (proveedor of proveedoresFiltrados(); track proveedor.id) {
-            <tr>
-              <td>
-                <span class="row-icon">{{ tabActiva() === 'EMPRESA' ? '🏭' : '👤' }}</span>
-                <span class="cell-primary">{{ proveedor.nombre }}</span>
-              </td>
-              <td class="cell-secondary cell-mono">{{ proveedor.documento ?? '—' }}</td>
-              <td class="cell-secondary">{{ proveedor.telefono ?? '—' }}</td>
-              <td class="cell-secondary">{{ proveedor.email ?? '—' }}</td>
-              <td>
-                <span
-                  class="rp-badge"
-                  [class.rp-badge--success]="proveedor.activo"
-                  [class.rp-badge--danger]="!proveedor.activo"
-                >
-                  {{ proveedor.activo ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td class="cell-actions">
-                <button
-                  type="button"
-                  class="rp-btn rp-btn--icon"
-                  (click)="openEdit(proveedor)"
-                  title="Editar"
-                >
-                  ✎
-                </button>
-                <button
-                  type="button"
-                  class="rp-btn rp-btn--icon danger"
-                  (click)="deleteProveedor(proveedor)"
-                  title="Eliminar"
-                >
-                  🗑
-                </button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="6" class="rp-empty">
-                {{
-                  busqueda()
-                    ? 'No hay proveedores que coincidan con la búsqueda'
-                    : 'No hay proveedores ' + tabConfig().label.toLowerCase() + ' registrados'
-                }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+      <div class="proveedores-placeholder">
+        <p>La integración de <strong>{{ tabConfig().label.toLowerCase() }}</strong> estará disponible próximamente.</p>
+        <p class="proveedores-placeholder__hint">Por ahora puede gestionar proveedores internos desde la pestaña correspondiente.</p>
+      </div>
     }
   </section>
 </div>
 
 @if (showForm()) {
-  <app-rp-modal [title]="modalTitle()" (closed)="cancelForm()">
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <div class="rp-form-grid">
+  <app-rp-modal [title]="modalTitle()" [wide]="true" (closed)="cancelForm()">
+    <form [formGroup]="internoForm" (ngSubmit)="saveInterno()">
+      <div class="rp-form-grid proveedores-form-grid">
         <div class="rp-field">
-          <label for="nombre">{{ tabConfig().nombreLabel }}</label>
-          <input
-            id="nombre"
-            type="text"
-            formControlName="nombre"
-            [placeholder]="tabConfig().nombrePlaceholder"
-            maxlength="150"
-          />
-          @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+          <label for="nombre">Nombre completo</label>
+          <input id="nombre" type="text" formControlName="nombre" maxlength="150" />
+          @if (internoForm.controls.nombre.touched && internoForm.controls.nombre.invalid) {
             <span class="rp-hint err">El nombre es obligatorio</span>
           }
         </div>
+
         <div class="rp-field">
-          <label for="documento">{{ tabConfig().documentoLabel }}</label>
-          <input id="documento" type="text" formControlName="documento" maxlength="20" />
+          <label for="tipoDocumento">Tipo documento</label>
+          <select id="tipoDocumento" formControlName="tipoDocumento">
+            @for (tipo of tiposDocumento; track tipo.value) {
+              <option [value]="tipo.value">{{ tipo.label }}</option>
+            }
+          </select>
         </div>
+
+        <div class="rp-field">
+          <label for="documento">Número documento</label>
+          <input id="documento" type="text" formControlName="documento" maxlength="30" />
+          @if (internoForm.controls.documento.touched && internoForm.controls.documento.invalid) {
+            <span class="rp-hint err">El documento es obligatorio</span>
+          }
+        </div>
+
+        <div class="rp-field">
+          <label for="fechaNacimiento">Fecha nacimiento</label>
+          <input id="fechaNacimiento" type="date" formControlName="fechaNacimiento" />
+        </div>
+
+        <div class="rp-field">
+          <label for="sexo">Sexo</label>
+          <select id="sexo" formControlName="sexo">
+            <option value="">— Seleccionar —</option>
+            @for (item of sexos; track item.value) {
+              <option [value]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="rh">RH</label>
+          <select id="rh" formControlName="rh">
+            <option value="">— Seleccionar —</option>
+            @for (item of rhValues; track item.value) {
+              <option [value]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="email">Correo electrónico</label>
+          <input id="email" type="email" formControlName="email" maxlength="150" />
+          @if (internoForm.controls.email.touched && internoForm.controls.email.invalid) {
+            <span class="rp-hint err">Ingrese un email válido</span>
+          }
+        </div>
+
         <div class="rp-field">
           <label for="telefono">Teléfono</label>
           <input id="telefono" type="text" formControlName="telefono" maxlength="30" />
         </div>
+
         <div class="rp-field">
-          <label for="email">Email</label>
-          <input id="email" type="email" formControlName="email" maxlength="150" />
-          @if (form.controls.email.touched && form.controls.email.invalid) {
-            <span class="rp-hint err">Ingrese un email válido</span>
-          }
+          <label for="fechaIngreso">Fecha ingreso</label>
+          <input id="fechaIngreso" type="date" formControlName="fechaIngreso" />
         </div>
+
+        <div class="rp-field">
+          <label for="arl">ARL</label>
+          <input id="arl" type="text" formControlName="arl" maxlength="100" />
+        </div>
+
+        <div class="rp-field">
+          <label for="eps">EPS</label>
+          <input id="eps" type="text" formControlName="eps" maxlength="100" />
+        </div>
+
+        <div class="rp-field rp-field--full">
+          <label for="direccion">Dirección</label>
+          <input id="direccion" type="text" formControlName="direccion" maxlength="255" />
+        </div>
+
+        <div class="rp-field">
+          <label for="departamentoId">Departamento</label>
+          <select
+            id="departamentoId"
+            formControlName="departamentoId"
+            (change)="onDepartamentoChange()"
+          >
+            <option [ngValue]="null">— Seleccionar —</option>
+            @for (dep of departamentos(); track dep.id) {
+              <option [ngValue]="dep.id">{{ dep.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="municipioId">Municipio</label>
+          <select id="municipioId" formControlName="municipioId">
+            <option [ngValue]="null">— Seleccionar —</option>
+            @for (mun of municipios(); track mun.id) {
+              <option [ngValue]="mun.id">{{ mun.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="nombreContacto">Nombre contacto</label>
+          <input id="nombreContacto" type="text" formControlName="nombreContacto" maxlength="150" />
+        </div>
+
+        <div class="rp-field">
+          <label for="telefonoContacto">Teléfono contacto</label>
+          <input id="telefonoContacto" type="text" formControlName="telefonoContacto" maxlength="30" />
+        </div>
+
         <div class="rp-field checkbox">
           <label>
             <input type="checkbox" formControlName="activo" />
@@ -154,6 +260,70 @@
           </label>
         </div>
       </div>
+
+      <section class="proveedores-hijos">
+        <button
+          type="button"
+          class="proveedores-hijos__toggle"
+          (click)="toggleHijosSection()"
+          [attr.aria-expanded]="hijosSectionOpen()"
+        >
+          <span>Hijos registrados (opcional)</span>
+          <span class="proveedores-hijos__count">{{ hijosArray.length }}</span>
+          <span class="proveedores-hijos__chevron" [class.open]="hijosSectionOpen()">▾</span>
+        </button>
+
+        @if (hijosSectionOpen()) {
+          <div class="proveedores-hijos__body">
+            <p class="proveedores-hijos__desc">
+              Agregue los hijos del proveedor. Se guardan junto con el registro principal.
+            </p>
+
+            @if (hijosArray.length === 0) {
+              <p class="proveedores-hijos__empty">No hay hijos agregados.</p>
+            }
+
+            @for (hijoGroup of hijosArray.controls; track $index; let i = $index) {
+              <div class="proveedores-hijo-row" [formGroup]="hijoGroup">
+                <div class="rp-field">
+                  <label [for]="'hijo-doc-' + i">Documento</label>
+                  <input [id]="'hijo-doc-' + i" type="text" formControlName="documento" maxlength="30" />
+                </div>
+                <div class="rp-field">
+                  <label [for]="'hijo-nombre-' + i">Nombre</label>
+                  <input [id]="'hijo-nombre-' + i" type="text" formControlName="nombre" maxlength="150" />
+                </div>
+                <div class="rp-field">
+                  <label [for]="'hijo-sexo-' + i">Sexo</label>
+                  <select [id]="'hijo-sexo-' + i" formControlName="sexo">
+                    <option value="">—</option>
+                    @for (item of sexos; track item.value) {
+                      <option [value]="item.value">{{ item.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="rp-field">
+                  <label [for]="'hijo-fn-' + i">Fecha nacimiento</label>
+                  <input [id]="'hijo-fn-' + i" type="date" formControlName="fechaNacimiento" />
+                </div>
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon danger proveedores-hijo-row__remove"
+                  (click)="removeHijoRow(i)"
+                  title="Quitar hijo"
+                >
+                  ✕
+                </button>
+              </div>
+            }
+
+            <button type="button" class="rp-btn rp-btn--secondary proveedores-hijos__add" (click)="addHijoRow()">
+              + Agregar hijo
+            </button>
+          </div>
+        }
+      </section>
+
       <div class="rp-form-actions proveedores-modal-actions">
         <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
           Cancelar

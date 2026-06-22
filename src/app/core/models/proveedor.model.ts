@@ -1,24 +1,5 @@
 export type TipoProveedor = 'INTERNO' | 'EXTERNO' | 'EMPRESA';
 
-export interface Proveedor {
-  id: number;
-  tipo: TipoProveedor;
-  nombre: string;
-  documento?: string;
-  telefono?: string;
-  email?: string;
-  activo: boolean;
-}
-
-export interface ProveedorRequest {
-  tipo: TipoProveedor;
-  nombre: string;
-  documento?: string;
-  telefono?: string;
-  email?: string;
-  activo?: boolean;
-}
-
 export interface ProveedorTabConfig {
   id: TipoProveedor;
   label: string;
