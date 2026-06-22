@@ -341,7 +341,7 @@
               {{
                 conjuntoForm.controls.departamentoId.value
                   ? 'Seleccione un municipio'
-                  : 'Seleccione primero un departamento'
+                  : 'Seleccione   un departamento'
               }}
             </option>
             @for (muni of municipios(); track muni.id) {
@@ -362,7 +362,7 @@
         <div class="rp-field">
           <label for="entidadBancariaId">Banco</label>
           <select id="entidadBancariaId" formControlName="entidadBancariaId">
-            <option [ngValue]="null">— Sin especificar —</option>
+            <option [ngValue]="null">Seleccione entidad bancaria</option>
             @for (entidad of entidadesBancarias(); track entidad.id) {
               <option [ngValue]="entidad.id">{{ entidad.codigo }} — {{ entidad.nombre }}</option>
             }
@@ -375,7 +375,7 @@
         <div class="rp-field">
           <label for="tipoCuenta">Tipo de cuenta</label>
           <select id="tipoCuenta" formControlName="tipoCuenta">
-            <option value="">— Sin especificar —</option>
+            <option value="">Seleccione tipo de cuenta</option>
             @for (tipo of tiposCuenta; track tipo.value) {
               <option [value]="tipo.value">{{ tipo.label }}</option>
             }
@@ -392,9 +392,10 @@
             />
           </div>
         }
-        <div class="rp-field checkbox">
-          <label>
-            <input type="checkbox" formControlName="activo" />
+        <div class="rp-field conjunto-estado-field">
+          <span class="conjunto-estado-field__label">Estado</span>
+          <label class="conjunto-estado-field__control" for="conjuntoActivo">
+            <input id="conjuntoActivo" type="checkbox" formControlName="activo" />
             Activo
           </label>
         </div>
