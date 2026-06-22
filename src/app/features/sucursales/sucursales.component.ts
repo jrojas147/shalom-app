@@ -16,7 +16,9 @@ import {
   TipoCuenta,
 } from '../../core/models/sucursal.model';
 import { Departamento, Municipio } from '../../core/models/ubicacion.model';
+import { EntidadBancaria } from '../../core/models/entidad-bancaria.model';
 import { AdministradoresConjuntoService } from '../../core/services/administradores-conjunto.service';
+import { EntidadesBancariasService } from '../../core/services/entidades-bancarias.service';
 import { SucursalesService } from '../../core/services/sucursales.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
@@ -59,6 +61,7 @@ export class SucursalesComponent implements OnInit {
   private readonly sucursalesService = inject(SucursalesService);
   private readonly administradoresService = inject(AdministradoresConjuntoService);
   private readonly ubicacionesService = inject(UbicacionesService);
+  private readonly entidadesBancariasService = inject(EntidadesBancariasService);
 
   readonly tiposDocumento = TIPOS_DOCUMENTO;
   readonly tiposCuenta = TIPOS_CUENTA;
@@ -75,6 +78,9 @@ export class SucursalesComponent implements OnInit {
   readonly editingId = signal<number | null>(null);
   readonly departamentos = signal<Departamento[]>([]);
   readonly municipios = signal<Municipio[]>([]);
+  readonly entidadesBancarias = signal<EntidadBancaria[]>([]);
+
+  private bancoPendienteEdicion?: string;
 
   readonly administradoresActivos = computed(() =>
     this.administradores().filter((a) => a.activo)
@@ -116,7 +122,7 @@ export class SucursalesComponent implements OnInit {
     departamentoId: [null as number | null, Validators.required],
     municipioId: [null as number | null, Validators.required],
     direccion: ['', Validators.required],
-    banco: [''],
+    entidadBancariaId: [null as number | null],
     numeroCuenta: [''],
     tipoCuenta: ['' as TipoCuenta | ''],
     fechaAlta: [this.todayIso()],
@@ -139,6 +145,7 @@ export class SucursalesComponent implements OnInit {
   ngOnInit(): void {
     this.loadData();
     this.loadDepartamentos();
+    this.loadEntidadesBancarias();
   }
 
   setTab(tab: SucursalesTab): void {
@@ -181,6 +188,19 @@ export class SucursalesComponent implements OnInit {
     });
   }
 
+  loadEntidadesBancarias(): void {
+    this.entidadesBancariasService.getAll().subscribe({
+      next: (entidades) => {
+        this.entidadesBancarias.set(entidades);
+        if (this.bancoPendienteEdicion) {
+          this.patchConjuntoBanco(this.bancoPendienteEdicion);
+          this.bancoPendienteEdicion = undefined;
+        }
+      },
+      error: () => this.entidadesBancarias.set([]),
+    });
+  }
+
   onDepartamentoChange(resetMunicipio = true): void {
     const departamentoId = this.conjuntoForm.controls.departamentoId.value;
     if (resetMunicipio) {
@@ -200,6 +220,7 @@ export class SucursalesComponent implements OnInit {
 
   openCreateConjunto(): void {
     this.editingId.set(null);
+    this.bancoPendienteEdicion = undefined;
     this.municipios.set([]);
     this.conjuntoForm.reset({
       administradorId: this.administradoresActivos()[0]?.id ?? null,
@@ -210,7 +231,7 @@ export class SucursalesComponent implements OnInit {
       departamentoId: null,
       municipioId: null,
       direccion: '',
-      banco: '',
+      entidadBancariaId: null,
       numeroCuenta: '',
       tipoCuenta: '',
       fechaAlta: this.todayIso(),
@@ -223,6 +244,7 @@ export class SucursalesComponent implements OnInit {
 
   openEditConjunto(sucursal: Sucursal): void {
     this.editingId.set(sucursal.id);
+    this.bancoPendienteEdicion = sucursal.banco;
     this.municipios.set([]);
     this.conjuntoForm.reset({
       administradorId: sucursal.administradorId,
@@ -233,7 +255,7 @@ export class SucursalesComponent implements OnInit {
       departamentoId: null,
       municipioId: null,
       direccion: sucursal.direccion,
-      banco: sucursal.banco ?? '',
+      entidadBancariaId: null,
       numeroCuenta: sucursal.numeroCuenta ?? '',
       tipoCuenta: sucursal.tipoCuenta ?? '',
       fechaAlta: sucursal.fechaAlta,
@@ -241,6 +263,7 @@ export class SucursalesComponent implements OnInit {
     });
     this.conjuntoForm.controls.municipioId.disable();
     this.patchConjuntoUbicacion(sucursal.departamento, sucursal.municipio);
+    this.patchConjuntoBanco(sucursal.banco);
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -285,6 +308,7 @@ export class SucursalesComponent implements OnInit {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+    this.bancoPendienteEdicion = undefined;
     this.error.set(null);
   }
 
@@ -297,6 +321,9 @@ export class SucursalesComponent implements OnInit {
     const raw = this.conjuntoForm.getRawValue();
     const departamento = this.departamentos().find((d) => d.id === raw.departamentoId);
     const municipio = this.municipios().find((m) => m.id === raw.municipioId);
+    const entidadBancaria = this.entidadesBancarias().find(
+      (e) => e.id === raw.entidadBancariaId
+    );
     if (!departamento || !municipio) {
       this.error.set('Seleccione un departamento y un municipio válidos.');
       return;
@@ -311,7 +338,7 @@ export class SucursalesComponent implements OnInit {
       departamento: departamento.nombre,
       municipio: municipio.nombre,
       direccion: raw.direccion.trim(),
-      banco: raw.banco.trim() || undefined,
+      banco: entidadBancaria?.nombre,
       numeroCuenta: raw.numeroCuenta.trim() || undefined,
       tipoCuenta: raw.tipoCuenta || undefined,
       fechaAlta: raw.fechaAlta || undefined,
@@ -502,6 +529,27 @@ export class SucursalesComponent implements OnInit {
         this.conjuntoForm.patchValue({ municipioId: municipio?.id ?? null });
       },
     });
+  }
+
+  private patchConjuntoBanco(banco?: string): void {
+    if (!banco?.trim()) {
+      return;
+    }
+
+    const valor = banco.trim();
+    const valorLower = valor.toLowerCase();
+    const entidad = this.entidadesBancarias().find(
+      (e) =>
+        e.nombre.toLowerCase() === valorLower ||
+        e.codigo === valor ||
+        String(e.id) === valor ||
+        e.nombre.toLowerCase().includes(valorLower) ||
+        valorLower.includes(e.nombre.toLowerCase())
+    );
+
+    if (entidad) {
+      this.conjuntoForm.patchValue({ entidadBancariaId: entidad.id });
+    }
   }
 
   private matchesConjuntoSearch(s: Sucursal, q: string): boolean {

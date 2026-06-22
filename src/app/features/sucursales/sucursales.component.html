@@ -360,8 +360,13 @@
           }
         </div>
         <div class="rp-field">
-          <label for="banco">Banco</label>
-          <input id="banco" type="text" formControlName="banco" maxlength="100" />
+          <label for="entidadBancariaId">Banco</label>
+          <select id="entidadBancariaId" formControlName="entidadBancariaId">
+            <option [ngValue]="null">— Sin especificar —</option>
+            @for (entidad of entidadesBancarias(); track entidad.id) {
+              <option [ngValue]="entidad.id">{{ entidad.codigo }} — {{ entidad.nombre }}</option>
+            }
+          </select>
         </div>
         <div class="rp-field">
           <label for="numeroCuenta">Número de cuenta</label>
