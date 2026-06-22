@@ -136,6 +136,7 @@
   <app-rp-modal
     [title]="modalTitle()"
     [wide]="true"
+    [compact]="true"
     [closeOnOverlay]="!showHijoForm()"
     (closed)="cancelForm()"
   >
@@ -219,6 +220,14 @@
           <input id="eps" type="text" formControlName="eps" maxlength="100" />
         </div>
 
+        <div class="rp-field proveedores-estado-field">
+          <label for="recicladorActivo">Estado</label>
+          <label class="proveedores-estado-field__control" for="recicladorActivo">
+            <input id="recicladorActivo" type="checkbox" formControlName="activo" />
+            Activo
+          </label>
+        </div>
+
         <div class="rp-field rp-field--full">
           <label for="direccion">Dirección</label>
           <input id="direccion" type="text" formControlName="direccion" maxlength="255" />
@@ -256,13 +265,6 @@
         <div class="rp-field">
           <label for="telefonoContacto">Teléfono contacto</label>
           <input id="telefonoContacto" type="text" formControlName="telefonoContacto" maxlength="30" />
-        </div>
-
-        <div class="rp-field checkbox">
-          <label>
-            <input type="checkbox" formControlName="activo" />
-            Activo
-          </label>
         </div>
       </div>
 

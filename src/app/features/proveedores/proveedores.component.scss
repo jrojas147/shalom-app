@@ -110,6 +110,20 @@
   grid-column: 1 / -1;
 }
 
+.proveedores-estado-field {
+  &__control {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-height: 2.375rem;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 400;
+    color: var(--rp-text);
+    cursor: pointer;
+  }
+}
+
 .proveedores-hijos {
   margin-top: var(--spacing-md);
   border: 1px solid var(--rp-border);

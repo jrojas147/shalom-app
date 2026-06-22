@@ -32,6 +32,11 @@
       padding: var(--spacing-md) var(--spacing-lg);
     }
   }
+
+  &--wide-compact {
+    max-width: 1024px;
+    max-height: min(72vh, 680px);
+  }
 }
 
 .rp-modal-header {

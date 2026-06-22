@@ -12,6 +12,7 @@ import { Component, input, output } from '@angular/core';
       <div
         class="rp-modal-panel"
         [class.rp-modal-panel--wide]="wide()"
+        [class.rp-modal-panel--wide-compact]="wide() && compact()"
         role="dialog"
         aria-modal="true"
         (click)="$event.stopPropagation()"
@@ -33,6 +34,7 @@ import { Component, input, output } from '@angular/core';
 export class RpModalComponent {
   title = input.required<string>();
   wide = input(false);
+  compact = input(false);
   stacked = input(false);
   closeOnOverlay = input(true);
 
