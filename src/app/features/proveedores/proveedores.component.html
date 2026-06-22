@@ -140,7 +140,7 @@
     [closeOnOverlay]="!showHijoForm()"
     (closed)="cancelForm()"
   >
-    <form [formGroup]="internoForm" (ngSubmit)="saveInterno()">
+    <form class="proveedores-reciclador-form" [formGroup]="internoForm" (ngSubmit)="saveInterno()">
       <div class="rp-form-grid proveedores-form-grid">
         <div class="rp-field">
           <label for="nombre">Nombre completo</label>
