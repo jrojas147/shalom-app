@@ -79,6 +79,7 @@ export class SucursalesComponent implements OnInit {
   readonly departamentos = signal<Departamento[]>([]);
   readonly municipios = signal<Municipio[]>([]);
   readonly entidadesBancarias = signal<EntidadBancaria[]>([]);
+  readonly fechaAltaEdicion = signal<string | null>(null);
 
   private bancoPendienteEdicion?: string;
 
@@ -125,7 +126,6 @@ export class SucursalesComponent implements OnInit {
     entidadBancariaId: [null as number | null],
     numeroCuenta: [''],
     tipoCuenta: ['' as TipoCuenta | ''],
-    fechaAlta: [this.todayIso()],
     activo: [true],
   });
 
@@ -220,6 +220,7 @@ export class SucursalesComponent implements OnInit {
 
   openCreateConjunto(): void {
     this.editingId.set(null);
+    this.fechaAltaEdicion.set(null);
     this.bancoPendienteEdicion = undefined;
     this.municipios.set([]);
     this.conjuntoForm.reset({
@@ -234,7 +235,6 @@ export class SucursalesComponent implements OnInit {
       entidadBancariaId: null,
       numeroCuenta: '',
       tipoCuenta: '',
-      fechaAlta: this.todayIso(),
       activo: true,
     });
     this.conjuntoForm.controls.municipioId.disable();
@@ -244,6 +244,7 @@ export class SucursalesComponent implements OnInit {
 
   openEditConjunto(sucursal: Sucursal): void {
     this.editingId.set(sucursal.id);
+    this.fechaAltaEdicion.set(sucursal.fechaAlta);
     this.bancoPendienteEdicion = sucursal.banco;
     this.municipios.set([]);
     this.conjuntoForm.reset({
@@ -258,7 +259,6 @@ export class SucursalesComponent implements OnInit {
       entidadBancariaId: null,
       numeroCuenta: sucursal.numeroCuenta ?? '',
       tipoCuenta: sucursal.tipoCuenta ?? '',
-      fechaAlta: sucursal.fechaAlta,
       activo: sucursal.activo,
     });
     this.conjuntoForm.controls.municipioId.disable();
@@ -308,6 +308,7 @@ export class SucursalesComponent implements OnInit {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+    this.fechaAltaEdicion.set(null);
     this.bancoPendienteEdicion = undefined;
     this.error.set(null);
   }
@@ -341,7 +342,6 @@ export class SucursalesComponent implements OnInit {
       banco: entidadBancaria?.nombre,
       numeroCuenta: raw.numeroCuenta.trim() || undefined,
       tipoCuenta: raw.tipoCuenta || undefined,
-      fechaAlta: raw.fechaAlta || undefined,
       activo: raw.activo,
     };
 
@@ -504,10 +504,6 @@ export class SucursalesComponent implements OnInit {
 
   administradorNombre(sucursal: Sucursal): string {
     return sucursal.administrador?.nombre ?? '—';
-  }
-
-  private todayIso(): string {
-    return new Date().toISOString().slice(0, 10);
   }
 
   private patchConjuntoUbicacion(departamentoNombre: string, municipioNombre: string): void {

@@ -381,10 +381,17 @@
             }
           </select>
         </div>
-        <div class="rp-field">
-          <label for="fechaAlta">Fecha de alta</label>
-          <input id="fechaAlta" type="date" formControlName="fechaAlta" />
-        </div>
+        @if (editingId()) {
+          <div class="rp-field">
+            <label>Fecha de alta</label>
+            <input
+              type="text"
+              [value]="formatFecha(fechaAltaEdicion() ?? undefined)"
+              readonly
+              tabindex="-1"
+            />
+          </div>
+        }
         <div class="rp-field checkbox">
           <label>
             <input type="checkbox" formControlName="activo" />
