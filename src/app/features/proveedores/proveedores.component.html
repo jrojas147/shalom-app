@@ -33,7 +33,7 @@
       </div>
       @if (esTabIntegrada()) {
         <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
-          + Nuevo proveedor
+          {{ esTabEmpresa() ? '+ Nueva empresa' : '+ Nuevo proveedor' }}
         </button>
       }
     </div>
@@ -43,7 +43,13 @@
         <input
           type="search"
           class="proveedores__search"
-          placeholder="Buscar por nombre, documento, teléfono o email..."
+          [placeholder]="
+            esTabEmpresa()
+              ? 'Buscar por razón social, NIT, contacto o ubicación...'
+              : esTabExterna()
+                ? 'Buscar por nombre, documento, email o contacto...'
+                : 'Buscar por nombre, documento, teléfono o email...'
+          "
           [value]="busqueda()"
           (input)="onBusquedaChange($any($event.target).value)"
         />
@@ -51,7 +57,7 @@
 
       @if (loading()) {
         <p class="rp-loading">Cargando...</p>
-      } @else {
+      } @else if (esTabInterna()) {
         <table class="rp-table">
           <thead>
             <tr>
@@ -122,12 +128,145 @@
             }
           </tbody>
         </table>
+      } @else if (esTabExterna()) {
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Documento</th>
+              <th>Email</th>
+              <th>Contacto</th>
+              <th>Tel. contacto</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (proveedor of externosFiltrados(); track proveedor.id) {
+              <tr>
+                <td>
+                  <span class="row-icon">👤</span>
+                  <span class="cell-primary">{{ proveedor.nombre }}</span>
+                </td>
+                <td class="cell-secondary cell-mono">{{ formatDocumento(proveedor) }}</td>
+                <td class="cell-secondary">{{ proveedor.email ?? '—' }}</td>
+                <td class="cell-secondary">{{ proveedor.nombreContacto ?? '—' }}</td>
+                <td class="cell-secondary">{{ proveedor.telefonoContacto ?? '—' }}</td>
+                <td>
+                  <span
+                    class="rp-badge"
+                    [class.rp-badge--success]="proveedor.activo"
+                    [class.rp-badge--danger]="!proveedor.activo"
+                  >
+                    {{ proveedor.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon"
+                    (click)="openEditExterno(proveedor)"
+                    title="Editar"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon danger"
+                    (click)="deleteExterno(proveedor)"
+                    title="Eliminar"
+                  >
+                    🗑
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="rp-empty">
+                  {{
+                    busqueda()
+                      ? 'No hay proveedores que coincidan con la búsqueda'
+                      : 'No hay proveedores externos registrados'
+                  }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else if (esTabEmpresa()) {
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th>Razón social</th>
+              <th>NIT</th>
+              <th>Contacto</th>
+              <th>Tel. contacto</th>
+              <th>Recicladores</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (empresa of empresasFiltradas(); track empresa.id) {
+              <tr>
+                <td>
+                  <span class="row-icon">🏢</span>
+                  <span class="cell-primary">{{ empresa.razonSocial }}</span>
+                </td>
+                <td class="cell-secondary cell-mono">{{ empresa.nit }}</td>
+                <td class="cell-secondary">{{ empresa.personaContacto ?? '—' }}</td>
+                <td class="cell-secondary">{{ empresa.telefonoContacto ?? '—' }}</td>
+                <td class="cell-secondary">
+                  @if (empresa.recicladoresAsociados.length > 0) {
+                    <span class="rp-badge rp-badge--neutral">
+                      {{ empresa.recicladoresAsociados.length }}
+                    </span>
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>
+                  <span
+                    class="rp-badge"
+                    [class.rp-badge--success]="empresa.activo"
+                    [class.rp-badge--danger]="!empresa.activo"
+                  >
+                    {{ empresa.activo ? 'Activa' : 'Inactiva' }}
+                  </span>
+                </td>
+                <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon"
+                    (click)="openEditEmpresa(empresa)"
+                    title="Editar"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon danger"
+                    (click)="deleteEmpresa(empresa)"
+                    title="Eliminar"
+                  >
+                    🗑
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="rp-empty">
+                  {{
+                    busqueda()
+                      ? 'No hay empresas que coincidan con la búsqueda'
+                      : 'No hay empresas proveedoras registradas'
+                  }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       }
-    } @else {
-      <div class="proveedores-placeholder">
-        <p>La integración de <strong>{{ tabConfig().label.toLowerCase() }}</strong> estará disponible próximamente.</p>
-        <p class="proveedores-placeholder__hint">Por ahora puede gestionar proveedores internos desde la pestaña correspondiente.</p>
-      </div>
     }
   </section>
 </div>
@@ -137,9 +276,233 @@
     [title]="modalTitle()"
     [wide]="true"
     [compact]="true"
-    [closeOnOverlay]="!showHijoForm()"
+    [closeOnOverlay]="!showHijoForm() && !showRecicladoresModal()"
     (closed)="cancelForm()"
   >
+    @if (esTabEmpresa()) {
+      <form class="proveedores-reciclador-form" [formGroup]="empresaForm" (ngSubmit)="saveEmpresa()">
+        <div class="rp-form-grid proveedores-form-grid">
+          <div class="rp-field">
+            <label for="empNit">NIT</label>
+            <input id="empNit" type="text" formControlName="nit" maxlength="20" />
+            @if (empresaForm.controls.nit.touched && empresaForm.controls.nit.invalid) {
+              <span class="rp-hint err">El NIT es obligatorio</span>
+            }
+          </div>
+
+          <div class="rp-field">
+            <label for="empRazonSocial">Razón social</label>
+            <input id="empRazonSocial" type="text" formControlName="razonSocial" maxlength="200" />
+            @if (empresaForm.controls.razonSocial.touched && empresaForm.controls.razonSocial.invalid) {
+              <span class="rp-hint err">La razón social es obligatoria</span>
+            }
+          </div>
+
+          <div class="rp-field">
+            <label for="empPersonaContacto">Persona de contacto</label>
+            <input id="empPersonaContacto" type="text" formControlName="personaContacto" maxlength="150" />
+          </div>
+
+          <div class="rp-field">
+            <label for="empTelefonoContacto">Teléfono contacto</label>
+            <input id="empTelefonoContacto" type="text" formControlName="telefonoContacto" maxlength="30" />
+          </div>
+
+          <div class="rp-field">
+            <label for="empDepartamentoId">Departamento</label>
+            <select
+              id="empDepartamentoId"
+              formControlName="departamentoId"
+              (change)="onEmpresaDepartamentoChange()"
+            >
+              <option [ngValue]="null">Seleccione departamento</option>
+              @for (dep of departamentos(); track dep.id) {
+                <option [ngValue]="dep.id">{{ dep.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field">
+            <label for="empMunicipioId">Municipio</label>
+            <select id="empMunicipioId" formControlName="municipioId">
+              <option [ngValue]="null">Seleccione municipio</option>
+              @for (mun of empresaMunicipios(); track mun.id) {
+                <option [ngValue]="mun.id">{{ mun.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field rp-field--full">
+            <label for="empDireccion">Dirección</label>
+            <input id="empDireccion" type="text" formControlName="direccion" maxlength="255" />
+          </div>
+
+          <div class="rp-field">
+            <label for="empTipoPago">Tipo de pago</label>
+            <select id="empTipoPago" formControlName="tipoPago">
+              <option value="">Seleccione tipo de pago</option>
+              @for (tipo of tiposPago; track tipo.value) {
+                <option [value]="tipo.value">{{ tipo.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field">
+            <label for="empEntidadBancariaId">Entidad bancaria</label>
+            <select id="empEntidadBancariaId" formControlName="entidadBancariaId">
+              <option [ngValue]="null">Seleccione entidad bancaria</option>
+              @for (entidad of entidadesBancarias(); track entidad.id) {
+                <option [ngValue]="entidad.id">{{ entidad.codigo }} — {{ entidad.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field">
+            <label for="empTipoCuenta">Tipo de cuenta</label>
+            <select id="empTipoCuenta" formControlName="tipoCuenta">
+              <option value="">Seleccione tipo de cuenta</option>
+              @for (tipo of tiposCuenta; track tipo.value) {
+                <option [value]="tipo.value">{{ tipo.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field">
+            <label for="empNumeroCuenta">Número de cuenta</label>
+            <input id="empNumeroCuenta" type="text" formControlName="numeroCuenta" maxlength="50" />
+          </div>
+
+          <div class="rp-field proveedores-estado-field">
+            <label for="empresaActivo">Estado</label>
+            <label class="proveedores-estado-field__control" for="empresaActivo">
+              <input id="empresaActivo" type="checkbox" formControlName="activo" />
+              Activa
+            </label>
+          </div>
+        </div>
+
+        <section class="proveedores-hijos">
+          <div class="proveedores-hijos__header">
+            <div>
+              <span class="proveedores-hijos__header-title">Recicladores asociados</span>
+              <span class="proveedores-hijos__count">{{ selectedRecicladorIds().length }}</span>
+            </div>
+            <button
+              type="button"
+              class="rp-btn rp-btn--secondary proveedores-hijos__manage"
+              (click)="openRecicladoresModal()"
+            >
+              Gestionar recicladores
+            </button>
+          </div>
+
+          @if (recicladoresSeleccionados().length === 0) {
+            <p class="proveedores-hijos__empty proveedores-hijos__empty--inline">
+              No hay recicladores asociados. Use el botón para seleccionarlos.
+            </p>
+          } @else {
+            <ul class="proveedores-hijos-list proveedores-hijos-list--compact">
+              @for (reciclador of recicladoresSeleccionados(); track reciclador.id) {
+                <li class="proveedores-hijos-list__item">
+                  <div class="proveedores-hijos-list__info">
+                    <span class="proveedores-hijos-list__nombre">{{ reciclador.nombre }}</span>
+                    <span class="proveedores-hijos-list__meta">
+                      {{ reciclador.tipoDocumento }} {{ reciclador.documento }}
+                      @if (reciclador.telefono) {
+                        · {{ reciclador.telefono }}
+                      }
+                    </span>
+                  </div>
+                  <div class="proveedores-hijos-list__actions">
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon danger"
+                      (click)="removeReciclador(reciclador.id)"
+                      title="Quitar reciclador"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <div class="rp-form-actions proveedores-modal-actions">
+          <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
+            Cancelar
+          </button>
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    } @else if (esTabExterna()) {
+      <form class="proveedores-reciclador-form" [formGroup]="externoForm" (ngSubmit)="saveExterno()">
+        <div class="rp-form-grid proveedores-form-grid">
+          <div class="rp-field">
+            <label for="extNombre">Nombre completo</label>
+            <input id="extNombre" type="text" formControlName="nombre" maxlength="150" />
+            @if (externoForm.controls.nombre.touched && externoForm.controls.nombre.invalid) {
+              <span class="rp-hint err">El nombre es obligatorio</span>
+            }
+          </div>
+
+          <div class="rp-field">
+            <label for="extTipoDocumento">Tipo documento</label>
+            <select id="extTipoDocumento" formControlName="tipoDocumento">
+              @for (tipo of tiposDocumento; track tipo.value) {
+                <option [value]="tipo.value">{{ tipo.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field">
+            <label for="extDocumento">Número documento</label>
+            <input id="extDocumento" type="text" formControlName="documento" maxlength="30" />
+            @if (externoForm.controls.documento.touched && externoForm.controls.documento.invalid) {
+              <span class="rp-hint err">El documento es obligatorio</span>
+            }
+          </div>
+
+          <div class="rp-field">
+            <label for="extEmail">Correo electrónico</label>
+            <input id="extEmail" type="email" formControlName="email" maxlength="150" />
+            @if (externoForm.controls.email.touched && externoForm.controls.email.invalid) {
+              <span class="rp-hint err">Ingrese un email válido</span>
+            }
+          </div>
+
+          <div class="rp-field">
+            <label for="extNombreContacto">Nombre contacto</label>
+            <input id="extNombreContacto" type="text" formControlName="nombreContacto" maxlength="150" />
+          </div>
+
+          <div class="rp-field">
+            <label for="extTelefonoContacto">Teléfono contacto</label>
+            <input id="extTelefonoContacto" type="text" formControlName="telefonoContacto" maxlength="30" />
+          </div>
+
+          <div class="rp-field proveedores-estado-field">
+            <label for="externoActivo">Estado</label>
+            <label class="proveedores-estado-field__control" for="externoActivo">
+              <input id="externoActivo" type="checkbox" formControlName="activo" />
+              Activo
+            </label>
+          </div>
+        </div>
+
+        <div class="rp-form-actions proveedores-modal-actions">
+          <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
+            Cancelar
+          </button>
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    } @else {
     <form class="proveedores-reciclador-form" [formGroup]="internoForm" (ngSubmit)="saveInterno()">
       <div class="rp-form-grid proveedores-form-grid">
         <div class="rp-field">
@@ -343,6 +706,7 @@
         </button>
       </div>
     </form>
+    }
   </app-rp-modal>
 }
 
@@ -399,5 +763,53 @@
         </button>
       </div>
     </form>
+  </app-rp-modal>
+}
+
+@if (showRecicladoresModal()) {
+  <app-rp-modal
+    title="Recicladores asociados"
+    [stacked]="true"
+    (closed)="closeRecicladoresModal()"
+  >
+    <p class="proveedores-hijos__desc">
+      Seleccione los recicladores internos vinculados a esta empresa.
+    </p>
+
+    @if (internosActivos().length === 0) {
+      <p class="proveedores-hijos__empty">No hay recicladores internos activos disponibles.</p>
+    } @else {
+      <ul class="proveedores-hijos-list">
+        @for (reciclador of internosActivos(); track reciclador.id) {
+          <li class="proveedores-hijos-list__item">
+            <label class="proveedores-reciclador-check">
+              <input
+                type="checkbox"
+                [checked]="isRecicladorSelected(reciclador.id)"
+                (change)="toggleReciclador(reciclador.id)"
+              />
+              <span class="proveedores-hijos-list__info">
+                <span class="proveedores-hijos-list__nombre">{{ reciclador.nombre }}</span>
+                <span class="proveedores-hijos-list__meta">
+                  {{ reciclador.tipoDocumento }} {{ reciclador.documento }}
+                  @if (reciclador.telefono) {
+                    · Tel. {{ reciclador.telefono }}
+                  }
+                  @if (reciclador.email) {
+                    · {{ reciclador.email }}
+                  }
+                </span>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="rp-form-actions proveedores-modal-actions">
+      <button type="button" class="rp-btn rp-btn--primary" (click)="closeRecicladoresModal()">
+        Listo ({{ selectedRecicladorIds().length }} seleccionados)
+      </button>
+    </div>
   </app-rp-modal>
 }

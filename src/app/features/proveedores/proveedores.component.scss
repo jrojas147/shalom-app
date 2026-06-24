@@ -251,3 +251,47 @@
 .proveedores-hijo-modal__error {
   margin-bottom: var(--spacing-md);
 }
+
+.proveedores-reciclador-check {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  margin: 0;
+  cursor: pointer;
+
+  input {
+    flex-shrink: 0;
+  }
+}
+
+.proveedores-hijos__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: 0.6875rem 1rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface-muted);
+}
+
+.proveedores-hijos__header-title {
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--rp-text);
+}
+
+.proveedores-hijos__manage {
+  flex-shrink: 0;
+}
+
+.proveedores-hijos__empty--inline {
+  margin: var(--spacing-sm) 0 0;
+  padding: 0 0.25rem;
+}
+
+.proveedores-hijos-list--compact {
+  margin-top: var(--spacing-sm);
+}
