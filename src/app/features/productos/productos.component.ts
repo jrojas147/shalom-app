@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
-  CATEGORIAS_PRODUCTO,
   categoriaProductoLabel,
   Producto,
   ProductoRequest,
 } from '../../core/models/producto.model';
+import { CategoriaProductoItem } from '../../core/models/categoria-producto.model';
+import { CategoriasProductoService } from '../../core/services/categorias-producto.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -20,9 +21,11 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 export class ProductosComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
+  private readonly categoriasProductoService = inject(CategoriasProductoService);
 
-  readonly categorias = CATEGORIAS_PRODUCTO;
   readonly categoriaProductoLabel = categoriaProductoLabel;
+
+  readonly categoriasProducto = signal<CategoriaProductoItem[]>([]);
 
   readonly productos = signal<Producto[]>([]);
   readonly busqueda = signal('');
@@ -58,6 +61,7 @@ export class ProductosComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProductos();
+    this.loadCategoriasProducto();
   }
 
   onBusquedaChange(value: string): void {
@@ -175,6 +179,13 @@ export class ProductosComponent implements OnInit {
         this.loading.set(false);
         this.error.set(this.extractErrorMessage(err));
       },
+    });
+  }
+
+  private loadCategoriasProducto(): void {
+    this.categoriasProductoService.getAll(true).subscribe({
+      next: (data) => this.categoriasProducto.set(data),
+      error: () => this.categoriasProducto.set([]),
     });
   }
 

@@ -142,8 +142,8 @@
           <label for="categoriaProducto">Categoría</label>
           <select id="categoriaProducto" formControlName="categoriaProducto">
             <option value="">Sin categoría</option>
-            @for (cat of categorias; track cat.value) {
-              <option [value]="cat.value">{{ cat.label }}</option>
+            @for (cat of categoriasProducto(); track cat.id) {
+              <option [value]="cat.nombre">{{ cat.nombre }}</option>
             }
           </select>
         </div>
