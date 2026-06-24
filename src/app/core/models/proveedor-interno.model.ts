@@ -20,6 +20,16 @@ export const RH_VALUES: { value: Rh; label: string }[] = [
   { value: 'O-', label: 'O-' },
 ];
 
+export interface ProveedorInternoSucursal {
+  id: number;
+  sucursalId: number;
+  nombre: string;
+  nit: string;
+  municipio?: string;
+  activo: boolean;
+  fechaInicio?: string;
+}
+
 export interface ProveedorInternoHijo {
   id?: number;
   recicladorId?: number;
@@ -50,6 +60,7 @@ export interface ProveedorInterno {
   telefonoContacto?: string;
   activo: boolean;
   hijos: ProveedorInternoHijo[];
+  sucursalesAsociadas: ProveedorInternoSucursal[];
 }
 
 export interface ProveedorInternoHijoRequest {
@@ -78,4 +89,5 @@ export interface ProveedorInternoRequest {
   telefonoContacto?: string;
   activo?: boolean;
   hijos?: ProveedorInternoHijoRequest[];
+  sucursalIds?: number[];
 }

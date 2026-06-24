@@ -37,8 +37,10 @@ import { EntidadesBancariasService } from '../../core/services/entidades-bancari
 import { ProveedoresEmpresasService } from '../../core/services/proveedores-empresas.service';
 import { ProveedoresExternosService } from '../../core/services/proveedores-externos.service';
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
+import { SucursalesService } from '../../core/services/sucursales.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { EntidadBancaria } from '../../core/models/entidad-bancaria.model';
+import { Sucursal } from '../../core/models/sucursal.model';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 @Component({
@@ -55,6 +57,7 @@ export class ProveedoresComponent implements OnInit {
   private readonly proveedoresEmpresasService = inject(ProveedoresEmpresasService);
   private readonly ubicacionesService = inject(UbicacionesService);
   private readonly entidadesBancariasService = inject(EntidadesBancariasService);
+  private readonly sucursalesService = inject(SucursalesService);
 
   readonly tabs = PROVEEDOR_TABS;
   readonly tiposDocumento = TIPOS_DOCUMENTO;
@@ -67,7 +70,9 @@ export class ProveedoresComponent implements OnInit {
   readonly externos = signal<ProveedorExterno[]>([]);
   readonly empresas = signal<ProveedorEmpresa[]>([]);
   readonly entidadesBancarias = signal<EntidadBancaria[]>([]);
+  readonly sucursales = signal<Sucursal[]>([]);
   readonly selectedRecicladorIds = signal<number[]>([]);
+  readonly selectedSucursalIds = signal<number[]>([]);
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
   readonly busqueda = signal('');
   readonly loading = signal(false);
@@ -76,6 +81,7 @@ export class ProveedoresComponent implements OnInit {
   readonly showForm = signal(false);
   readonly showHijoForm = signal(false);
   readonly showRecicladoresModal = signal(false);
+  readonly showSucursalesModal = signal(false);
   readonly editingId = signal<number | null>(null);
   readonly editingHijoIndex = signal<number | null>(null);
   readonly hijoFormError = signal<string | null>(null);
@@ -96,6 +102,13 @@ export class ProveedoresComponent implements OnInit {
   );
 
   readonly internosActivos = computed(() => this.internos().filter((p) => p.activo));
+
+  readonly sucursalesActivas = computed(() => this.sucursales().filter((s) => s.activo));
+
+  readonly sucursalesSeleccionadas = computed(() => {
+    const ids = new Set(this.selectedSucursalIds());
+    return this.sucursales().filter((s) => ids.has(s.id));
+  });
 
   readonly recicladoresSeleccionados = computed(() => {
     const ids = new Set(this.selectedRecicladorIds());
@@ -220,6 +233,7 @@ export class ProveedoresComponent implements OnInit {
     this.loadInternos();
     this.loadDepartamentos();
     this.loadEntidadesBancarias();
+    this.loadSucursales();
     this.empresaForm.controls.municipioId.disable();
   }
 
@@ -282,6 +296,13 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
+  loadSucursales(): void {
+    this.sucursalesService.getAll(true).subscribe({
+      next: (data) => this.sucursales.set(data),
+      error: () => this.sucursales.set([]),
+    });
+  }
+
   loadDepartamentos(): void {
     this.ubicacionesService.getDepartamentos().subscribe({
       next: (departamentos) => this.departamentos.set(departamentos),
@@ -332,6 +353,7 @@ export class ProveedoresComponent implements OnInit {
     this.cancelForm();
     if (tab.id === 'INTERNO') {
       this.loadInternos();
+      this.loadSucursales();
     } else if (tab.id === 'EXTERNO') {
       this.loadExternos();
     } else if (tab.id === 'EMPRESA') {
@@ -359,6 +381,33 @@ export class ProveedoresComponent implements OnInit {
 
   closeRecicladoresModal(): void {
     this.showRecicladoresModal.set(false);
+  }
+
+  openSucursalesModal(): void {
+    if (this.sucursales().length === 0) {
+      this.loadSucursales();
+    }
+    this.showSucursalesModal.set(true);
+  }
+
+  closeSucursalesModal(): void {
+    this.showSucursalesModal.set(false);
+  }
+
+  isSucursalSelected(sucursalId: number): boolean {
+    return this.selectedSucursalIds().includes(sucursalId);
+  }
+
+  toggleSucursal(sucursalId: number): void {
+    this.selectedSucursalIds.update((ids) =>
+      ids.includes(sucursalId)
+        ? ids.filter((id) => id !== sucursalId)
+        : [...ids, sucursalId]
+    );
+  }
+
+  removeSucursal(sucursalId: number): void {
+    this.selectedSucursalIds.update((ids) => ids.filter((id) => id !== sucursalId));
   }
 
   isRecicladorSelected(recicladorId: number): boolean {
@@ -486,6 +535,7 @@ export class ProveedoresComponent implements OnInit {
       this.resetExternoForm();
     } else {
       this.resetInternoForm();
+      this.loadSucursales();
     }
     this.showForm.set(true);
     this.error.set(null);
@@ -514,6 +564,9 @@ export class ProveedoresComponent implements OnInit {
 
     proveedor.hijos.forEach((hijo) => this.hijosArray.push(this.createHijoGroup(hijo)));
     this.hijosSectionOpen.set(proveedor.hijos.length > 0);
+    this.selectedSucursalIds.set(
+      (proveedor.sucursalesAsociadas ?? []).map((s) => s.sucursalId)
+    );
     this.patchUbicacion(proveedor.departamento, proveedor.municipio);
     this.showForm.set(true);
     this.error.set(null);
@@ -562,6 +615,7 @@ export class ProveedoresComponent implements OnInit {
   cancelForm(): void {
     this.cancelHijoModal();
     this.closeRecicladoresModal();
+    this.closeSucursalesModal();
     this.showForm.set(false);
     this.editingId.set(null);
     this.hijosSectionOpen.set(false);
@@ -600,6 +654,7 @@ export class ProveedoresComponent implements OnInit {
       telefonoContacto: raw.telefonoContacto.trim() || undefined,
       activo: raw.activo,
       hijos: this.buildHijosRequest(),
+      sucursalIds: this.selectedSucursalIds(),
     };
 
     this.saving.set(true);
@@ -800,6 +855,7 @@ export class ProveedoresComponent implements OnInit {
 
   private resetInternoForm(): void {
     this.hijosArray.clear();
+    this.selectedSucursalIds.set([]);
     this.municipios.set([]);
     this.internoForm.reset({
       nombre: '',

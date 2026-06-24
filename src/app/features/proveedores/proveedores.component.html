@@ -65,6 +65,7 @@
               <th>Documento</th>
               <th>Teléfono</th>
               <th>Email</th>
+              <th>Sucursales</th>
               <th>Hijos</th>
               <th>Estado</th>
               <th></th>
@@ -80,6 +81,15 @@
                 <td class="cell-secondary cell-mono">{{ formatDocumento(proveedor) }}</td>
                 <td class="cell-secondary">{{ proveedor.telefono ?? '—' }}</td>
                 <td class="cell-secondary">{{ proveedor.email ?? '—' }}</td>
+                <td class="cell-secondary">
+                  @if ((proveedor.sucursalesAsociadas ?? []).length > 0) {
+                    <span class="rp-badge rp-badge--neutral">
+                      {{ (proveedor.sucursalesAsociadas ?? []).length }}
+                    </span>
+                  } @else {
+                    —
+                  }
+                </td>
                 <td class="cell-secondary">
                   @if (proveedor.hijos.length > 0) {
                     <span class="rp-badge rp-badge--neutral">{{ proveedor.hijos.length }}</span>
@@ -117,7 +127,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="rp-empty">
+                <td colspan="8" class="rp-empty">
                   {{
                     busqueda()
                       ? 'No hay proveedores que coincidan con la búsqueda'
@@ -276,7 +286,7 @@
     [title]="modalTitle()"
     [wide]="true"
     [compact]="true"
-    [closeOnOverlay]="!showHijoForm() && !showRecicladoresModal()"
+    [closeOnOverlay]="!showHijoForm() && !showRecicladoresModal() && !showSucursalesModal()"
     (closed)="cancelForm()"
   >
     @if (esTabEmpresa()) {
@@ -632,6 +642,51 @@
       </div>
 
       <section class="proveedores-hijos">
+        <div class="proveedores-hijos__header">
+          <div>
+            <span class="proveedores-hijos__header-title">Sucursales asociadas</span>
+            <span class="proveedores-hijos__count">{{ selectedSucursalIds().length }}</span>
+          </div>
+          <button
+            type="button"
+            class="rp-btn rp-btn--secondary proveedores-hijos__manage"
+            (click)="openSucursalesModal()"
+          >
+            Gestionar sucursales
+          </button>
+        </div>
+
+        @if (sucursalesSeleccionadas().length === 0) {
+          <p class="proveedores-hijos__empty proveedores-hijos__empty--inline">
+            No hay sucursales asociadas. Use el botón para seleccionarlas.
+          </p>
+        } @else {
+          <ul class="proveedores-hijos-list proveedores-hijos-list--compact">
+            @for (sucursal of sucursalesSeleccionadas(); track sucursal.id) {
+              <li class="proveedores-hijos-list__item">
+                <div class="proveedores-hijos-list__info">
+                  <span class="proveedores-hijos-list__nombre">{{ sucursal.nombre }}</span>
+                  <span class="proveedores-hijos-list__meta">
+                    NIT {{ sucursal.nit }} · {{ sucursal.municipio }}
+                  </span>
+                </div>
+                <div class="proveedores-hijos-list__actions">
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon danger"
+                    (click)="removeSucursal(sucursal.id)"
+                    title="Quitar sucursal"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="proveedores-hijos">
         <button
           type="button"
           class="proveedores-hijos__toggle"
@@ -809,6 +864,51 @@
     <div class="rp-form-actions proveedores-modal-actions">
       <button type="button" class="rp-btn rp-btn--primary" (click)="closeRecicladoresModal()">
         Listo ({{ selectedRecicladorIds().length }} seleccionados)
+      </button>
+    </div>
+  </app-rp-modal>
+}
+
+@if (showSucursalesModal()) {
+  <app-rp-modal
+    title="Sucursales asociadas"
+    [stacked]="true"
+    (closed)="closeSucursalesModal()"
+  >
+    <p class="proveedores-hijos__desc">
+      Seleccione las sucursales vinculadas a este reciclador. Cada sucursal admite máximo 2 recicladores.
+    </p>
+
+    @if (sucursalesActivas().length === 0) {
+      <p class="proveedores-hijos__empty">No hay sucursales activas disponibles.</p>
+    } @else {
+      <ul class="proveedores-hijos-list">
+        @for (sucursal of sucursalesActivas(); track sucursal.id) {
+          <li class="proveedores-hijos-list__item">
+            <label class="proveedores-reciclador-check">
+              <input
+                type="checkbox"
+                [checked]="isSucursalSelected(sucursal.id)"
+                (change)="toggleSucursal(sucursal.id)"
+              />
+              <span class="proveedores-hijos-list__info">
+                <span class="proveedores-hijos-list__nombre">{{ sucursal.nombre }}</span>
+                <span class="proveedores-hijos-list__meta">
+                  NIT {{ sucursal.nit }} · {{ sucursal.municipio }}
+                  @if (sucursal.direccion) {
+                    · {{ sucursal.direccion }}
+                  }
+                </span>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="rp-form-actions proveedores-modal-actions">
+      <button type="button" class="rp-btn rp-btn--primary" (click)="closeSucursalesModal()">
+        Listo ({{ selectedSucursalIds().length }} seleccionadas)
       </button>
     </div>
   </app-rp-modal>
