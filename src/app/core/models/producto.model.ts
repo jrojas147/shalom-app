@@ -1,3 +1,5 @@
+import { API_CORE_URL } from '../config/api.config';
+
 export type CategoriaProducto = 'PLASTICOS' | 'METALES' | 'PAPEL' | 'VIDRIO' | 'CHATARRA';
 
 export interface Producto {
@@ -24,6 +26,10 @@ export interface ProductoRequest {
   precioVenta?: number | null;
   descripcion?: string;
   imagen?: string;
+}
+
+export interface ProductoImagenUploadResponse {
+  url: string;
 }
 
 export interface CategoriaFiltro {
@@ -54,6 +60,17 @@ export function categoriaProductoFiltro(producto: Producto): CategoriaProducto |
   return CATEGORIAS_PRODUCTO.some((c) => c.value === upper)
     ? (upper as CategoriaProducto)
     : null;
+}
+
+export function productoImagenUrl(imagen?: string | null): string | null {
+  if (!imagen) {
+    return null;
+  }
+  if (imagen.startsWith('http://') || imagen.startsWith('https://') || imagen.startsWith('blob:')) {
+    return imagen;
+  }
+  const path = imagen.startsWith('/') ? imagen : `/${imagen}`;
+  return `${API_CORE_URL}${path}`;
 }
 
 export function productoPrecioKg(producto: Producto): number {

@@ -1,15 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   categoriaProductoLabel,
   Producto,
+  productoImagenUrl,
   ProductoRequest,
 } from '../../core/models/producto.model';
 import { CategoriaProductoItem } from '../../core/models/categoria-producto.model';
 import { CategoriasProductoService } from '../../core/services/categorias-producto.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
+
+const MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
+const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 @Component({
   selector: 'app-productos',
@@ -18,14 +22,19 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
   templateUrl: './productos.component.html',
   styleUrl: './productos.component.scss',
 })
-export class ProductosComponent implements OnInit {
+export class ProductosComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
   private readonly categoriasProductoService = inject(CategoriasProductoService);
 
+  private previewObjectUrl: string | null = null;
+
   readonly categoriaProductoLabel = categoriaProductoLabel;
+  readonly productoImagenUrl = productoImagenUrl;
 
   readonly categoriasProducto = signal<CategoriaProductoItem[]>([]);
+  readonly imagenPreview = signal<string | null>(null);
+  readonly uploadingImagen = signal(false);
 
   readonly productos = signal<Producto[]>([]);
   readonly busqueda = signal('');
@@ -64,6 +73,10 @@ export class ProductosComponent implements OnInit {
     this.loadCategoriasProducto();
   }
 
+  ngOnDestroy(): void {
+    this.clearImagenPreview();
+  }
+
   onBusquedaChange(value: string): void {
     this.busqueda.set(value);
   }
@@ -77,6 +90,7 @@ export class ProductosComponent implements OnInit {
 
   openEdit(producto: Producto): void {
     this.editingId.set(producto.id);
+    this.clearImagenPreview();
     this.form.patchValue({
       nombreInterno: producto.nombreInterno,
       activo: producto.activo,
@@ -88,6 +102,7 @@ export class ProductosComponent implements OnInit {
       descripcion: producto.descripcion ?? '',
       imagen: producto.imagen ?? '',
     });
+    this.imagenPreview.set(productoImagenUrl(producto.imagen));
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -99,7 +114,57 @@ export class ProductosComponent implements OnInit {
     this.resetForm();
   }
 
+  onImagenSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!IMAGEN_TIPOS_PERMITIDOS.includes(file.type)) {
+      this.error.set('Formato no permitido. Use JPG, PNG, WEBP o GIF.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > MAX_IMAGEN_BYTES) {
+      this.error.set('La imagen no puede superar 5 MB.');
+      input.value = '';
+      return;
+    }
+
+    this.clearImagenPreview();
+    this.previewObjectUrl = URL.createObjectURL(file);
+    this.imagenPreview.set(this.previewObjectUrl);
+    this.uploadingImagen.set(true);
+    this.error.set(null);
+
+    this.productosService.uploadImagen(file).subscribe({
+      next: (response) => {
+        this.form.patchValue({ imagen: response.url });
+        this.uploadingImagen.set(false);
+      },
+      error: (err) => {
+        this.uploadingImagen.set(false);
+        this.clearImagenPreview();
+        this.form.patchValue({ imagen: '' });
+        this.error.set(this.extractErrorMessage(err));
+        input.value = '';
+      },
+    });
+  }
+
+  removeImagen(): void {
+    this.clearImagenPreview();
+    this.form.patchValue({ imagen: '' });
+  }
+
   save(): void {
+    if (this.uploadingImagen()) {
+      this.error.set('Espere a que termine la carga de la imagen.');
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -201,6 +266,7 @@ export class ProductosComponent implements OnInit {
   }
 
   private resetForm(): void {
+    this.clearImagenPreview();
     this.form.reset({
       nombreInterno: '',
       activo: true,
@@ -212,6 +278,15 @@ export class ProductosComponent implements OnInit {
       descripcion: '',
       imagen: '',
     });
+  }
+
+  private clearImagenPreview(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+      this.previewObjectUrl = null;
+    }
+    this.imagenPreview.set(null);
+    this.uploadingImagen.set(false);
   }
 
   private extractErrorMessage(err: {

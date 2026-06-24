@@ -76,8 +76,8 @@
           <button type="button" class="product-card" (click)="agregarProducto(producto)">
             <div class="product-image-wrap">
               <div class="product-image">
-                @if (producto.imagen) {
-                  <img [src]="producto.imagen" [alt]="producto.nombreInterno" loading="lazy" />
+                @if (productoImagenUrl(producto.imagen); as imagenSrc) {
+                  <img [src]="imagenSrc" [alt]="producto.nombreInterno" loading="lazy" />
                 } @else {
                   <span>{{ productoIcono(producto) }}</span>
                 }

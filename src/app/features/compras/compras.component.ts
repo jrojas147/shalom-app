@@ -12,6 +12,7 @@ import {
   categoriaProductoFiltro,
   categoriaProductoLabel,
   Producto,
+  productoImagenUrl,
   productoPrecioKg,
 } from '../../core/models/producto.model';
 import { ClientesService } from '../../core/services/clientes.service';
@@ -32,6 +33,7 @@ export class ComprasComponent implements OnInit {
 
   readonly empaqueOpciones = EMPAQUE_OPCIONES;
   readonly productoPrecioKg = productoPrecioKg;
+  readonly productoImagenUrl = productoImagenUrl;
   readonly categorias: CategoriaFiltro[] = [
     { id: 'TODOS', label: 'Todos', icon: 'todos' },
     { id: 'PLASTICOS', label: 'Plásticos', icon: 'plasticos' },

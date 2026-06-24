@@ -198,9 +198,36 @@
           ></textarea>
         </div>
 
-        <div class="rp-field rp-field--full">
-          <label for="imagen">URL de imagen</label>
-          <input id="imagen" type="url" formControlName="imagen" maxlength="500" />
+        <div class="rp-field rp-field--full productos-imagen-field">
+          <label for="imagenArchivo">Imagen del producto</label>
+          <div class="productos-imagen-field__controls">
+            <input
+              id="imagenArchivo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="onImagenSelected($event)"
+              [disabled]="uploadingImagen() || saving()"
+            />
+            @if (form.controls.imagen.value) {
+              <button
+                type="button"
+                class="rp-btn rp-btn--ghost productos-imagen-field__remove"
+                (click)="removeImagen()"
+                [disabled]="uploadingImagen() || saving()"
+              >
+                Quitar imagen
+              </button>
+            }
+          </div>
+          <span class="rp-hint">JPG, PNG, WEBP o GIF. Máximo 5 MB.</span>
+          @if (uploadingImagen()) {
+            <span class="rp-hint">Subiendo imagen...</span>
+          }
+          @if (imagenPreview(); as preview) {
+            <div class="productos-imagen-preview">
+              <img [src]="preview" alt="Vista previa del producto" />
+            </div>
+          }
         </div>
       </div>
 
