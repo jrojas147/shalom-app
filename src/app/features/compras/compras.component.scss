@@ -170,6 +170,12 @@
     object-fit: contain;
     display: block;
   }
+
+  span {
+    font-size: 2.5rem;
+    line-height: 1;
+    opacity: 0.65;
+  }
 }
 
 .product-body {

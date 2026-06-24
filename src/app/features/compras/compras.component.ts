@@ -9,7 +9,10 @@ import {
 import {
   CategoriaFiltro,
   CategoriaProducto,
+  categoriaProductoFiltro,
+  categoriaProductoLabel,
   Producto,
+  productoPrecioKg,
 } from '../../core/models/producto.model';
 import { ClientesService } from '../../core/services/clientes.service';
 import { ComprasService } from '../../core/services/compras.service';
@@ -28,6 +31,7 @@ export class ComprasComponent implements OnInit {
   private readonly comprasService = inject(ComprasService);
 
   readonly empaqueOpciones = EMPAQUE_OPCIONES;
+  readonly productoPrecioKg = productoPrecioKg;
   readonly categorias: CategoriaFiltro[] = [
     { id: 'TODOS', label: 'Todos', icon: 'todos' },
     { id: 'PLASTICOS', label: 'Plásticos', icon: 'plasticos' },
@@ -53,11 +57,13 @@ export class ComprasComponent implements OnInit {
     const cat = this.categoriaActiva();
     const q = this.busqueda().trim().toLowerCase();
     return this.productos().filter((p) => {
-      const matchCat = cat === 'TODOS' || p.categoria === cat;
+      const categoria = categoriaProductoFiltro(p);
+      const matchCat = cat === 'TODOS' || categoria === cat;
       const matchQ =
         !q ||
-        p.nombre.toLowerCase().includes(q) ||
-        p.clasificacion.toLowerCase().includes(q);
+        p.nombreInterno.toLowerCase().includes(q) ||
+        (p.nombreCiiu?.toLowerCase().includes(q) ?? false) ||
+        (p.codigoCiiu?.toLowerCase().includes(q) ?? false);
       return matchCat && matchQ;
     });
   });
@@ -166,7 +172,7 @@ export class ComprasComponent implements OnInit {
   }
 
   itemTotal(item: CompraDetalleItem): number {
-    return item.pesoKg * item.producto.precioPorKg;
+    return item.pesoKg * productoPrecioKg(item.producto);
   }
 
   formatPrecioKg(value: number): string {
@@ -192,19 +198,11 @@ export class ComprasComponent implements OnInit {
     });
   }
 
-  formatStock(producto: Producto): string {
-    if (producto.stock >= 1000) {
-      const ton = producto.stock / 1000;
-      return `Stock: ${ton.toLocaleString('es-CL', { maximumFractionDigits: 1 })} ton`;
-    }
-    return `Stock: ${producto.stock} ${producto.stockUnidad}`;
+  categoriaLabel(producto: Producto): string {
+    return categoriaProductoLabel(producto.categoriaProducto);
   }
 
-  empaqueLabel(empaque: EmpaqueTipo): string {
-    return this.empaqueOpciones.find((o) => o.value === empaque)?.label ?? empaque;
-  }
-
-  categoriaIcono(categoria: CategoriaProducto): string {
+  categoriaIcono(categoria: CategoriaProducto | null): string {
     switch (categoria) {
       case 'PLASTICOS':
         return '♻';
@@ -214,9 +212,19 @@ export class ComprasComponent implements OnInit {
         return '📄';
       case 'VIDRIO':
         return '🫙';
+      case 'CHATARRA':
+        return '🔩';
       default:
         return '•';
     }
+  }
+
+  empaqueLabel(empaque: EmpaqueTipo): string {
+    return this.empaqueOpciones.find((o) => o.value === empaque)?.label ?? empaque;
+  }
+
+  productoIcono(producto: Producto): string {
+    return this.categoriaIcono(categoriaProductoFiltro(producto));
   }
 
   procesar(metodo: 'TICKET' | 'CREDITO' | 'PAGO'): void {

@@ -76,13 +76,17 @@
           <button type="button" class="product-card" (click)="agregarProducto(producto)">
             <div class="product-image-wrap">
               <div class="product-image">
-                <img [src]="producto.imagenUrl" [alt]="producto.nombre" loading="lazy" />
+                @if (producto.imagen) {
+                  <img [src]="producto.imagen" [alt]="producto.nombreInterno" loading="lazy" />
+                } @else {
+                  <span>{{ productoIcono(producto) }}</span>
+                }
               </div>
             </div>
             <div class="product-body">
-              <h3>{{ producto.nombre }}</h3>
-              <p class="product-price">{{ formatPrecioKg(producto.precioPorKg) }} /kg</p>
-              <p class="product-stock">{{ formatStock(producto) }}</p>
+              <h3>{{ producto.nombreInterno }}</h3>
+              <p class="product-price">{{ formatPrecioKg(productoPrecioKg(producto)) }} /kg</p>
+              <p class="product-stock">{{ categoriaLabel(producto) }}</p>
             </div>
           </button>
         } @empty {
@@ -113,10 +117,10 @@
       @for (item of items(); track item.productoId) {
         <article class="detail-item">
           <div class="item-top">
-            <span class="item-icon">{{ categoriaIcono(item.producto.categoria) }}</span>
+            <span class="item-icon">{{ productoIcono(item.producto) }}</span>
             <div class="item-info">
-              <span class="item-class">{{ item.producto.clasificacion }}</span>
-              <strong class="item-name">{{ item.producto.nombre }}</strong>
+              <span class="item-class">{{ categoriaLabel(item.producto) }}</span>
+              <strong class="item-name">{{ item.producto.nombreInterno }}</strong>
             </div>
             <select
               class="item-empaque"
@@ -150,7 +154,7 @@
               <span class="weight-unit">KG</span>
             </div>
             <div class="item-pricing">
-              <span class="price-kg">{{ formatPrecioKg(item.producto.precioPorKg) }} /kg</span>
+              <span class="price-kg">{{ formatPrecioKg(productoPrecioKg(item.producto)) }} /kg</span>
               <strong class="price-total">{{ formatCurrency(itemTotal(item)) }}</strong>
             </div>
           </div>
