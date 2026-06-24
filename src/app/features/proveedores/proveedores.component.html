@@ -517,7 +517,13 @@
       <div class="rp-form-grid proveedores-form-grid">
         <div class="rp-field">
           <label for="nombre">Nombre completo</label>
-          <input id="nombre" type="text" formControlName="nombre" maxlength="150" />
+          <input
+            id="nombre"
+            type="text"
+            formControlName="nombre"
+            maxlength="150"
+            style="text-transform: uppercase"
+          />
           @if (internoForm.controls.nombre.touched && internoForm.controls.nombre.invalid) {
             <span class="rp-hint err">El nombre es obligatorio</span>
           }
