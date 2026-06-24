@@ -173,9 +173,9 @@
         </div>
 
         <div class="rp-field">
-          <label for="sexo">Sexo</label>
+          <label for="sexo">Genero</label>
           <select id="sexo" formControlName="sexo">
-            <option value="">— Seleccionar —</option>
+            <option value="">Seleccione genero</option>
             @for (item of sexos; track item.value) {
               <option [value]="item.value">{{ item.label }}</option>
             }
@@ -185,7 +185,7 @@
         <div class="rp-field">
           <label for="rh">RH</label>
           <select id="rh" formControlName="rh">
-            <option value="">— Seleccionar —</option>
+            <option value="">Seleccione tipo sanguineo</option>
             @for (item of rhValues; track item.value) {
               <option [value]="item.value">{{ item.label }}</option>
             }
@@ -240,7 +240,7 @@
             formControlName="departamentoId"
             (change)="onDepartamentoChange()"
           >
-            <option [ngValue]="null">— Seleccionar —</option>
+            <option [ngValue]="null">Seleccione departamento</option>
             @for (dep of departamentos(); track dep.id) {
               <option [ngValue]="dep.id">{{ dep.nombre }}</option>
             }
@@ -250,7 +250,7 @@
         <div class="rp-field">
           <label for="municipioId">Municipio</label>
           <select id="municipioId" formControlName="municipioId">
-            <option [ngValue]="null">— Seleccionar —</option>
+            <option [ngValue]="null">Seleccione municipio</option>
             @for (mun of municipios(); track mun.id) {
               <option [ngValue]="mun.id">{{ mun.nombre }}</option>
             }
@@ -275,7 +275,7 @@
           (click)="toggleHijosSection()"
           [attr.aria-expanded]="hijosSectionOpen()"
         >
-          <span>Hijos registrados (opcional)</span>
+          <span>Hijos registrados.</span>
           <span class="proveedores-hijos__count">{{ hijosArray.length }}</span>
           <span class="proveedores-hijos__chevron" [class.open]="hijosSectionOpen()">▾</span>
         </button>
@@ -375,9 +375,9 @@
         </div>
 
         <div class="rp-field">
-          <label for="hijoSexo">Sexo</label>
+          <label for="hijoSexo">Género</label>
           <select id="hijoSexo" formControlName="sexo">
-            <option value="">— Seleccionar —</option>
+            <option value="">— Seleccionar género —</option>
             @for (item of sexos; track item.value) {
               <option [value]="item.value">{{ item.label }}</option>
             }
