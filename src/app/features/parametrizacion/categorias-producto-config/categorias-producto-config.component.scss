@@ -145,3 +145,14 @@
     }
   }
 }
+
+@container (max-width: 560px) {
+  .param-block__add-row {
+    grid-template-columns: 1fr;
+
+    .rp-btn--primary,
+    .rp-btn--ghost {
+      width: 100%;
+    }
+  }
+}

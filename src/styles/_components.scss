@@ -425,6 +425,7 @@
 
 // Secciones de parametrización (formulario inline + lista)
 .param-block {
+  container-type: inline-size;
   background: var(--rp-surface);
   border: 1px solid var(--rp-border);
   border-radius: var(--radius-lg);
