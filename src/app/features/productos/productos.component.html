@@ -52,7 +52,17 @@
           @for (producto of productosFiltrados(); track producto.id) {
             <tr>
               <td>
-                <span class="row-icon">📦</span>
+                @if (productoImagenUrl(producto.imagen); as imgUrl) {
+                  <span class="productos-list-thumb">
+                    <img
+                      [src]="imgUrl"
+                      [alt]="producto.nombreInterno"
+                      loading="lazy"
+                    />
+                  </span>
+                } @else {
+                  <span class="row-icon" aria-hidden="true">📦</span>
+                }
                 <span class="cell-primary">{{ producto.nombreInterno }}</span>
               </td>
               <td class="cell-secondary">

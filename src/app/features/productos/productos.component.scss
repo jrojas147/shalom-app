@@ -48,6 +48,27 @@
   color: var(--rp-text-muted);
 }
 
+.productos-list-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: var(--spacing-sm);
+  vertical-align: middle;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--rp-border);
+  background: var(--rp-surface-muted, #f5f7f9);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
 .cell-actions {
   display: flex;
   gap: var(--spacing-xs);
