@@ -8,10 +8,10 @@ export interface NavMenuItem {
 
 export const NAV_MENU_ITEMS: NavMenuItem[] = [
   { label: 'Inicio', route: '/app/inicio', icon: 'inicio' },
-  { label: 'Compras', route: '/app/compras', icon: 'compra' },
+  { label: 'Pre c ompra', route: '/app/compras', icon: 'compra' },
   { label: 'Caja', route: '/app/caja', icon: 'caja' },
   { label: 'Venta', route: '/app/venta', icon: 'venta' },
-  { label: 'Liquidacion', route: '/app/liquidacion', icon: 'liquidacion' },
+  { label: 'Retribución', route: '/app/liquidacion', icon: 'liquidacion' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },
   // { label: 'Inventario', route: '/app/inventario', icon: 'inventario' }, // Habilitar más adelante
   { label: 'Proveedores', route: '/app/proveedores', icon: 'proveedores' },
