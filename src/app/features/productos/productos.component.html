@@ -206,23 +206,20 @@
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               (change)="onImagenSelected($event)"
-              [disabled]="uploadingImagen() || saving()"
+              [disabled]="saving()"
             />
-            @if (form.controls.imagen.value) {
+            @if (tieneImagen()) {
               <button
                 type="button"
                 class="rp-btn rp-btn--ghost productos-imagen-field__remove"
                 (click)="removeImagen()"
-                [disabled]="uploadingImagen() || saving()"
+                [disabled]="saving()"
               >
                 Quitar imagen
               </button>
             }
           </div>
-          <span class="rp-hint">JPG, PNG, WEBP o GIF. Máximo 5 MB.</span>
-          @if (uploadingImagen()) {
-            <span class="rp-hint">Subiendo imagen...</span>
-          }
+          <span class="rp-hint">JPG, PNG, WEBP o GIF. Máximo 5 MB. Se guarda al registrar el producto.</span>
           @if (imagenPreview(); as preview) {
             <div class="productos-imagen-preview">
               <img [src]="preview" alt="Vista previa del producto" />

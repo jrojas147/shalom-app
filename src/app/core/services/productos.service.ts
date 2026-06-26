@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
-import { Producto, ProductoImagenUploadResponse, ProductoRequest } from '../models/producto.model';
+import { Producto, ProductoRequest } from '../models/producto.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
@@ -22,21 +22,27 @@ export class ProductosService {
     return this.http.get<Producto>(`${this.baseUrl}/${id}`);
   }
 
-  create(request: ProductoRequest): Observable<Producto> {
-    return this.http.post<Producto>(this.baseUrl, request);
+  create(request: ProductoRequest, imagen?: File | null): Observable<Producto> {
+    return this.http.post<Producto>(this.baseUrl, this.buildFormData(request, imagen));
   }
 
-  update(id: number, request: ProductoRequest): Observable<Producto> {
-    return this.http.put<Producto>(`${this.baseUrl}/${id}`, request);
+  update(id: number, request: ProductoRequest, imagen?: File | null): Observable<Producto> {
+    return this.http.put<Producto>(`${this.baseUrl}/${id}`, this.buildFormData(request, imagen));
   }
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  uploadImagen(file: File): Observable<ProductoImagenUploadResponse> {
+  private buildFormData(request: ProductoRequest, imagen?: File | null): FormData {
     const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<ProductoImagenUploadResponse>(`${this.baseUrl}/imagen`, formData);
+    formData.append(
+      'data',
+      new Blob([JSON.stringify(request)], { type: 'application/json' })
+    );
+    if (imagen) {
+      formData.append('imagen', imagen);
+    }
+    return formData;
   }
 }

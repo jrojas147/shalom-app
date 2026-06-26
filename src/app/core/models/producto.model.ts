@@ -25,11 +25,7 @@ export interface ProductoRequest {
   precioCompra?: number | null;
   precioVenta?: number | null;
   descripcion?: string;
-  imagen?: string;
-}
-
-export interface ProductoImagenUploadResponse {
-  url: string;
+  eliminarImagen?: boolean;
 }
 
 export interface CategoriaFiltro {

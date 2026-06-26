@@ -33,8 +33,23 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly productoImagenUrl = productoImagenUrl;
 
   readonly categoriasProducto = signal<CategoriaProductoItem[]>([]);
-  readonly imagenPreview = signal<string | null>(null);
-  readonly uploadingImagen = signal(false);
+  readonly imagenPendiente = signal<File | null>(null);
+  readonly imagenGuardada = signal<string | null>(null);
+  readonly imagenEliminada = signal(false);
+
+  readonly imagenPreview = computed(() => {
+    if (this.previewObjectUrl) {
+      return this.previewObjectUrl;
+    }
+    if (this.imagenEliminada()) {
+      return null;
+    }
+    return productoImagenUrl(this.imagenGuardada());
+  });
+
+  readonly tieneImagen = computed(
+    () => !!this.imagenPendiente() || (!this.imagenEliminada() && !!this.imagenGuardada())
+  );
 
   readonly productos = signal<Producto[]>([]);
   readonly busqueda = signal('');
@@ -65,7 +80,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
     precioCompra: [null as number | null, Validators.min(0)],
     precioVenta: [null as number | null, Validators.min(0)],
     descripcion: ['', Validators.maxLength(500)],
-    imagen: ['', Validators.maxLength(500)],
   });
 
   ngOnInit(): void {
@@ -74,7 +88,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.clearImagenPreview();
+    this.revokePreviewObjectUrl();
   }
 
   onBusquedaChange(value: string): void {
@@ -90,7 +104,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   openEdit(producto: Producto): void {
     this.editingId.set(producto.id);
-    this.clearImagenPreview();
+    this.resetImagenState();
     this.form.patchValue({
       nombreInterno: producto.nombreInterno,
       activo: producto.activo,
@@ -100,9 +114,8 @@ export class ProductosComponent implements OnInit, OnDestroy {
       precioCompra: producto.precioCompra ?? null,
       precioVenta: producto.precioVenta ?? null,
       descripcion: producto.descripcion ?? '',
-      imagen: producto.imagen ?? '',
     });
-    this.imagenPreview.set(productoImagenUrl(producto.imagen));
+    this.imagenGuardada.set(producto.imagen ?? null);
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -133,38 +146,20 @@ export class ProductosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.clearImagenPreview();
+    this.revokePreviewObjectUrl();
     this.previewObjectUrl = URL.createObjectURL(file);
-    this.imagenPreview.set(this.previewObjectUrl);
-    this.uploadingImagen.set(true);
+    this.imagenPendiente.set(file);
+    this.imagenEliminada.set(false);
     this.error.set(null);
-
-    this.productosService.uploadImagen(file).subscribe({
-      next: (response) => {
-        this.form.patchValue({ imagen: response.url });
-        this.uploadingImagen.set(false);
-      },
-      error: (err) => {
-        this.uploadingImagen.set(false);
-        this.clearImagenPreview();
-        this.form.patchValue({ imagen: '' });
-        this.error.set(this.extractErrorMessage(err));
-        input.value = '';
-      },
-    });
   }
 
   removeImagen(): void {
-    this.clearImagenPreview();
-    this.form.patchValue({ imagen: '' });
+    this.revokePreviewObjectUrl();
+    this.imagenPendiente.set(null);
+    this.imagenEliminada.set(true);
   }
 
   save(): void {
-    if (this.uploadingImagen()) {
-      this.error.set('Espere a que termine la carga de la imagen.');
-      return;
-    }
-
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -180,16 +175,20 @@ export class ProductosComponent implements OnInit, OnDestroy {
       precioCompra: raw.precioCompra,
       precioVenta: raw.precioVenta,
       descripcion: raw.descripcion.trim() || undefined,
-      imagen: raw.imagen.trim() || undefined,
     };
+
+    const id = this.editingId();
+    if (id && this.imagenEliminada()) {
+      request.eliminarImagen = true;
+    }
 
     this.saving.set(true);
     this.error.set(null);
 
-    const id = this.editingId();
+    const imagen = this.imagenPendiente();
     const op$ = id
-      ? this.productosService.update(id, request)
-      : this.productosService.create(request);
+      ? this.productosService.update(id, request, imagen)
+      : this.productosService.create(request, imagen);
 
     op$.subscribe({
       next: () => {
@@ -266,7 +265,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   }
 
   private resetForm(): void {
-    this.clearImagenPreview();
+    this.resetImagenState();
     this.form.reset({
       nombreInterno: '',
       activo: true,
@@ -276,17 +275,21 @@ export class ProductosComponent implements OnInit, OnDestroy {
       precioCompra: null,
       precioVenta: null,
       descripcion: '',
-      imagen: '',
     });
   }
 
-  private clearImagenPreview(): void {
+  private resetImagenState(): void {
+    this.revokePreviewObjectUrl();
+    this.imagenPendiente.set(null);
+    this.imagenGuardada.set(null);
+    this.imagenEliminada.set(false);
+  }
+
+  private revokePreviewObjectUrl(): void {
     if (this.previewObjectUrl) {
       URL.revokeObjectURL(this.previewObjectUrl);
       this.previewObjectUrl = null;
     }
-    this.imagenPreview.set(null);
-    this.uploadingImagen.set(false);
   }
 
   private extractErrorMessage(err: {
