@@ -82,9 +82,9 @@
                 <td class="cell-secondary">{{ proveedor.telefono ?? '—' }}</td>
                 <td class="cell-secondary">{{ proveedor.email ?? '—' }}</td>
                 <td class="cell-secondary">
-                  @if ((proveedor.sucursalesAsociadas ?? []).length > 0) {
+                  @if (proveedor.sucursalesAsociadas.length > 0) {
                     <span class="rp-badge rp-badge--neutral">
-                      {{ (proveedor.sucursalesAsociadas ?? []).length }}
+                      {{ proveedor.sucursalesAsociadas.length }}
                     </span>
                   } @else {
                     —

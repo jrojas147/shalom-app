@@ -565,7 +565,7 @@ export class ProveedoresComponent implements OnInit {
     proveedor.hijos.forEach((hijo) => this.hijosArray.push(this.createHijoGroup(hijo)));
     this.hijosSectionOpen.set(proveedor.hijos.length > 0);
     this.selectedSucursalIds.set(
-      (proveedor.sucursalesAsociadas ?? []).map((s) => s.sucursalId)
+      proveedor.sucursalesAsociadas.map((s) => s.sucursalId)
     );
     this.patchUbicacion(proveedor.departamento, proveedor.municipio);
     this.showForm.set(true);
