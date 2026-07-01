@@ -1,0 +1,83 @@
+<section class="param-block">
+  <h2 class="param-block__title">Códigos CIIU</h2>
+  <p class="param-block__desc">
+    Catálogo de códigos CIIU disponibles para asociar a los productos del comercio.
+  </p>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <form class="param-block__add-row" [formGroup]="form" (ngSubmit)="save()">
+    <input
+      type="text"
+      formControlName="codigo"
+      placeholder="Código"
+      maxlength="20"
+      aria-label="Código CIIU"
+    />
+    <input
+      type="text"
+      formControlName="nombre"
+      placeholder="Nombre"
+      maxlength="255"
+      aria-label="Nombre CIIU"
+    />
+    <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+      {{ saving() ? 'Guardando...' : editingId() ? 'Guardar' : 'Agregar' }}
+    </button>
+    @if (editingId()) {
+      <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelEdit()">Cancelar</button>
+    }
+  </form>
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando...</p>
+  } @else {
+    <ul class="param-block__list">
+      @for (item of codigosCiiu(); track item.id) {
+        <li class="param-block__item">
+          <span class="param-block__item-text">
+            <strong>{{ item.codigo }}</strong>
+            <span class="param-block__item-meta">{{ item.nombre }}</span>
+          </span>
+          <span class="param-block__item-actions">
+            <button
+              type="button"
+              class="param-block__icon-btn"
+              title="Editar"
+              (click)="startEdit(item)"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M4 20h4l10.5-10.5a1.5 1.5 0 0 0-4-4L4 16v4z"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linejoin="round"
+                />
+                <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.75" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="param-block__icon-btn param-block__icon-btn--danger"
+              title="Eliminar"
+              (click)="deleteCodigo(item)"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M6 6l12 12M18 6L6 18"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+          </span>
+        </li>
+      } @empty {
+        <li class="rp-empty">No hay códigos CIIU registrados</li>
+      }
+    </ul>
+  }
+</section>

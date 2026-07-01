@@ -152,14 +152,14 @@
           </label>
         </div>
 
-        <div class="rp-field">
-          <label for="codigoCiiu">Código CIIU</label>
-          <input id="codigoCiiu" type="text" formControlName="codigoCiiu" maxlength="20" />
-        </div>
-
-        <div class="rp-field">
-          <label for="nombreCiiu">Nombre CIIU</label>
-          <input id="nombreCiiu" type="text" formControlName="nombreCiiu" maxlength="200" />
+        <div class="rp-field rp-field--full">
+          <label for="codigoCiiuId">Código CIIU</label>
+          <select id="codigoCiiuId" formControlName="codigoCiiuId">
+            <option [ngValue]="null">Sin código CIIU</option>
+            @for (ciiu of codigosCiiu(); track ciiu.id) {
+              <option [ngValue]="ciiu.id">{{ ciiu.codigo }} — {{ ciiu.nombre }}</option>
+            }
+          </select>
         </div>
 
         <div class="rp-field">

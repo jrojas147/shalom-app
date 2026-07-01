@@ -5,6 +5,7 @@ export interface Producto {
   comercioId: number;
   nombreInterno: string;
   activo: boolean;
+  codigoCiiuId?: number | null;
   codigoCiiu?: string | null;
   nombreCiiu?: string | null;
   precioCompra?: number | null;
@@ -16,8 +17,7 @@ export interface Producto {
 export interface ProductoRequest {
   nombreInterno: string;
   activo?: boolean;
-  codigoCiiu?: string;
-  nombreCiiu?: string;
+  codigoCiiuId?: number | null;
   precioCompra?: number | null;
   precioVenta?: number | null;
   descripcion?: string;

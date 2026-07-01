@@ -6,6 +6,8 @@ import {
   productoImagenUrl,
   ProductoRequest,
 } from '../../core/models/producto.model';
+import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
+import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -22,10 +24,13 @@ const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image
 export class ProductosComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
+  private readonly codigosCiiuService = inject(CodigosCiiuService);
 
   private previewObjectUrl: string | null = null;
 
   readonly productoImagenUrl = productoImagenUrl;
+
+  readonly codigosCiiu = signal<CodigoCiiu[]>([]);
 
   readonly imagenPendiente = signal<File | null>(null);
   readonly imagenGuardada = signal<string | null>(null);
@@ -68,8 +73,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly form = this.fb.nonNullable.group({
     nombreInterno: ['', [Validators.required, Validators.maxLength(100)]],
     activo: [true],
-    codigoCiiu: ['', Validators.maxLength(20)],
-    nombreCiiu: ['', Validators.maxLength(200)],
+    codigoCiiuId: [null as number | null],
     precioCompra: [null as number | null, Validators.min(0)],
     precioVenta: [null as number | null, Validators.min(0)],
     descripcion: ['', Validators.maxLength(500)],
@@ -77,6 +81,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadProductos();
+    this.loadCodigosCiiu();
   }
 
   ngOnDestroy(): void {
@@ -100,8 +105,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.form.patchValue({
       nombreInterno: producto.nombreInterno,
       activo: producto.activo,
-      codigoCiiu: producto.codigoCiiu ?? '',
-      nombreCiiu: producto.nombreCiiu ?? '',
+      codigoCiiuId: producto.codigoCiiuId ?? null,
       precioCompra: producto.precioCompra ?? null,
       precioVenta: producto.precioVenta ?? null,
       descripcion: producto.descripcion ?? '',
@@ -160,8 +164,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     const request: ProductoRequest = {
       nombreInterno: raw.nombreInterno.trim(),
       activo: raw.activo,
-      codigoCiiu: raw.codigoCiiu.trim() || undefined,
-      nombreCiiu: raw.nombreCiiu.trim() || undefined,
+      codigoCiiuId: raw.codigoCiiuId ?? undefined,
       precioCompra: raw.precioCompra,
       precioVenta: raw.precioVenta,
       descripcion: raw.descripcion.trim() || undefined,
@@ -236,6 +239,13 @@ export class ProductosComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadCodigosCiiu(): void {
+    this.codigosCiiuService.getAll().subscribe({
+      next: (data) => this.codigosCiiu.set(data),
+      error: () => this.codigosCiiu.set([]),
+    });
+  }
+
   private matchesSearch(producto: Producto, q: string): boolean {
     const fields = [
       producto.nombreInterno,
@@ -251,8 +261,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.form.reset({
       nombreInterno: '',
       activo: true,
-      codigoCiiu: '',
-      nombreCiiu: '',
+      codigoCiiuId: null,
       precioCompra: null,
       precioVenta: null,
       descripcion: '',
