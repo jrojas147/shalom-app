@@ -27,7 +27,7 @@
       <input
         type="search"
         class="productos__search"
-        placeholder="Buscar por nombre, categoría, CIIU o descripción..."
+        placeholder="Buscar por nombre, CIIU o descripción..."
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
@@ -40,7 +40,6 @@
         <thead>
           <tr>
             <th>Producto</th>
-            <th>Categoría</th>
             <th>CIIU</th>
             <th>Precio compra</th>
             <th>Precio venta</th>
@@ -64,9 +63,6 @@
                   <span class="row-icon" aria-hidden="true">📦</span>
                 }
                 <span class="cell-primary">{{ producto.nombreInterno }}</span>
-              </td>
-              <td class="cell-secondary">
-                {{ categoriaProductoLabel(producto.categoriaProducto) }}
               </td>
               <td class="cell-secondary">
                 @if (producto.codigoCiiu || producto.nombreCiiu) {
@@ -110,7 +106,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="rp-empty">
+              <td colspan="6" class="rp-empty">
                 {{
                   busqueda()
                     ? 'No hay productos que coincidan con la búsqueda'
@@ -146,16 +142,6 @@
           @if (form.controls.nombreInterno.touched && form.controls.nombreInterno.invalid) {
             <span class="rp-field-error">El nombre interno es obligatorio.</span>
           }
-        </div>
-
-        <div class="rp-field">
-          <label for="categoriaProducto">Categoría</label>
-          <select id="categoriaProducto" formControlName="categoriaProducto">
-            <option value="">Sin categoría</option>
-            @for (cat of categoriasProducto(); track cat.id) {
-              <option [value]="cat.nombre">{{ cat.nombre }}</option>
-            }
-          </select>
         </div>
 
         <div class="rp-field productos-estado-field">

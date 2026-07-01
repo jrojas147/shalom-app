@@ -7,10 +7,6 @@ import {
   EmpaqueTipo,
 } from '../../core/models/compra.model';
 import {
-  CategoriaFiltro,
-  CategoriaProducto,
-  categoriaProductoFiltro,
-  categoriaProductoLabel,
   Producto,
   productoImagenUrl,
   productoPrecioKg,
@@ -34,19 +30,11 @@ export class ComprasComponent implements OnInit {
   readonly empaqueOpciones = EMPAQUE_OPCIONES;
   readonly productoPrecioKg = productoPrecioKg;
   readonly productoImagenUrl = productoImagenUrl;
-  readonly categorias: CategoriaFiltro[] = [
-    { id: 'TODOS', label: 'Todos', icon: 'todos' },
-    { id: 'PLASTICOS', label: 'Plásticos', icon: 'plasticos' },
-    { id: 'METALES', label: 'Metales', icon: 'metales' },
-    { id: 'PAPEL', label: 'Papel/Cartón', icon: 'papel' },
-    { id: 'VIDRIO', label: 'Vidrio', icon: 'vidrio' },
-  ];
 
   readonly productos = signal<Producto[]>([]);
   readonly clientes = signal<Cliente[]>([]);
   readonly items = signal<CompraDetalleItem[]>([]);
   readonly clienteSeleccionado = signal<Cliente | null>(null);
-  readonly categoriaActiva = signal<CategoriaFiltro['id']>('TODOS');
   readonly busqueda = signal('');
   readonly loading = signal(false);
   readonly showClienteModal = signal(false);
@@ -56,17 +44,16 @@ export class ComprasComponent implements OnInit {
   readonly factura = signal('0042');
 
   readonly productosFiltrados = computed(() => {
-    const cat = this.categoriaActiva();
     const q = this.busqueda().trim().toLowerCase();
     return this.productos().filter((p) => {
-      const categoria = categoriaProductoFiltro(p);
-      const matchCat = cat === 'TODOS' || categoria === cat;
-      const matchQ =
-        !q ||
+      if (!q) {
+        return true;
+      }
+      return (
         p.nombreInterno.toLowerCase().includes(q) ||
         (p.nombreCiiu?.toLowerCase().includes(q) ?? false) ||
-        (p.codigoCiiu?.toLowerCase().includes(q) ?? false);
-      return matchCat && matchQ;
+        (p.codigoCiiu?.toLowerCase().includes(q) ?? false)
+      );
     });
   });
 
@@ -101,10 +88,6 @@ export class ComprasComponent implements OnInit {
         }
       },
     });
-  }
-
-  setCategoria(id: CategoriaFiltro['id']): void {
-    this.categoriaActiva.set(id);
   }
 
   onBusqueda(value: string): void {
@@ -200,33 +183,12 @@ export class ComprasComponent implements OnInit {
     });
   }
 
-  categoriaLabel(producto: Producto): string {
-    return categoriaProductoLabel(producto.categoriaProducto);
-  }
-
-  categoriaIcono(categoria: CategoriaProducto | null): string {
-    switch (categoria) {
-      case 'PLASTICOS':
-        return '♻';
-      case 'METALES':
-        return '⚙';
-      case 'PAPEL':
-        return '📄';
-      case 'VIDRIO':
-        return '🫙';
-      case 'CHATARRA':
-        return '🔩';
-      default:
-        return '•';
-    }
-  }
-
   empaqueLabel(empaque: EmpaqueTipo): string {
     return this.empaqueOpciones.find((o) => o.value === empaque)?.label ?? empaque;
   }
 
-  productoIcono(producto: Producto): string {
-    return this.categoriaIcono(categoriaProductoFiltro(producto));
+  productoIcono(): string {
+    return '📦';
   }
 
   procesar(metodo: 'TICKET' | 'CREDITO' | 'PAGO'): void {

@@ -1,7 +1,5 @@
 import { API_CORE_URL } from '../config/api.config';
 
-export type CategoriaProducto = 'PLASTICOS' | 'METALES' | 'PAPEL' | 'VIDRIO' | 'CHATARRA';
-
 export interface Producto {
   id: number;
   comercioId: number;
@@ -9,7 +7,6 @@ export interface Producto {
   activo: boolean;
   codigoCiiu?: string | null;
   nombreCiiu?: string | null;
-  categoriaProducto?: string | null;
   precioCompra?: number | null;
   precioVenta?: number | null;
   descripcion?: string | null;
@@ -21,41 +18,10 @@ export interface ProductoRequest {
   activo?: boolean;
   codigoCiiu?: string;
   nombreCiiu?: string;
-  categoriaProducto?: string;
   precioCompra?: number | null;
   precioVenta?: number | null;
   descripcion?: string;
   eliminarImagen?: boolean;
-}
-
-export interface CategoriaFiltro {
-  id: 'TODOS' | CategoriaProducto;
-  label: string;
-  icon: 'todos' | 'plasticos' | 'metales' | 'papel' | 'vidrio';
-}
-
-export const CATEGORIAS_PRODUCTO: { value: CategoriaProducto; label: string }[] = [
-  { value: 'PLASTICOS', label: 'Plásticos' },
-  { value: 'METALES', label: 'Metales' },
-  { value: 'PAPEL', label: 'Papel/Cartón' },
-  { value: 'VIDRIO', label: 'Vidrio' },
-  { value: 'CHATARRA', label: 'Chatarra' },
-];
-
-export function categoriaProductoLabel(value?: string | null): string {
-  if (!value) return '—';
-  const found = CATEGORIAS_PRODUCTO.find(
-    (c) => c.value === value.toUpperCase()
-  );
-  return found?.label ?? value;
-}
-
-export function categoriaProductoFiltro(producto: Producto): CategoriaProducto | null {
-  if (!producto.categoriaProducto) return null;
-  const upper = producto.categoriaProducto.toUpperCase();
-  return CATEGORIAS_PRODUCTO.some((c) => c.value === upper)
-    ? (upper as CategoriaProducto)
-    : null;
 }
 
 export function productoImagenUrl(imagen?: string | null): string | null {

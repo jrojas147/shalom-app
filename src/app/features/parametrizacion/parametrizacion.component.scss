@@ -1,14 +1,10 @@
 .parametrizacion__sections {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--spacing-lg);
   align-items: start;
 
   > * {
     min-width: 0;
-  }
-
-  @media (max-width: 992px) {
-    grid-template-columns: 1fr;
   }
 }

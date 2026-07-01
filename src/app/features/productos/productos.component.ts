@@ -2,13 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
-  categoriaProductoLabel,
   Producto,
   productoImagenUrl,
   ProductoRequest,
 } from '../../core/models/producto.model';
-import { CategoriaProductoItem } from '../../core/models/categoria-producto.model';
-import { CategoriasProductoService } from '../../core/services/categorias-producto.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -25,14 +22,11 @@ const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image
 export class ProductosComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
-  private readonly categoriasProductoService = inject(CategoriasProductoService);
 
   private previewObjectUrl: string | null = null;
 
-  readonly categoriaProductoLabel = categoriaProductoLabel;
   readonly productoImagenUrl = productoImagenUrl;
 
-  readonly categoriasProducto = signal<CategoriaProductoItem[]>([]);
   readonly imagenPendiente = signal<File | null>(null);
   readonly imagenGuardada = signal<string | null>(null);
   readonly imagenEliminada = signal(false);
@@ -76,7 +70,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
     activo: [true],
     codigoCiiu: ['', Validators.maxLength(20)],
     nombreCiiu: ['', Validators.maxLength(200)],
-    categoriaProducto: ['' as string],
     precioCompra: [null as number | null, Validators.min(0)],
     precioVenta: [null as number | null, Validators.min(0)],
     descripcion: ['', Validators.maxLength(500)],
@@ -84,7 +77,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadProductos();
-    this.loadCategoriasProducto();
   }
 
   ngOnDestroy(): void {
@@ -110,7 +102,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       activo: producto.activo,
       codigoCiiu: producto.codigoCiiu ?? '',
       nombreCiiu: producto.nombreCiiu ?? '',
-      categoriaProducto: producto.categoriaProducto ?? '',
       precioCompra: producto.precioCompra ?? null,
       precioVenta: producto.precioVenta ?? null,
       descripcion: producto.descripcion ?? '',
@@ -171,7 +162,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       activo: raw.activo,
       codigoCiiu: raw.codigoCiiu.trim() || undefined,
       nombreCiiu: raw.nombreCiiu.trim() || undefined,
-      categoriaProducto: raw.categoriaProducto || undefined,
       precioCompra: raw.precioCompra,
       precioVenta: raw.precioVenta,
       descripcion: raw.descripcion.trim() || undefined,
@@ -246,19 +236,11 @@ export class ProductosComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadCategoriasProducto(): void {
-    this.categoriasProductoService.getAll(true).subscribe({
-      next: (data) => this.categoriasProducto.set(data),
-      error: () => this.categoriasProducto.set([]),
-    });
-  }
-
   private matchesSearch(producto: Producto, q: string): boolean {
     const fields = [
       producto.nombreInterno,
       producto.codigoCiiu,
       producto.nombreCiiu,
-      producto.categoriaProducto,
       producto.descripcion,
     ];
     return fields.some((value) => value?.toLowerCase().includes(q));
@@ -271,7 +253,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       activo: true,
       codigoCiiu: '',
       nombreCiiu: '',
-      categoriaProducto: '',
       precioCompra: null,
       precioVenta: null,
       descripcion: '',

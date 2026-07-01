@@ -17,49 +17,6 @@
       />
     </div>
 
-    <div class="compras-tabs">
-      @for (cat of categorias; track cat.id) {
-        <button
-          type="button"
-          class="tab-btn"
-          [class.active]="categoriaActiva() === cat.id"
-          (click)="setCategoria(cat.id)"
-        >
-          @switch (cat.icon) {
-            @case ('todos') {
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
-                <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
-                <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
-                <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
-              </svg>
-            }
-            @case ('plasticos') {
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 3l2 4h4l-3 3 1 5-4-2-4 2 1-5-3-3h4l2-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-              </svg>
-            }
-            @case ('metales') {
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M8 7h8v10H8zM10 4h4v3h-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-              </svg>
-            }
-            @case ('papel') {
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 4h10v16H7zM9 8h6M9 12h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            }
-            @case ('vidrio') {
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M8 4h8l2 16H6l2-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-              </svg>
-            }
-          }
-          {{ cat.label }}
-        </button>
-      }
-    </div>
-
     @if (error() && !showClienteModal()) {
       <div class="compras-alert">{{ error() }}</div>
     }
@@ -79,14 +36,13 @@
                 @if (productoImagenUrl(producto.imagen); as imagenSrc) {
                   <img [src]="imagenSrc" [alt]="producto.nombreInterno" loading="lazy" />
                 } @else {
-                  <span>{{ productoIcono(producto) }}</span>
+                  <span>{{ productoIcono() }}</span>
                 }
               </div>
             </div>
             <div class="product-body">
               <h3>{{ producto.nombreInterno }}</h3>
               <p class="product-price">{{ formatPrecioKg(productoPrecioKg(producto)) }} /kg</p>
-              <p class="product-stock">{{ categoriaLabel(producto) }}</p>
             </div>
           </button>
         } @empty {
@@ -117,9 +73,8 @@
       @for (item of items(); track item.productoId) {
         <article class="detail-item">
           <div class="item-top">
-            <span class="item-icon">{{ productoIcono(item.producto) }}</span>
+            <span class="item-icon">{{ productoIcono() }}</span>
             <div class="item-info">
-              <span class="item-class">{{ categoriaLabel(item.producto) }}</span>
               <strong class="item-name">{{ item.producto.nombreInterno }}</strong>
             </div>
             <select
