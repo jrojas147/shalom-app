@@ -7,6 +7,8 @@ export interface CompraProveedorSeleccion {
   documento?: string;
   sucursalId?: number;
   sucursalNombre?: string;
+  sucursalNit?: string;
+  sucursalMunicipio?: string;
 }
 
 export function compraProveedorEtiqueta(seleccion: CompraProveedorSeleccion): string {

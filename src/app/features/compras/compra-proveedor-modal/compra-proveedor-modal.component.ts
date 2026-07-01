@@ -128,6 +128,8 @@ export class CompraProveedorModalComponent implements OnInit {
       documento: interno.documento,
       sucursalId: sucursal.sucursalId,
       sucursalNombre: sucursal.nombre,
+      sucursalNit: sucursal.nit,
+      sucursalMunicipio: sucursal.municipio,
     });
   }
 

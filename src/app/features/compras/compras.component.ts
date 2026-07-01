@@ -16,7 +16,9 @@ import {
   productoPrecioKg,
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
+import { AuthService } from '../../core/services/auth.service';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
+import { CompraFacturaPrintService } from '../../core/services/compra-factura-print.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { CompraProveedorModalComponent } from './compra-proveedor-modal/compra-proveedor-modal.component';
@@ -32,6 +34,8 @@ export class ComprasComponent implements OnInit {
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly comprasService = inject(ComprasService);
+  private readonly auth = inject(AuthService);
+  private readonly facturaPrintService = inject(CompraFacturaPrintService);
 
   readonly compraProveedorEtiqueta = compraProveedorEtiqueta;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
@@ -221,18 +225,27 @@ export class ComprasComponent implements OnInit {
     this.procesando.set(true);
     this.error.set(null);
 
+    const proveedorSnapshot = { ...proveedor };
+    const itemsSnapshot = this.items().map((item) => ({
+      ...item,
+      producto: { ...item.producto },
+    }));
+    const totalSnapshot = this.subtotal();
+    const pesoSnapshot = this.pesoTotal();
+
     this.comprasService
       .procesar({
-        proveedor,
-        items: this.items(),
-        total: this.subtotal(),
-        pesoTotal: this.pesoTotal(),
+        proveedor: proveedorSnapshot,
+        items: itemsSnapshot,
+        total: totalSnapshot,
+        pesoTotal: pesoSnapshot,
       })
       .subscribe({
         next: (res) => {
           this.procesando.set(false);
           this.factura.set(res.factura);
           this.mensaje.set(res.mensaje);
+          this.imprimirFactura(res.factura, proveedorSnapshot, itemsSnapshot, totalSnapshot, pesoSnapshot);
           this.items.set([]);
         },
         error: () => {
@@ -240,5 +253,34 @@ export class ComprasComponent implements OnInit {
           this.error.set('No se pudo procesar la compra.');
         },
       });
+  }
+
+  private imprimirFactura(
+    factura: string,
+    proveedor: CompraProveedorSeleccion,
+    items: CompraDetalleItem[],
+    total: number,
+    pesoTotal: number
+  ): void {
+    const user = this.auth.currentUser();
+    const nombreUsuario = [user?.nombre, user?.apellido].filter(Boolean).join(' ').trim();
+
+    this.facturaPrintService.imprimir({
+      factura,
+      fecha: new Date(),
+      comercioNombre: user?.comercioNombre ?? 'Comercio',
+      usuarioNombre: nombreUsuario || user?.username || 'Usuario',
+      usuarioUsername: user?.username ?? '',
+      proveedor,
+      items: items.map((item) => ({
+        nombre: item.producto.nombreInterno,
+        pesoKg: item.pesoKg,
+        precioKg: productoPrecioKg(item.producto),
+        total: this.itemTotal(item),
+        empaque: this.empaqueLabel(item.empaque),
+      })),
+      total,
+      pesoTotal,
+    });
   }
 }
