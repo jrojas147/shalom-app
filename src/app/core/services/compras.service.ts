@@ -8,7 +8,6 @@ export interface ProcesarCompraRequest {
   items: CompraDetalleItem[];
   total: number;
   pesoTotal: number;
-  metodo: 'TICKET' | 'CREDITO' | 'PAGO';
 }
 
 export interface ProcesarCompraResponse {
@@ -24,7 +23,7 @@ export class ComprasService {
     const factura = String(this.facturaCounter++).padStart(4, '0');
     return of({
       factura,
-      mensaje: `Compra procesada para ${compraProveedorEtiqueta(request.proveedor)} — ${request.metodo}`,
+      mensaje: `Compra procesada para ${compraProveedorEtiqueta(request.proveedor)}`,
     });
   }
 }

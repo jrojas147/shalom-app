@@ -567,34 +567,6 @@
   }
 }
 
-.action-row {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-}
-
-.action-ticket,
-.action-credito {
-  flex: 1;
-  font-size: 0.8125rem;
-  min-height: 40px;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-.action-credito {
-  background: var(--rp-disponible-bg);
-  color: var(--rp-disponible-text);
-  border: 1px solid transparent;
-
-  &:hover:not(:disabled) {
-    background: #c8d96f;
-  }
-}
-
 .action-pago {
   width: 100%;
   font-size: 0.875rem;

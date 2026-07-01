@@ -206,7 +206,7 @@ export class ComprasComponent implements OnInit {
     return '📦';
   }
 
-  procesar(metodo: 'TICKET' | 'CREDITO' | 'PAGO'): void {
+  procesarPago(): void {
     const proveedor = this.proveedorSeleccionado();
     if (!proveedor) {
       this.error.set('Seleccione un proveedor para continuar.');
@@ -227,7 +227,6 @@ export class ComprasComponent implements OnInit {
         items: this.items(),
         total: this.subtotal(),
         pesoTotal: this.pesoTotal(),
-        metodo,
       })
       .subscribe({
         next: (res) => {
