@@ -1,20 +1,37 @@
 <div class="compras-pos">
   <section class="compras-main">
-    <div class="compras-search">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M9 12h6"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
+    <div class="compras-toolbar">
+      <div class="compras-search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M9 12h6"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+        <input
+          type="search"
+          placeholder="Escanear código de barras..."
+          [ngModel]="busqueda()"
+          (ngModelChange)="onBusqueda($event)"
         />
-      </svg>
-      <input
-        type="search"
-        placeholder="Escanear código de barras..."
-        [ngModel]="busqueda()"
-        (ngModelChange)="onBusqueda($event)"
-      />
+      </div>
+
+      <div class="compras-ciiu-filter">
+        <label class="compras-ciiu-filter__label" for="comprasCiiuFiltro">CIIU</label>
+        <select
+          id="comprasCiiuFiltro"
+          class="compras-ciiu-filter__select"
+          [ngModel]="codigoCiiuFiltro()"
+          (ngModelChange)="onCodigoCiiuFiltro($event)"
+        >
+          <option [ngValue]="null">Todos los nombres CIIU</option>
+          @for (ciiu of codigosCiiu(); track ciiu.id) {
+            <option [ngValue]="ciiu.id">{{ ciiu.nombre }}</option>
+          }
+        </select>
+      </div>
     </div>
 
     @if (error() && !showClienteModal()) {

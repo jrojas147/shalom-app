@@ -11,7 +11,9 @@ import {
   productoImagenUrl,
   productoPrecioKg,
 } from '../../core/models/producto.model';
+import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { ClientesService } from '../../core/services/clientes.service';
+import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
 
@@ -24,6 +26,7 @@ import { ProductosService } from '../../core/services/productos.service';
 })
 export class ComprasComponent implements OnInit {
   private readonly productosService = inject(ProductosService);
+  private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly clientesService = inject(ClientesService);
   private readonly comprasService = inject(ComprasService);
 
@@ -32,10 +35,12 @@ export class ComprasComponent implements OnInit {
   readonly productoImagenUrl = productoImagenUrl;
 
   readonly productos = signal<Producto[]>([]);
+  readonly codigosCiiu = signal<CodigoCiiu[]>([]);
   readonly clientes = signal<Cliente[]>([]);
   readonly items = signal<CompraDetalleItem[]>([]);
   readonly clienteSeleccionado = signal<Cliente | null>(null);
   readonly busqueda = signal('');
+  readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly loading = signal(false);
   readonly showClienteModal = signal(false);
   readonly procesando = signal(false);
@@ -45,7 +50,12 @@ export class ComprasComponent implements OnInit {
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
+    const ciiuId = this.codigoCiiuFiltro();
     return this.productos().filter((p) => {
+      const matchCiiu = ciiuId == null || p.codigoCiiuId === ciiuId;
+      if (!matchCiiu) {
+        return false;
+      }
       if (!q) {
         return true;
       }
@@ -88,10 +98,19 @@ export class ComprasComponent implements OnInit {
         }
       },
     });
+
+    this.codigosCiiuService.getAll().subscribe({
+      next: (data) => this.codigosCiiu.set(data),
+      error: () => this.codigosCiiu.set([]),
+    });
   }
 
   onBusqueda(value: string): void {
     this.busqueda.set(value);
+  }
+
+  onCodigoCiiuFiltro(value: number | null): void {
+    this.codigoCiiuFiltro.set(value);
   }
 
   agregarProducto(producto: Producto): void {
