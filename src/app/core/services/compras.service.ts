@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+import { CompraProveedorSeleccion, compraProveedorEtiqueta } from '../models/compra-proveedor.model';
 import { CompraDetalleItem } from '../models/compra.model';
-import { Cliente } from '../models/cliente.model';
 
 export interface ProcesarCompraRequest {
-  cliente: Cliente;
+  proveedor: CompraProveedorSeleccion;
   items: CompraDetalleItem[];
   total: number;
   pesoTotal: number;
@@ -24,7 +24,7 @@ export class ComprasService {
     const factura = String(this.facturaCounter++).padStart(4, '0');
     return of({
       factura,
-      mensaje: `Compra procesada para ${request.cliente.nombre} — ${request.metodo}`,
+      mensaje: `Compra procesada para ${compraProveedorEtiqueta(request.proveedor)} — ${request.metodo}`,
     });
   }
 }

@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    @if (error() && !showClienteModal()) {
+    @if (error() && !showProveedorModal()) {
       <div class="compras-alert">{{ error() }}</div>
     }
 
@@ -72,13 +72,18 @@
   <aside class="compras-detail">
     <header class="detail-header">
       <div class="detail-client">
-        <span class="detail-label">Cliente:</span>
-        @if (clienteSeleccionado(); as cliente) {
-          <strong>{{ cliente.nombre }}</strong>
+        <span class="detail-label">Proveedor:</span>
+        @if (proveedorSeleccionado(); as proveedor) {
+          <div class="detail-proveedor">
+            <strong>{{ compraProveedorEtiqueta(proveedor) }}</strong>
+            <span class="detail-proveedor__tipo">{{ compraProveedorTipoLabel(proveedor.tipo) }}</span>
+          </div>
         } @else {
-          <strong class="muted">Sin cliente</strong>
+          <strong class="muted">Sin proveedor</strong>
         }
-        <button type="button" class="btn-agregar" (click)="abrirModalCliente()">Agregar</button>
+        <button type="button" class="btn-agregar" (click)="abrirModalProveedor()">
+          {{ proveedorSeleccionado() ? 'Cambiar' : 'Seleccionar' }}
+        </button>
       </div>
       <div class="detail-meta">
         <span>Factura: <strong>{{ factura() }}</strong></span>
@@ -177,31 +182,10 @@
   </aside>
 </div>
 
-@if (showClienteModal()) {
-  <div class="modal-overlay" (click)="cerrarModalCliente()">
-    <div class="modal-panel" (click)="$event.stopPropagation()">
-      <header class="modal-header">
-        <h2>Seleccionar cliente</h2>
-        <button type="button" class="modal-close" (click)="cerrarModalCliente()" aria-label="Cerrar">×</button>
-      </header>
-      <ul class="cliente-list">
-        @for (cliente of clientes(); track cliente.id) {
-          <li>
-            <button
-              type="button"
-              class="cliente-item"
-              [class.selected]="clienteSeleccionado()?.id === cliente.id"
-              (click)="seleccionarCliente(cliente)"
-            >
-              <span class="cliente-avatar">{{ cliente.nombre.charAt(0) }}</span>
-              <span class="cliente-nombre">{{ cliente.nombre }}</span>
-              @if (clienteSeleccionado()?.id === cliente.id) {
-                <span class="cliente-check">✓</span>
-              }
-            </button>
-          </li>
-        }
-      </ul>
-    </div>
-  </div>
+@if (showProveedorModal()) {
+  <app-compra-proveedor-modal
+    [seleccionActual]="proveedorSeleccionado()"
+    (closed)="cerrarModalProveedor()"
+    (seleccionado)="seleccionarProveedor($event)"
+  />
 }

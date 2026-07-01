@@ -1,0 +1,148 @@
+<app-rp-modal title="Seleccionar proveedor" [wide]="true" (closed)="cerrar()">
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <div class="proveedor-modal-tabs" role="tablist" aria-label="Tipos de proveedor">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="proveedor-modal-tab"
+        role="tab"
+        [class.active]="tabActiva() === tab.id"
+        [attr.aria-selected]="tabActiva() === tab.id"
+        (click)="setTab(tab.id)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <p class="proveedor-modal-desc">
+    @if (esTabInterna()) {
+      Seleccione el reciclador interno y la sucursal asociada.
+    } @else if (esTabExterna()) {
+      Seleccione el proveedor externo para la compra.
+    } @else {
+      Seleccione la empresa proveedora asociada.
+    }
+  </p>
+
+  <input
+    type="search"
+    class="proveedor-modal-search"
+    placeholder="Buscar..."
+    [value]="busqueda()"
+    (input)="onBusqueda($any($event.target).value)"
+  />
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando proveedores...</p>
+  } @else if (esTabInterna()) {
+    <div class="proveedor-modal-interno">
+      <section class="proveedor-modal-section">
+        <h3>Recicladores internos</h3>
+        <ul class="proveedor-modal-list">
+          @for (interno of internosFiltrados(); track interno.id) {
+            <li>
+              <button
+                type="button"
+                class="proveedor-modal-item"
+                [class.selected]="esInternoSeleccionado(interno.id)"
+                (click)="seleccionarInterno(interno)"
+              >
+                <span class="proveedor-modal-item__avatar">{{ interno.nombre.charAt(0) }}</span>
+                <span class="proveedor-modal-item__body">
+                  <strong>{{ interno.nombre }}</strong>
+                  <span>{{ interno.documento }}</span>
+                </span>
+                @if (esInternoSeleccionado(interno.id)) {
+                  <span class="proveedor-modal-item__check">✓</span>
+                }
+              </button>
+            </li>
+          } @empty {
+            <li class="rp-empty">No hay recicladores internos activos</li>
+          }
+        </ul>
+      </section>
+
+      @if (internoPendiente(); as interno) {
+        <section class="proveedor-modal-section">
+          <h3>Sucursales de {{ interno.nombre }}</h3>
+          @if (sucursalesInternoPendiente().length > 0) {
+            <ul class="proveedor-modal-list">
+              @for (sucursal of sucursalesInternoPendiente(); track sucursal.sucursalId) {
+                <li>
+                  <button
+                    type="button"
+                    class="proveedor-modal-item"
+                    [class.selected]="esSucursalSeleccionada(sucursal.sucursalId)"
+                    (click)="seleccionarSucursal(sucursal)"
+                  >
+                    <span class="proveedor-modal-item__body">
+                      <strong>{{ sucursal.nombre }}</strong>
+                      <span>{{ sucursal.nit }}@if (sucursal.municipio) { · {{ sucursal.municipio }} }</span>
+                    </span>
+                    @if (esSucursalSeleccionada(sucursal.sucursalId)) {
+                      <span class="proveedor-modal-item__check">✓</span>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+            <div class="proveedor-modal-actions">
+              <button type="button" class="rp-btn rp-btn--primary" (click)="confirmarInterno()">
+                Confirmar selección
+              </button>
+            </div>
+          } @else {
+            <p class="rp-empty">Este reciclador no tiene sucursales asociadas activas.</p>
+          }
+        </section>
+      }
+    </div>
+  } @else if (esTabExterna()) {
+    <ul class="proveedor-modal-list">
+      @for (externo of externosFiltrados(); track externo.id) {
+        <li>
+          <button
+            type="button"
+            class="proveedor-modal-item"
+            [class.selected]="esSeleccionActual(seleccionActual(), 'EXTERNO', externo.id)"
+            (click)="seleccionarExterno(externo)"
+          >
+            <span class="proveedor-modal-item__avatar">{{ externo.nombre.charAt(0) }}</span>
+            <span class="proveedor-modal-item__body">
+              <strong>{{ externo.nombre }}</strong>
+              <span>{{ externo.documento }}</span>
+            </span>
+          </button>
+        </li>
+      } @empty {
+        <li class="rp-empty">No hay proveedores externos activos</li>
+      }
+    </ul>
+  } @else {
+    <ul class="proveedor-modal-list">
+      @for (empresa of empresasFiltradas(); track empresa.id) {
+        <li>
+          <button
+            type="button"
+            class="proveedor-modal-item"
+            [class.selected]="esSeleccionActual(seleccionActual(), 'EMPRESA', empresa.id)"
+            (click)="seleccionarEmpresa(empresa)"
+          >
+            <span class="proveedor-modal-item__avatar">{{ empresa.razonSocial.charAt(0) }}</span>
+            <span class="proveedor-modal-item__body">
+              <strong>{{ empresa.razonSocial }}</strong>
+              <span>{{ empresa.nit }}@if (empresa.municipio) { · {{ empresa.municipio }} }</span>
+            </span>
+          </button>
+        </li>
+      } @empty {
+        <li class="rp-empty">No hay empresas proveedoras activas</li>
+      }
+    </ul>
+  }
+</app-rp-modal>

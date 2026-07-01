@@ -1,6 +1,10 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cliente } from '../../core/models/cliente.model';
+import {
+  CompraProveedorSeleccion,
+  compraProveedorEtiqueta,
+  compraProveedorTipoLabel,
+} from '../../core/models/compra-proveedor.model';
 import {
   CompraDetalleItem,
   EMPAQUE_OPCIONES,
@@ -12,37 +16,37 @@ import {
   productoPrecioKg,
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
-import { ClientesService } from '../../core/services/clientes.service';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
+import { CompraProveedorModalComponent } from './compra-proveedor-modal/compra-proveedor-modal.component';
 
 @Component({
   selector: 'app-compras',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CompraProveedorModalComponent],
   templateUrl: './compras.component.html',
   styleUrl: './compras.component.scss',
 })
 export class ComprasComponent implements OnInit {
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
-  private readonly clientesService = inject(ClientesService);
   private readonly comprasService = inject(ComprasService);
 
+  readonly compraProveedorEtiqueta = compraProveedorEtiqueta;
+  readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
   readonly empaqueOpciones = EMPAQUE_OPCIONES;
   readonly productoPrecioKg = productoPrecioKg;
   readonly productoImagenUrl = productoImagenUrl;
 
   readonly productos = signal<Producto[]>([]);
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
-  readonly clientes = signal<Cliente[]>([]);
   readonly items = signal<CompraDetalleItem[]>([]);
-  readonly clienteSeleccionado = signal<Cliente | null>(null);
+  readonly proveedorSeleccionado = signal<CompraProveedorSeleccion | null>(null);
   readonly busqueda = signal('');
   readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly loading = signal(false);
-  readonly showClienteModal = signal(false);
+  readonly showProveedorModal = signal(false);
   readonly procesando = signal(false);
   readonly mensaje = signal<string | null>(null);
   readonly error = signal<string | null>(null);
@@ -87,15 +91,6 @@ export class ComprasComponent implements OnInit {
       error: () => {
         this.error.set('No se pudieron cargar los productos.');
         this.loading.set(false);
-      },
-    });
-
-    this.clientesService.getActivos().subscribe({
-      next: (data) => {
-        this.clientes.set(data);
-        if (data.length > 0) {
-          this.clienteSeleccionado.set(data[0]);
-        }
       },
     });
 
@@ -162,17 +157,18 @@ export class ComprasComponent implements OnInit {
     this.items.update((list) => list.filter((i) => i.productoId !== productoId));
   }
 
-  abrirModalCliente(): void {
-    this.showClienteModal.set(true);
+  abrirModalProveedor(): void {
+    this.showProveedorModal.set(true);
   }
 
-  cerrarModalCliente(): void {
-    this.showClienteModal.set(false);
+  cerrarModalProveedor(): void {
+    this.showProveedorModal.set(false);
   }
 
-  seleccionarCliente(cliente: Cliente): void {
-    this.clienteSeleccionado.set(cliente);
-    this.showClienteModal.set(false);
+  seleccionarProveedor(proveedor: CompraProveedorSeleccion): void {
+    this.proveedorSeleccionado.set(proveedor);
+    this.showProveedorModal.set(false);
+    this.error.set(null);
   }
 
   itemTotal(item: CompraDetalleItem): number {
@@ -211,10 +207,10 @@ export class ComprasComponent implements OnInit {
   }
 
   procesar(metodo: 'TICKET' | 'CREDITO' | 'PAGO'): void {
-    const cliente = this.clienteSeleccionado();
-    if (!cliente) {
-      this.error.set('Seleccione un cliente para continuar.');
-      this.abrirModalCliente();
+    const proveedor = this.proveedorSeleccionado();
+    if (!proveedor) {
+      this.error.set('Seleccione un proveedor para continuar.');
+      this.abrirModalProveedor();
       return;
     }
     if (this.items().length === 0) {
@@ -227,7 +223,7 @@ export class ComprasComponent implements OnInit {
 
     this.comprasService
       .procesar({
-        cliente,
+        proveedor,
         items: this.items(),
         total: this.subtotal(),
         pesoTotal: this.pesoTotal(),

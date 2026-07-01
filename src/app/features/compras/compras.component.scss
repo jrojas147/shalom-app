@@ -290,6 +290,21 @@
   }
 }
 
+.detail-proveedor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+
+  &__tipo {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--rp-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+}
+
 .detail-label {
   font-weight: 500;
 }
