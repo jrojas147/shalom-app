@@ -288,6 +288,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   private matchesSearch(producto: Producto, q: string): boolean {
     const fields = [
+      String(producto.id),
       producto.nombreInterno,
       producto.codigoCiiu,
       producto.nombreCiiu,

@@ -75,7 +75,22 @@
   justify-content: flex-end;
 }
 
+.productos-id {
+  width: 4.5rem;
+  color: var(--rp-text-secondary);
+}
+
 .productos-modal-form {
+  .productos-id-field {
+    input {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--rp-text-secondary);
+      background: var(--rp-surface-muted);
+      cursor: default;
+    }
+  }
+
   .productos-nombre-uppercase {
     text-transform: uppercase;
   }
