@@ -5,6 +5,9 @@ import { roleGuard } from './core/guards/role.guard';
 const loadInicio = () =>
   import('./features/inicio/inicio.component').then((m) => m.InicioComponent);
 
+const adminDireccion = roleGuard(['ADMIN', 'DIRECCION']);
+const operadorModules = roleGuard(['ADMIN', 'DIRECCION', 'OPERADOR']);
+
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
@@ -21,42 +24,47 @@ export const routes: Routes = [
       ),
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
-      { path: 'inicio', loadComponent: loadInicio },
+      { path: 'inicio', canActivate: [adminDireccion], loadComponent: loadInicio },
       {
         path: 'compras',
+        canActivate: [operadorModules],
         loadComponent: () =>
           import('./features/compras/compras.component').then((m) => m.ComprasComponent),
       },
-      { path: 'caja', loadComponent: loadInicio },
-      { path: 'venta', loadComponent: loadInicio },
-      { path: 'liquidacion', loadComponent: loadInicio },
+      { path: 'caja', canActivate: [adminDireccion], loadComponent: loadInicio },
+      { path: 'venta', canActivate: [adminDireccion], loadComponent: loadInicio },
+      { path: 'liquidacion', canActivate: [adminDireccion], loadComponent: loadInicio },
       {
         path: 'productos',
+        canActivate: [adminDireccion],
         loadComponent: () =>
           import('./features/productos/productos.component').then((m) => m.ProductosComponent),
       },
-      { path: 'inventario', loadComponent: loadInicio },
+      { path: 'inventario', canActivate: [operadorModules], loadComponent: loadInicio },
       {
         path: 'proveedores',
+        canActivate: [adminDireccion],
         loadComponent: () =>
           import('./features/proveedores/proveedores.component').then((m) => m.ProveedoresComponent),
       },
-      { path: 'clientes', loadComponent: loadInicio },
-      { path: 'aliados', loadComponent: loadInicio },
-      { path: 'perfil', loadComponent: loadInicio },
+      { path: 'clientes', canActivate: [adminDireccion], loadComponent: loadInicio },
+      { path: 'aliados', canActivate: [adminDireccion], loadComponent: loadInicio },
+      { path: 'perfil', canActivate: [adminDireccion], loadComponent: loadInicio },
       {
         path: 'usuarios',
-        canActivate: [roleGuard(['ADMIN', 'DIRECCION', 'OPERADOR'])],
+        canActivate: [adminDireccion],
         loadComponent: () =>
           import('./features/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
       },
       {
         path: 'sucursales',
+        canActivate: [adminDireccion],
         loadComponent: () =>
           import('./features/sucursales/sucursales.component').then((m) => m.SucursalesComponent),
       },
       {
         path: 'parametrizacion',
+        canActivate: [adminDireccion],
         loadComponent: () =>
           import('./features/parametrizacion/parametrizacion.component').then(
             (m) => m.ParametrizacionComponent

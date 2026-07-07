@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { getDefaultAppRoute } from '../../../core/config/role-access';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -52,7 +53,8 @@ export class LoginComponent {
     this.auth.login({ username, password, cerrarSesionPrevia }).subscribe({
       next: () => {
         this.loading.set(false);
-        void this.router.navigate(['/app/inicio']);
+        const user = this.auth.currentUser();
+        void this.router.navigateByUrl(getDefaultAppRoute(user?.rol ?? 'ADMIN'));
       },
       error: (err: HttpErrorResponse) => this.handleError(err),
     });
