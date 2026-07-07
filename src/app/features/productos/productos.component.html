@@ -195,15 +195,66 @@
         </div>
 
         <div class="rp-field rp-field--full productos-imagen-field">
-          <label for="imagenArchivo">Imagen del producto</label>
-          <div class="productos-imagen-field__controls">
+          <span class="productos-imagen-field__label">Imagen del producto</span>
+          <label
+            class="productos-imagen-upload"
+            for="imagenArchivo"
+            [class.productos-imagen-upload--filled]="tieneImagen()"
+            [class.productos-imagen-upload--dragover]="imagenDragOver()"
+            [class.productos-imagen-upload--disabled]="saving()"
+            (dragover)="onImagenDragOver($event)"
+            (dragleave)="onImagenDragLeave($event)"
+            (drop)="onImagenDrop($event)"
+          >
             <input
+              #imagenArchivoInput
               id="imagenArchivo"
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               (change)="onImagenSelected($event)"
               [disabled]="saving()"
             />
+            @if (imagenPreview(); as preview) {
+              <div class="productos-imagen-upload__preview">
+                <img [src]="preview" alt="Vista previa del producto" />
+              </div>
+              <div class="productos-imagen-upload__body">
+                <span class="productos-imagen-upload__title">{{ imagenEtiqueta() }}</span>
+                <span class="productos-imagen-upload__subtitle">
+                  Haz clic o arrastra otra imagen para reemplazarla
+                </span>
+              </div>
+            } @else {
+              <div class="productos-imagen-upload__empty">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect
+                    x="3"
+                    y="5"
+                    width="18"
+                    height="14"
+                    rx="2"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                  />
+                  <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor" />
+                  <path
+                    d="M21 16l-5.5-5.5a1.5 1.5 0 00-2.12 0L3 21"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <span>
+                  Arrastra una imagen aquí o
+                  <strong>selecciona un archivo</strong>
+                </span>
+              </div>
+            }
+          </label>
+          <div class="productos-imagen-field__footer">
+            <span class="rp-hint">
+              JPG, PNG, WEBP o GIF. Máximo 5 MB. Se guarda al registrar el producto.
+            </span>
             @if (tieneImagen()) {
               <button
                 type="button"
@@ -215,12 +266,6 @@
               </button>
             }
           </div>
-          <span class="rp-hint">JPG, PNG, WEBP o GIF. Máximo 5 MB. Se guarda al registrar el producto.</span>
-          @if (imagenPreview(); as preview) {
-            <div class="productos-imagen-preview">
-              <img [src]="preview" alt="Vista previa del producto" />
-            </div>
-          }
         </div>
       </div>
 

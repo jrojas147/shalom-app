@@ -121,38 +121,168 @@
   }
 
   .productos-imagen-field {
-    &__controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing-sm);
-      align-items: center;
+    &__label {
+      display: block;
+      margin-bottom: var(--spacing-xs);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--rp-text-secondary);
     }
 
-    input[type='file'] {
-      flex: 1 1 220px;
-      min-width: 0;
-      font-size: 0.875rem;
+    &__footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-xs);
+
+      .rp-hint {
+        margin-top: 0;
+      }
     }
 
     &__remove {
       flex: 0 0 auto;
+      min-height: 36px;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
     }
   }
 
-  .productos-imagen-preview {
-    margin-top: var(--spacing-sm);
-    width: min(100%, 220px);
-    aspect-ratio: 1;
-    border: 1px solid var(--rp-border);
+  .productos-imagen-upload {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-height: 148px;
+    padding: var(--spacing-md);
+    border: 2px dashed var(--rp-border-strong);
     border-radius: var(--radius-md);
-    background: var(--rp-surface-muted, #f5f7f9);
-    overflow: hidden;
+    background: var(--rp-surface-muted);
+    cursor: pointer;
+    transition:
+      border-color 0.15s,
+      background 0.15s,
+      box-shadow 0.15s;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
+    &:hover:not(.productos-imagen-upload--disabled) {
+      border-color: var(--rp-primary);
+      background: var(--rp-primary-light);
+    }
+
+    &:focus-within:not(.productos-imagen-upload--disabled) {
+      outline: 2px solid var(--rp-primary-light);
+      outline-offset: 2px;
+      border-color: var(--rp-primary);
+    }
+
+    &--dragover {
+      border-color: var(--rp-primary);
+      background: var(--rp-primary-light);
+      box-shadow: 0 0 0 4px rgba(10, 107, 119, 0.12);
+    }
+
+    &--filled {
+      flex-direction: row;
+      align-items: stretch;
+      gap: var(--spacing-md);
+      min-height: auto;
+      padding: var(--spacing-sm);
+      border-style: solid;
+      border-color: var(--rp-border);
+      background: var(--rp-surface);
+
+      &:hover:not(.productos-imagen-upload--disabled) {
+        border-color: var(--rp-primary);
+        background: var(--rp-primary-light);
+      }
+    }
+
+    &--disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    input[type='file'] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    &__empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-sm);
+      max-width: 280px;
+      text-align: center;
+      color: var(--rp-text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.45;
+      pointer-events: none;
+
+      svg {
+        width: 42px;
+        height: 42px;
+        color: var(--rp-primary);
+      }
+
+      strong {
+        color: var(--rp-primary);
+        font-weight: 600;
+      }
+    }
+
+    &__preview {
+      flex: 0 0 88px;
+      width: 88px;
+      aspect-ratio: 1;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--rp-border);
+      background: var(--rp-surface-muted);
+      overflow: hidden;
+      pointer-events: none;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+    }
+
+    &__body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.25rem;
+      min-width: 0;
+      pointer-events: none;
+    }
+
+    &__title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--rp-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__subtitle {
+      font-size: 0.8125rem;
+      color: var(--rp-text-muted);
+      line-height: 1.4;
     }
   }
 

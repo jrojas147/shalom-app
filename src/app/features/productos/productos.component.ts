@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Producto,
@@ -22,6 +31,9 @@ const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image
   styleUrl: './productos.component.scss',
 })
 export class ProductosComponent implements OnInit, OnDestroy {
+  @ViewChild('imagenArchivoInput')
+  private imagenArchivoInput?: ElementRef<HTMLInputElement>;
+
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
@@ -35,6 +47,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly imagenPendiente = signal<File | null>(null);
   readonly imagenGuardada = signal<string | null>(null);
   readonly imagenEliminada = signal(false);
+  readonly imagenDragOver = signal(false);
 
   readonly imagenPreview = computed(() => {
     if (this.previewObjectUrl) {
@@ -49,6 +62,14 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly tieneImagen = computed(
     () => !!this.imagenPendiente() || (!this.imagenEliminada() && !!this.imagenGuardada())
   );
+
+  readonly imagenEtiqueta = computed(() => {
+    const pendiente = this.imagenPendiente();
+    if (pendiente) {
+      return pendiente.name;
+    }
+    return 'Imagen actual del producto';
+  });
 
   readonly productos = signal<Producto[]>([]);
   readonly busqueda = signal('');
@@ -129,29 +150,48 @@ export class ProductosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!IMAGEN_TIPOS_PERMITIDOS.includes(file.type)) {
-      this.error.set('Formato no permitido. Use JPG, PNG, WEBP o GIF.');
-      input.value = '';
+    this.processImagenFile(file, input);
+  }
+
+  onImagenDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (this.saving()) {
+      return;
+    }
+    this.imagenDragOver.set(true);
+  }
+
+  onImagenDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    const currentTarget = event.currentTarget as HTMLElement;
+    const relatedTarget = event.relatedTarget as Node | null;
+    if (relatedTarget && currentTarget.contains(relatedTarget)) {
+      return;
+    }
+    this.imagenDragOver.set(false);
+  }
+
+  onImagenDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.imagenDragOver.set(false);
+
+    if (this.saving()) {
       return;
     }
 
-    if (file.size > MAX_IMAGEN_BYTES) {
-      this.error.set('La imagen no puede superar 5 MB.');
-      input.value = '';
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) {
       return;
     }
 
-    this.revokePreviewObjectUrl();
-    this.previewObjectUrl = URL.createObjectURL(file);
-    this.imagenPendiente.set(file);
-    this.imagenEliminada.set(false);
-    this.error.set(null);
+    this.processImagenFile(file, this.imagenArchivoInput?.nativeElement);
   }
 
   removeImagen(): void {
     this.revokePreviewObjectUrl();
     this.imagenPendiente.set(null);
     this.imagenEliminada.set(true);
+    this.resetImagenInput();
   }
 
   save(): void {
@@ -273,6 +313,39 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.imagenPendiente.set(null);
     this.imagenGuardada.set(null);
     this.imagenEliminada.set(false);
+    this.imagenDragOver.set(false);
+    this.resetImagenInput();
+  }
+
+  private processImagenFile(file: File, input?: HTMLInputElement): void {
+    if (!IMAGEN_TIPOS_PERMITIDOS.includes(file.type)) {
+      this.error.set('Formato no permitido. Use JPG, PNG, WEBP o GIF.');
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    if (file.size > MAX_IMAGEN_BYTES) {
+      this.error.set('La imagen no puede superar 5 MB.');
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.revokePreviewObjectUrl();
+    this.previewObjectUrl = URL.createObjectURL(file);
+    this.imagenPendiente.set(file);
+    this.imagenEliminada.set(false);
+    this.error.set(null);
+  }
+
+  private resetImagenInput(): void {
+    const input = this.imagenArchivoInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
   }
 
   private revokePreviewObjectUrl(): void {
