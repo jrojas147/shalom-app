@@ -85,6 +85,10 @@ export class ComprasComponent implements OnInit {
     this.items().reduce((sum, item) => sum + item.pesoKg, 0)
   );
 
+  readonly puedeRegistrarPreCompra = computed(
+    () => !!this.proveedorSeleccionado() && this.items().length > 0
+  );
+
   ngOnInit(): void {
     this.loading.set(true);
     this.productosService.getActivos().subscribe({
