@@ -107,6 +107,10 @@ export class ClientesComponent implements OnInit {
         this.form.patchValue({ sexo: 'M' });
       }
     });
+
+    this.form.controls.departamentoId.valueChanges.subscribe((departamentoId) => {
+      this.loadMunicipios(departamentoId);
+    });
   }
 
   loadClientes(): void {
@@ -153,8 +157,8 @@ export class ClientesComponent implements OnInit {
     this.resetForm();
   }
 
-  onDepartamentoChange(departamentoId: number | null): void {
-    this.form.patchValue({ municipioId: null });
+  private loadMunicipios(departamentoId: number | null): void {
+    this.form.patchValue({ municipioId: null }, { emitEvent: false });
     this.municipios.set([]);
 
     if (!departamentoId) {
@@ -313,7 +317,7 @@ export class ClientesComponent implements OnInit {
       return;
     }
 
-    this.form.patchValue({ departamentoId: departamento.id });
+    this.form.patchValue({ departamentoId: departamento.id }, { emitEvent: false });
     this.form.controls.municipioId.enable();
     this.ubicacionesService.getMunicipiosByDepartamento(departamento.id).subscribe({
       next: (municipios) => {
@@ -321,7 +325,7 @@ export class ClientesComponent implements OnInit {
         const municipio = municipios.find(
           (m) => m.nombre.toLowerCase() === (municipioNombre ?? '').toLowerCase()
         );
-        this.form.patchValue({ municipioId: municipio?.id ?? null });
+        this.form.patchValue({ municipioId: municipio?.id ?? null }, { emitEvent: false });
       },
     });
   }

@@ -234,11 +234,7 @@
 
         <div class="rp-field">
           <label for="departamentoId">Departamento</label>
-          <select
-            id="departamentoId"
-            formControlName="departamentoId"
-            (change)="onDepartamentoChange($any($event.target).value ? +$any($event.target).value : null)"
-          >
+          <select id="departamentoId" formControlName="departamentoId">
             <option [ngValue]="null">Seleccione...</option>
             @for (dep of departamentos(); track dep.id) {
               <option [ngValue]="dep.id">{{ dep.nombre }}</option>
