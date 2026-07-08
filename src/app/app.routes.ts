@@ -49,7 +49,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/productos/productos.component').then((m) => m.ProductosComponent),
       },
-      { path: 'inventario', canActivate: [operadorModules], loadComponent: loadInicio },
+      {
+        path: 'inventario',
+        canActivate: [operadorModules],
+        loadComponent: () =>
+          import('./features/inventario/inventario.component').then((m) => m.InventarioComponent),
+      },
       {
         path: 'proveedores',
         canActivate: [adminDireccion],

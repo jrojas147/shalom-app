@@ -209,6 +209,15 @@
     }
   }
 
+  &--danger {
+    background: var(--rp-danger);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: #a93226;
+    }
+  }
+
   &--icon {
     width: 36px;
     height: 36px;

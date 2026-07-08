@@ -18,6 +18,7 @@ import {
 import { Producto, productoPrecioKg } from '../../core/models/producto.model';
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
+import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal/compra-proveedor-modal.component';
 
@@ -36,6 +37,7 @@ import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal
 export class GestionComprasComponent implements OnInit {
   private readonly comprasService = inject(ComprasService);
   private readonly productosService = inject(ProductosService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly compraProveedorEtiqueta = compraProveedorEtiqueta;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
@@ -204,10 +206,26 @@ export class GestionComprasComponent implements OnInit {
       this.error.set('La pre-compra debe tener al menos un producto.');
       return;
     }
-    if (!confirm('¿Confirmar esta pre-compra? Se actualizará el inventario.')) {
-      return;
-    }
 
+    this.confirmDialog
+      .confirm({
+        title: 'Confirmar pre-compra',
+        message: '¿Confirmar esta pre-compra? Se actualizará el inventario.',
+        confirmLabel: 'Confirmar',
+        cancelLabel: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+        this.ejecutarConfirmacionCompra(compra, proveedor);
+      });
+  }
+
+  private ejecutarConfirmacionCompra(
+    compra: Compra,
+    proveedor: CompraProveedorSeleccion
+  ): void {
     this.saving.set(true);
     this.error.set(null);
     const payload = this.buildPayload(proveedor);

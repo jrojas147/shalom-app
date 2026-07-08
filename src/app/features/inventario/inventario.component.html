@@ -1,0 +1,246 @@
+<div class="inventario">
+  <header class="rp-page-header">
+    <div>
+      <h1>Inventario</h1>
+      <p>Consulta de existencias por producto y entradas registradas al confirmar compras.</p>
+    </div>
+  </header>
+
+  @if (error() && !showDetalle()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <section class="inventario-stats">
+    <article class="inventario-stat">
+      <span class="inventario-stat__label">Productos con stock</span>
+      <strong class="inventario-stat__value">{{ totalProductos() }}</strong>
+    </article>
+    <article class="inventario-stat">
+      <span class="inventario-stat__label">Kg disponibles</span>
+      <strong class="inventario-stat__value">{{ formatPeso(totalKgDisponible()) }} KG</strong>
+    </article>
+    <article class="inventario-stat">
+      <span class="inventario-stat__label">Entradas disponibles</span>
+      <strong class="inventario-stat__value">{{ entradasDisponibles() }}</strong>
+    </article>
+  </section>
+
+  <section class="rp-panel inventario-panel">
+    <div class="panel-header inventario__toolbar">
+      <div class="inventario-tabs">
+        <button
+          type="button"
+          class="inventario-tab"
+          [class.active]="vista() === 'resumen'"
+          (click)="setVista('resumen')"
+        >
+          Resumen por producto
+        </button>
+        <button
+          type="button"
+          class="inventario-tab"
+          [class.active]="vista() === 'detalle'"
+          (click)="setVista('detalle')"
+        >
+          Entradas detalladas
+        </button>
+      </div>
+      <button type="button" class="rp-btn rp-btn--secondary" (click)="loadInventario()">
+        Actualizar
+      </button>
+    </div>
+
+    <div class="inventario__filters">
+      <input
+        type="search"
+        class="inventario__search"
+        [placeholder]="
+          vista() === 'resumen'
+            ? 'Buscar por código o nombre de producto...'
+            : 'Buscar por ID, producto, estado, ubicación o proveedor...'
+        "
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+
+      @if (vista() === 'detalle') {
+        <select
+          class="inventario__estado-filter"
+          [ngModel]="estadoFiltro()"
+          (ngModelChange)="onEstadoFiltroChange($event)"
+        >
+          <option value="">Todos los estados</option>
+          @for (estado of inventarioEstados; track estado) {
+            <option [value]="estado">{{ inventarioEstadoLabel(estado) }}</option>
+          }
+        </select>
+      }
+    </div>
+
+    @if (vista() === 'detalle' && productoFiltroId() !== null) {
+      <div class="inventario__product-filter">
+        <span>Filtrando por: <strong>{{ productoFiltroNombre() }}</strong></span>
+        <button type="button" class="rp-btn rp-btn--ghost" (click)="limpiarFiltroProducto()">
+          Quitar filtro
+        </button>
+      </div>
+    }
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando inventario...</p>
+    } @else if (vista() === 'resumen') {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Producto</th>
+            <th class="cell-num">Disponible (KG)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of resumenFiltrado(); track item.codigoProducto) {
+            <tr>
+              <td class="cell-mono">{{ item.codigoProducto }}</td>
+              <td class="cell-primary">{{ item.nombreProducto }}</td>
+              <td class="cell-num cell-primary">{{ formatPeso(item.cantidadDisponible) }}</td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--ghost"
+                  (click)="verEntradasProducto(item)"
+                >
+                  Ver entradas
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="cell-empty">No hay existencias disponibles.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Producto</th>
+            <th class="cell-num">Cantidad (KG)</th>
+            <th class="cell-num">P. compra</th>
+            <th class="cell-num">P. venta</th>
+            <th>Estado</th>
+            <th>Ubicación</th>
+            <th>Fecha entrada</th>
+            <th>Proveedor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entrada of entradasFiltradas(); track entrada.idInventario) {
+            <tr>
+              <td class="cell-mono">{{ entrada.idInventario }}</td>
+              <td>
+                <span class="cell-primary">{{ entrada.nombreProducto }}</span>
+                <span class="cell-secondary cell-sub">#{{ entrada.codigoProducto }}</span>
+              </td>
+              <td class="cell-num">{{ formatPeso(entrada.cantidadDisponible) }}</td>
+              <td class="cell-num cell-secondary">{{ formatCurrency(entrada.precioCompraUnitario) }}</td>
+              <td class="cell-num cell-secondary">{{ formatCurrency(entrada.precioVentaUnitario) }}</td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--success]="entrada.estado === 'DISPONIBLE'"
+                  [class.rp-badge--danger]="entrada.estado === 'AGOTADO'"
+                  [class.rp-badge--warning]="entrada.estado === 'BLOQUEADO'"
+                >
+                  {{ inventarioEstadoLabel(entrada.estado) }}
+                </span>
+              </td>
+              <td class="cell-secondary">{{ entrada.ubicacion || '—' }}</td>
+              <td class="cell-secondary">{{ entrada.fechaEntrada | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="cell-secondary">{{ proveedorResumen(entrada) }}</td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--ghost"
+                  (click)="openDetalle(entrada)"
+                >
+                  Ver
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="10" class="cell-empty">No hay entradas que coincidan con la búsqueda.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
+
+@if (showDetalle() && entradaSeleccionada(); as entrada) {
+  <app-rp-modal title="Detalle de entrada" (closed)="cerrarDetalle()">
+    <div class="inventario-detalle">
+      <dl class="inventario-detalle__grid">
+        <div>
+          <dt>ID inventario</dt>
+          <dd>{{ entrada.idInventario }}</dd>
+        </div>
+        <div>
+          <dt>Producto</dt>
+          <dd>{{ entrada.nombreProducto }} (#{{ entrada.codigoProducto }})</dd>
+        </div>
+        <div>
+          <dt>Cantidad disponible</dt>
+          <dd>{{ formatPeso(entrada.cantidadDisponible) }} KG</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>{{ inventarioEstadoLabel(entrada.estado) }}</dd>
+        </div>
+        <div>
+          <dt>Precio compra</dt>
+          <dd>{{ formatCurrency(entrada.precioCompraUnitario) }}</dd>
+        </div>
+        <div>
+          <dt>Precio venta</dt>
+          <dd>{{ formatCurrency(entrada.precioVentaUnitario) }}</dd>
+        </div>
+        <div>
+          <dt>Ubicación</dt>
+          <dd>{{ entrada.ubicacion || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Proveedor</dt>
+          <dd>{{ proveedorResumen(entrada) }}</dd>
+        </div>
+        <div>
+          <dt>Fecha entrada</dt>
+          <dd>{{ entrada.fechaEntrada | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        </div>
+        <div>
+          <dt>Fecha salida</dt>
+          <dd>
+            @if (entrada.fechaSalida) {
+              {{ entrada.fechaSalida | date: 'dd/MM/yyyy HH:mm' }}
+            } @else {
+              —
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Detalle compra</dt>
+          <dd>{{ entrada.compraDetalleId ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Usuario registro</dt>
+          <dd>{{ entrada.usuarioRegistro }}</dd>
+        </div>
+      </dl>
+    </div>
+  </app-rp-modal>
+}

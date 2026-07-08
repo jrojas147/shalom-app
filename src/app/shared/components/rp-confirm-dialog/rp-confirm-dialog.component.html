@@ -1,0 +1,50 @@
+@if (options(); as opts) {
+  <div class="rp-confirm-overlay" (click)="onOverlayClick()">
+    <div
+      class="rp-confirm-panel"
+      role="alertdialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'rp-confirm-title'"
+      [attr.aria-describedby]="'rp-confirm-message'"
+      (click)="$event.stopPropagation()"
+    >
+      <div
+        class="rp-confirm-icon"
+        [class.rp-confirm-icon--danger]="opts.confirmVariant === 'danger'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          @if (opts.confirmVariant === 'danger') {
+            <path
+              d="M12 9v4M12 17h.01M10.3 4.5h3.4L20 19H4L10.3 4.5z"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          } @else {
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+            <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          }
+        </svg>
+      </div>
+
+      <h2 id="rp-confirm-title" class="rp-confirm-title">{{ opts.title }}</h2>
+      <p id="rp-confirm-message" class="rp-confirm-message">{{ opts.message }}</p>
+
+      <div class="rp-confirm-actions">
+        <button type="button" class="rp-btn rp-btn--ghost" (click)="cancel()">
+          {{ opts.cancelLabel }}
+        </button>
+        <button
+          type="button"
+          class="rp-btn"
+          [class.rp-btn--primary]="opts.confirmVariant === 'primary'"
+          [class.rp-btn--danger]="opts.confirmVariant === 'danger'"
+          (click)="accept()"
+        >
+          {{ opts.confirmLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
