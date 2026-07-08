@@ -21,7 +21,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },
   { label: 'Usuarios', route: '/app/usuarios', icon: 'usuarios' },
   { label: 'Parametrizacion', route: '/app/parametrizacion', icon: 'parametrizacion' },
-  { label: 'Perfil', route: '/app/perfil', icon: 'perfil' },
+  //{ label: 'Perfil', route: '/app/perfil', icon: 'perfil' },
 ];
 
 const OPERADOR_MENU: NavMenuItem[] = [

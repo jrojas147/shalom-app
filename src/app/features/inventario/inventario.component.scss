@@ -1,26 +1,74 @@
+.inventario {
+  .rp-page-header {
+    margin-bottom: var(--spacing-md);
+
+    h1 {
+      font-size: 1.375rem;
+    }
+
+    p {
+      margin-top: 0.125rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .inventario-panel.rp-panel {
+    padding: var(--spacing-sm) var(--spacing-md);
+
+    .panel-header {
+      margin-bottom: var(--spacing-sm);
+    }
+  }
+
+  .rp-table {
+    thead th {
+      padding: 0.375rem 0.625rem;
+    }
+
+    tbody td {
+      padding: 0.5rem 0.625rem;
+      font-size: 0.8125rem;
+    }
+
+    .cell-secondary {
+      font-size: 0.75rem;
+    }
+
+    .cell-mono {
+      font-size: 0.75rem;
+    }
+  }
+
+  .rp-btn {
+    min-height: 34px;
+    padding: 0.4375rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+}
+
 .inventario-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .inventario-stat {
-  padding: var(--spacing-md);
+  padding: 0.625rem 0.75rem;
   border: 1px solid var(--rp-border);
   border-radius: var(--radius-md);
   background: var(--rp-surface);
 
   &__label {
     display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.8125rem;
+    margin-bottom: 0.125rem;
+    font-size: 0.75rem;
     color: var(--rp-text-secondary);
   }
 
   &__value {
     font-family: var(--font-headline);
-    font-size: 1.25rem;
+    font-size: 1.0625rem;
     color: var(--rp-text);
   }
 }
@@ -33,7 +81,7 @@
 
 .inventario__toolbar {
   flex-wrap: wrap;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   align-items: center;
   justify-content: space-between;
 }
@@ -47,13 +95,13 @@
 .inventario-tab {
   display: inline-flex;
   align-items: center;
-  padding: 0.5rem 0.875rem;
+  padding: 0.375rem 0.75rem;
   border: 1px solid var(--rp-border);
   border-radius: var(--radius-full);
   background: var(--rp-surface);
   color: var(--rp-text-secondary);
   font-family: var(--font-headline);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -74,19 +122,19 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .inventario__search {
   flex: 1 1 280px;
   min-width: 0;
-  padding: 0.5625rem 0.875rem;
+  padding: 0.4375rem 0.75rem;
   border: 1px solid var(--rp-border);
   border-radius: var(--radius-md);
   background: var(--rp-surface);
   color: var(--rp-text);
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 
   &::placeholder {
     color: var(--rp-text-muted);
@@ -100,13 +148,13 @@
 
 .inventario__estado-filter {
   flex: 0 0 auto;
-  min-width: 180px;
-  padding: 0.5625rem 0.875rem;
+  min-width: 160px;
+  padding: 0.4375rem 0.75rem;
   border: 1px solid var(--rp-border);
   border-radius: var(--radius-md);
   background: var(--rp-surface);
   color: var(--rp-text);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .inventario__product-filter {
@@ -114,12 +162,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  padding: 0.5rem 0.75rem;
+  margin-bottom: var(--spacing-sm);
+  padding: 0.375rem 0.625rem;
   border-radius: var(--radius-md);
   background: var(--rp-info-bg);
   color: var(--rp-text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .cell-num {
@@ -141,13 +189,13 @@
 .cell-empty {
   text-align: center;
   color: var(--rp-text-muted);
-  padding: var(--spacing-lg) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-sm);
 }
 
 .inventario-detalle__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-sm) var(--spacing-md);
+  gap: 0.375rem var(--spacing-sm);
   margin: 0;
 
   div {
@@ -165,7 +213,7 @@
 
   dd {
     margin: 0;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: var(--rp-text);
     word-break: break-word;
   }
