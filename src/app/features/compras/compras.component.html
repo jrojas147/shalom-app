@@ -99,15 +99,6 @@
             <div class="item-info">
               <strong class="item-name">{{ item.producto.nombreInterno }}</strong>
             </div>
-            <select
-              class="item-empaque"
-              [ngModel]="item.empaque"
-              (ngModelChange)="setEmpaque(item.productoId, $event)"
-            >
-              @for (op of empaqueOpciones; track op.value) {
-                <option [value]="op.value">{{ op.label }}</option>
-              }
-            </select>
             <button
               type="button"
               class="item-delete"
@@ -118,6 +109,19 @@
                 <path d="M6 7h12M10 7V5h4v2M9 11v6M15 11v6M8 7l1 12h6l1-12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
+          </div>
+          <div class="item-empaque-row">
+            <label class="item-empaque-label" [for]="'empaque-' + item.productoId">Empaque</label>
+            <select
+              [id]="'empaque-' + item.productoId"
+              class="item-empaque"
+              [ngModel]="item.empaque"
+              (ngModelChange)="setEmpaque(item.productoId, $event)"
+            >
+              @for (op of empaqueOpciones; track op.value) {
+                <option [value]="op.value">{{ op.label }}</option>
+              }
+            </select>
           </div>
           <div class="item-bottom">
             <div class="weight-control">
