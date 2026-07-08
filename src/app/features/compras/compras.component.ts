@@ -54,7 +54,7 @@ export class ComprasComponent implements OnInit {
   readonly procesando = signal(false);
   readonly mensaje = signal<string | null>(null);
   readonly error = signal<string | null>(null);
-  readonly factura = signal('0042');
+  readonly factura = signal('—');
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
@@ -210,7 +210,7 @@ export class ComprasComponent implements OnInit {
     return '📦';
   }
 
-  procesarPago(): void {
+  registrarPreCompra(): void {
     const proveedor = this.proveedorSeleccionado();
     if (!proveedor) {
       this.error.set('Seleccione un proveedor para continuar.');
@@ -234,7 +234,7 @@ export class ComprasComponent implements OnInit {
     const pesoSnapshot = this.pesoTotal();
 
     this.comprasService
-      .procesar({
+      .registrarPreCompra({
         proveedor: proveedorSnapshot,
         items: itemsSnapshot,
         total: totalSnapshot,
@@ -247,12 +247,24 @@ export class ComprasComponent implements OnInit {
           this.mensaje.set(res.mensaje);
           this.imprimirFactura(res.factura, proveedorSnapshot, itemsSnapshot, totalSnapshot, pesoSnapshot);
           this.items.set([]);
+          this.proveedorSeleccionado.set(null);
         },
-        error: () => {
+        error: (err) => {
           this.procesando.set(false);
-          this.error.set('No se pudo procesar la compra.');
+          this.error.set(this.extractErrorMessage(err));
         },
       });
+  }
+
+  private extractErrorMessage(err: {
+    error?: { message?: string; errors?: Record<string, string> };
+  }): string {
+    const body = err.error;
+    if (body?.errors) {
+      const first = Object.values(body.errors)[0];
+      if (first) return first;
+    }
+    return body?.message ?? 'No se pudo registrar la pre-compra.';
   }
 
   private imprimirFactura(

@@ -6,6 +6,7 @@ const loadInicio = () =>
   import('./features/inicio/inicio.component').then((m) => m.InicioComponent);
 
 const adminDireccion = roleGuard(['ADMIN', 'DIRECCION']);
+const operadorOnly = roleGuard(['OPERADOR']);
 const operadorModules = roleGuard(['ADMIN', 'DIRECCION', 'OPERADOR']);
 
 export const routes: Routes = [
@@ -26,10 +27,18 @@ export const routes: Routes = [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
       { path: 'inicio', canActivate: [adminDireccion], loadComponent: loadInicio },
       {
-        path: 'compras',
-        canActivate: [operadorModules],
+        path: 'pre-compra',
+        canActivate: [operadorOnly],
         loadComponent: () =>
           import('./features/compras/compras.component').then((m) => m.ComprasComponent),
+      },
+      {
+        path: 'compras',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/gestion-compras/gestion-compras.component').then(
+            (m) => m.GestionComprasComponent
+          ),
       },
       { path: 'caja', canActivate: [adminDireccion], loadComponent: loadInicio },
       { path: 'venta', canActivate: [adminDireccion], loadComponent: loadInicio },

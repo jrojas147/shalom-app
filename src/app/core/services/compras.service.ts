@@ -1,29 +1,70 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { CompraProveedorSeleccion, compraProveedorEtiqueta } from '../models/compra-proveedor.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { API_CORE_URL } from '../config/api.config';
 import { CompraDetalleItem } from '../models/compra.model';
+import { CompraProveedorSeleccion } from '../models/compra-proveedor.model';
+import {
+  Compra,
+  CompraEstado,
+  RegistrarCompraRequest,
+  RegistrarCompraResponse,
+} from '../models/compra-registro.model';
 
-export interface ProcesarCompraRequest {
+export interface RegistrarPreCompraPayload {
   proveedor: CompraProveedorSeleccion;
   items: CompraDetalleItem[];
   total: number;
   pesoTotal: number;
 }
 
-export interface ProcesarCompraResponse {
-  factura: string;
-  mensaje: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class ComprasService {
-  private facturaCounter = 42;
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${API_CORE_URL}/api/compras`;
 
-  procesar(request: ProcesarCompraRequest): Observable<ProcesarCompraResponse> {
-    const factura = String(this.facturaCounter++).padStart(4, '0');
-    return of({
-      factura,
-      mensaje: `Compra procesada para ${compraProveedorEtiqueta(request.proveedor)}`,
-    });
+  listar(estado: CompraEstado = 'PENDIENTE'): Observable<Compra[]> {
+    const params = new HttpParams().set('estado', estado);
+    return this.http.get<Compra[]>(this.baseUrl, { params });
+  }
+
+  obtener(id: number): Observable<Compra> {
+    return this.http.get<Compra>(`${this.baseUrl}/${id}`);
+  }
+
+  registrarPreCompra(payload: RegistrarPreCompraPayload): Observable<RegistrarCompraResponse> {
+    return this.http.post<RegistrarCompraResponse>(
+      `${this.baseUrl}/pre-compra`,
+      this.toRequest(payload)
+    );
+  }
+
+  actualizar(id: number, payload: RegistrarPreCompraPayload): Observable<Compra> {
+    return this.http.put<Compra>(`${this.baseUrl}/${id}`, this.toRequest(payload));
+  }
+
+  confirmar(id: number, payload?: RegistrarPreCompraPayload): Observable<RegistrarCompraResponse> {
+    const url = `${this.baseUrl}/${id}/confirmar`;
+    if (payload) {
+      return this.http.post<RegistrarCompraResponse>(url, this.toRequest(payload));
+    }
+    return this.http.post<RegistrarCompraResponse>(url, null);
+  }
+
+  private toRequest(payload: RegistrarPreCompraPayload): RegistrarCompraRequest {
+    return {
+      proveedor: {
+        tipo: payload.proveedor.tipo,
+        proveedorId: payload.proveedor.proveedorId,
+        sucursalId: payload.proveedor.sucursalId,
+      },
+      items: payload.items.map((item) => ({
+        productoId: item.productoId,
+        pesoKg: item.pesoKg,
+        empaque: item.empaque,
+      })),
+      total: payload.total,
+      pesoTotal: payload.pesoTotal,
+    };
   }
 }

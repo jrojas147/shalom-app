@@ -54,7 +54,7 @@ export class LoginComponent {
       next: () => {
         this.loading.set(false);
         const user = this.auth.currentUser();
-        void this.router.navigateByUrl(getDefaultAppRoute(user?.rol ?? 'ADMIN'));
+        void this.router.navigateByUrl(getDefaultAppRoute(user?.rol));
       },
       error: (err: HttpErrorResponse) => this.handleError(err),
     });

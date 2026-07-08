@@ -3,7 +3,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, finalize, of, tap } from 'rxjs';
 import { API_AUTH_URL } from '../config/api.config';
-import { LoginRequest, LoginResponse, RefreshRequest, User } from '../models/user.model';
+import { normalizeUserRole } from '../config/role-access';
+import { LoginRequest, LoginResponse, RefreshRequest, User, UserRole } from '../models/user.model';
 
 const TOKEN_KEY = 'shofi_token';
 const REFRESH_KEY = 'shofi_refresh';
@@ -55,9 +56,10 @@ export class AuthService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
-  hasRole(...roles: string[]): boolean {
+  hasRole(...roles: UserRole[]): boolean {
     const user = this.currentUserSignal();
-    return !!user && roles.includes(user.rol);
+    const normalized = normalizeUserRole(user?.rol);
+    return !!normalized && roles.includes(normalized);
   }
 
   /** Comercio efectivo: del usuario o, para DIRECCION, el seleccionado (default demo = 1). */
@@ -86,10 +88,11 @@ export class AuthService {
   }
 
   private persistSession(response: LoginResponse): void {
+    const user = this.normalizeUser(response.user);
     localStorage.setItem(TOKEN_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-    this.currentUserSignal.set(response.user);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    this.currentUserSignal.set(user);
   }
 
   private clearSession(): void {
@@ -105,9 +108,14 @@ export class AuthService {
       return null;
     }
     try {
-      return JSON.parse(raw) as User;
+      return this.normalizeUser(JSON.parse(raw) as User);
     } catch {
       return null;
     }
+  }
+
+  private normalizeUser(user: User): User {
+    const rol = normalizeUserRole(user.rol);
+    return rol ? { ...user, rol } : user;
   }
 }

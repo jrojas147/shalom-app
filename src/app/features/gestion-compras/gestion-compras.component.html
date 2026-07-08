@@ -1,0 +1,198 @@
+<div class="gestion-compras">
+  <header class="rp-page-header">
+    <div>
+      <h1>Compras</h1>
+      <p>Pre-compras pendientes de confirmación. Al confirmar se actualiza el inventario.</p>
+    </div>
+  </header>
+
+  @if (error() && !compraSeleccionada()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (mensaje() && !compraSeleccionada()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  <section class="rp-panel">
+    <div class="panel-header">
+      <h2>Pre-compras pendientes</h2>
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Factura</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Peso</th>
+            <th>Total</th>
+            <th>Registrado por</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (compra of compras(); track compra.id) {
+            <tr>
+              <td class="cell-mono">{{ compra.numeroFactura }}</td>
+              <td class="cell-secondary">{{ compra.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <span class="cell-primary">{{ compra.proveedorNombre }}</span>
+                @if (compra.sucursalNombre) {
+                  <span class="cell-secondary"> — {{ compra.sucursalNombre }}</span>
+                }
+              </td>
+              <td class="cell-secondary">{{ formatPeso(compra.pesoTotal) }} KG</td>
+              <td class="cell-secondary">{{ formatCurrency(compra.total) }}</td>
+              <td class="cell-secondary">{{ compra.usuarioRegistroNombre ?? '—' }}</td>
+              <td class="cell-actions">
+                <button type="button" class="rp-btn rp-btn--secondary" (click)="abrirDetalle(compra)">
+                  Ver detalle
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="rp-empty">No hay pre-compras pendientes</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
+
+@if (compraSeleccionada(); as compra) {
+  <app-rp-modal
+    [title]="'Pre-compra ' + compra.numeroFactura"
+    [wide]="true"
+    (closed)="cerrarDetalle()"
+  >
+    @if (error()) {
+      <div class="rp-alert rp-alert--error">{{ error() }}</div>
+    }
+
+    <div class="gestion-compras-modal">
+      <div class="gestion-compras-modal__meta">
+        <div>
+          <span class="meta-label">Estado</span>
+          <span class="rp-badge rp-badge--warning">Pendiente</span>
+        </div>
+        <div>
+          <span class="meta-label">Fecha registro</span>
+          <strong>{{ compra.createdAt | date: 'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+        <div>
+          <span class="meta-label">Registrado por</span>
+          <strong>{{ compra.usuarioRegistroNombre ?? '—' }}</strong>
+        </div>
+      </div>
+
+      <div class="gestion-compras-modal__section">
+        <div class="section-header">
+          <h3>Proveedor</h3>
+          @if (editMode()) {
+            <button type="button" class="rp-btn rp-btn--ghost" (click)="abrirModalProveedor()">
+              Cambiar proveedor
+            </button>
+          }
+        </div>
+        @if (proveedorEdit(); as proveedor) {
+          <p class="proveedor-resumen">
+            <strong>{{ compraProveedorEtiqueta(proveedor) }}</strong>
+            <span>{{ compraProveedorTipoLabel(proveedor.tipo) }}</span>
+          </p>
+        }
+      </div>
+
+      <div class="gestion-compras-modal__section">
+        <h3>Productos</h3>
+        <table class="rp-table gestion-compras-modal__table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Peso (KG)</th>
+              <th>Empaque</th>
+              <th>Precio/kg</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of itemsEdit(); track item.productoId) {
+              <tr>
+                <td class="cell-primary">{{ item.producto.nombreInterno }}</td>
+                <td class="gestion-compras-modal__peso">
+                  @if (editMode()) {
+                    <div class="weight-inline">
+                      <button type="button" (click)="ajustarPeso(item.productoId, -0.5)">−</button>
+                      <input
+                        type="text"
+                        [value]="formatPeso(item.pesoKg)"
+                        (change)="onPesoInput(item.productoId, $any($event.target).value)"
+                      />
+                      <button type="button" (click)="ajustarPeso(item.productoId, 0.5)">+</button>
+                    </div>
+                  } @else {
+                    {{ formatPeso(item.pesoKg) }}
+                  }
+                </td>
+                <td>
+                  @if (editMode()) {
+                    <select
+                      [ngModel]="item.empaque"
+                      (ngModelChange)="setEmpaque(item.productoId, $event)"
+                    >
+                      @for (op of empaqueOpciones; track op.value) {
+                        <option [value]="op.value">{{ op.label }}</option>
+                      }
+                    </select>
+                  } @else {
+                    {{ empaqueLabel(item.empaque) }}
+                  }
+                </td>
+                <td class="cell-secondary">
+                  {{ formatCurrency(productoPrecioKg(item.producto)) }}
+                </td>
+                <td class="cell-secondary">{{ formatCurrency(itemTotal(item)) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="gestion-compras-modal__totals">
+        <div><span>Peso total</span><strong>{{ formatPeso(pesoTotalEdit()) }} KG</strong></div>
+        <div><span>Total</span><strong>{{ formatCurrency(subtotalEdit()) }}</strong></div>
+      </div>
+
+      <div class="gestion-compras-modal__actions">
+        @if (editMode()) {
+          <button type="button" class="rp-btn rp-btn--ghost" [disabled]="saving()" (click)="cancelarEdicion()">
+            Cancelar edición
+          </button>
+          <button type="button" class="rp-btn rp-btn--secondary" [disabled]="saving()" (click)="guardarCambios()">
+            {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        } @else {
+          <button type="button" class="rp-btn rp-btn--ghost" [disabled]="saving()" (click)="activarEdicion()">
+            Editar
+          </button>
+        }
+        <button type="button" class="rp-btn rp-btn--primary" [disabled]="saving()" (click)="confirmarCompra()">
+          {{ saving() ? 'Confirmando...' : 'Confirmar compra' }}
+        </button>
+      </div>
+    </div>
+  </app-rp-modal>
+}
+
+@if (showProveedorModal()) {
+  <app-compra-proveedor-modal
+    [seleccionActual]="proveedorEdit()"
+    (closed)="cerrarModalProveedor()"
+    (seleccionado)="seleccionarProveedor($event)"
+  />
+}

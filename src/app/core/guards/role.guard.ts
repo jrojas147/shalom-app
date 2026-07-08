@@ -18,6 +18,6 @@ export const roleGuard = (roles: UserRole[]): CanActivateFn => {
     }
 
     const user = auth.currentUser();
-    return router.createUrlTree([getDefaultAppRoute(user?.rol ?? 'ADMIN')]);
+    return router.createUrlTree([getDefaultAppRoute(user?.rol)]);
   };
 };

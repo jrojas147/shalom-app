@@ -14,10 +14,7 @@ import { getNavItemsForRole } from '../nav-menu.items';
 })
 export class MainLayoutComponent {
   readonly auth = inject(AuthService);
-  readonly navItems = computed(() => {
-    const user = this.auth.currentUser();
-    return user ? getNavItemsForRole(user.rol) : [];
-  });
+  readonly navItems = computed(() => getNavItemsForRole(this.auth.currentUser()?.rol));
   readonly today = new Intl.DateTimeFormat('es-AR', {
     day: 'numeric',
     month: 'short',
