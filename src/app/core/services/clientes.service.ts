@@ -1,19 +1,32 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { Cliente } from '../models/cliente.model';
-
-const MOCK_CLIENTES: Cliente[] = [
-  { id: 1, nombre: 'Patricia Mendez', activo: true },
-  { id: 2, nombre: 'Carlos Rodríguez', activo: true },
-  { id: 3, nombre: 'María González', activo: true },
-  { id: 4, nombre: 'Juan Pérez', activo: true },
-  { id: 5, nombre: 'Ana Martínez', activo: false },
-  { id: 6, nombre: 'Luis Fernández', activo: true },
-];
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { API_CORE_URL } from '../config/api.config';
+import { Cliente, ClienteRequest } from '../models/cliente.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClientesService {
-  getActivos(): Observable<Cliente[]> {
-    return of(MOCK_CLIENTES.filter((c) => c.activo));
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${API_CORE_URL}/api/clientes`;
+
+  getAll(soloActivos = false): Observable<Cliente[]> {
+    const params = soloActivos ? new HttpParams().set('soloActivos', 'true') : undefined;
+    return this.http.get<Cliente[]>(this.baseUrl, { params });
+  }
+
+  getById(id: number): Observable<Cliente> {
+    return this.http.get<Cliente>(`${this.baseUrl}/${id}`);
+  }
+
+  create(request: ClienteRequest): Observable<Cliente> {
+    return this.http.post<Cliente>(this.baseUrl, request);
+  }
+
+  update(id: number, request: ClienteRequest): Observable<Cliente> {
+    return this.http.put<Cliente>(`${this.baseUrl}/${id}`, request);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }

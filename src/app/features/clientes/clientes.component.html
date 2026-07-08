@@ -1,0 +1,286 @@
+<div class="clientes">
+  <header class="rp-page-header">
+    <div>
+      <h1>Clientes</h1>
+      <p>
+        @if (puedeGestionar()) {
+          Registro y consulta de clientes del comercio.
+        } @else {
+          Consulta de clientes del comercio.
+        }
+      </p>
+    </div>
+  </header>
+
+  @if (error() && !showForm()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <section class="rp-panel clientes-panel">
+    <div class="panel-header clientes__toolbar">
+      <div>
+        <h2>Listado de clientes</h2>
+      </div>
+      @if (puedeGestionar()) {
+        <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+          + Nuevo cliente
+        </button>
+      }
+    </div>
+
+    <div class="clientes__search-row">
+      <input
+        type="search"
+        class="clientes__search"
+        placeholder="Buscar por ID, nombre, documento, teléfono o ciudad..."
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Documento</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Contacto</th>
+            <th>Ubicación</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cliente of clientesFiltrados(); track cliente.id) {
+            <tr>
+              <td class="cell-mono">{{ cliente.id }}</td>
+              <td class="cell-secondary">{{ documentoClienteLabel(cliente) }}</td>
+              <td class="cell-primary">{{ cliente.nombre }}</td>
+              <td class="cell-secondary">{{ tipoClienteLabel(cliente.tipoCliente) }}</td>
+              <td class="cell-secondary">
+                {{ cliente.telefonoCelular || cliente.telefonoFijo || cliente.email || '—' }}
+              </td>
+              <td class="cell-secondary">
+                @if (cliente.municipio || cliente.departamento) {
+                  {{ cliente.municipio || '—' }}@if (cliente.departamento) {, {{ cliente.departamento }}}
+                } @else {
+                  —
+                }
+              </td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--success]="cliente.activo"
+                  [class.rp-badge--danger]="!cliente.activo"
+                >
+                  {{ cliente.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="cell-actions">
+                @if (puedeGestionar()) {
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon"
+                    (click)="openEdit(cliente)"
+                    title="Editar"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon danger"
+                    (click)="deleteCliente(cliente)"
+                    title="Eliminar"
+                  >
+                    🗑
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--secondary"
+                    (click)="openView(cliente)"
+                  >
+                    Ver
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="rp-empty">
+                {{
+                  busqueda()
+                    ? 'No hay clientes que coincidan con la búsqueda'
+                    : 'No hay clientes registrados'
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
+
+@if (showForm()) {
+  <app-rp-modal [title]="modalTitle()" [wide]="true" (closed)="cancelForm()">
+    @if (error()) {
+      <div class="rp-alert rp-alert--error">{{ error() }}</div>
+    }
+
+    <form class="clientes-modal-form" [formGroup]="form" (ngSubmit)="save()">
+      <div class="rp-form-grid">
+        @if (soloLectura() && viewingCliente(); as clienteVista) {
+          <div class="rp-field">
+            <label>ID interno</label>
+            <input type="text" [value]="clienteVista.id" readonly />
+          </div>
+          <div class="rp-field">
+            <label>Fecha de registro</label>
+            <input
+              type="text"
+              [value]="clienteVista.createdAt | date: 'dd/MM/yyyy HH:mm'"
+              readonly
+            />
+          </div>
+        }
+
+        @if (puedeGestionar() && editingId(); as id) {
+          <div class="rp-field">
+            <label>ID interno</label>
+            <input type="text" [value]="id" readonly />
+          </div>
+        }
+
+        <div class="rp-field">
+          <label for="tipoCliente">Tipo de cliente</label>
+          <select id="tipoCliente" formControlName="tipoCliente">
+            @for (tipo of tiposCliente; track tipo.value) {
+              <option [ngValue]="tipo.value">{{ tipo.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="tipoDocumento">Tipo de documento</label>
+          <select id="tipoDocumento" formControlName="tipoDocumento">
+            @for (tipo of tiposDocumento; track tipo.value) {
+              <option [ngValue]="tipo.value">{{ tipo.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="documento">Número de documento</label>
+          <input id="documento" type="text" formControlName="documento" maxlength="30" />
+        </div>
+
+        <div class="rp-field rp-field--full">
+          <label for="nombre">Nombre completo / Razón social</label>
+          <input id="nombre" type="text" formControlName="nombre" maxlength="200" />
+        </div>
+
+        <div class="rp-field">
+          <label for="fechaNacimiento">Fecha de nacimiento</label>
+          <input id="fechaNacimiento" type="date" formControlName="fechaNacimiento" />
+        </div>
+
+        @if (!esEmpresa()) {
+          <div class="rp-field">
+            <label for="sexo">Sexo</label>
+            <select id="sexo" formControlName="sexo">
+              @for (sexo of sexosCliente; track sexo.value) {
+                @if (sexo.value !== 'NO_APLICA') {
+                  <option [ngValue]="sexo.value">{{ sexo.label }}</option>
+                }
+              }
+            </select>
+          </div>
+        }
+
+        <div class="rp-field">
+          <label for="telefonoFijo">Teléfono fijo</label>
+          <input id="telefonoFijo" type="text" formControlName="telefonoFijo" maxlength="30" />
+        </div>
+
+        <div class="rp-field">
+          <label for="telefonoCelular">Celular</label>
+          <input id="telefonoCelular" type="text" formControlName="telefonoCelular" maxlength="30" />
+        </div>
+
+        <div class="rp-field">
+          <label for="email">Correo electrónico</label>
+          <input id="email" type="email" formControlName="email" maxlength="150" />
+        </div>
+
+        <div class="rp-field">
+          <label for="metodoPagoPreferido">Método de pago preferido</label>
+          <select id="metodoPagoPreferido" formControlName="metodoPagoPreferido">
+            <option [ngValue]="null">Sin preferencia</option>
+            @for (metodo of metodosPago; track metodo.value) {
+              <option [ngValue]="metodo.value">{{ metodo.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field rp-field--full">
+          <label for="direccion">Dirección</label>
+          <input id="direccion" type="text" formControlName="direccion" maxlength="255" />
+        </div>
+
+        <div class="rp-field">
+          <label for="departamentoId">Departamento</label>
+          <select
+            id="departamentoId"
+            formControlName="departamentoId"
+            (change)="onDepartamentoChange($any($event.target).value ? +$any($event.target).value : null)"
+          >
+            <option [ngValue]="null">Seleccione...</option>
+            @for (dep of departamentos(); track dep.id) {
+              <option [ngValue]="dep.id">{{ dep.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field">
+          <label for="municipioId">Ciudad / Municipio</label>
+          <select id="municipioId" formControlName="municipioId">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (mun of municipios(); track mun.id) {
+              <option [ngValue]="mun.id">{{ mun.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="rp-field rp-field--full">
+          <label for="observaciones">Observaciones</label>
+          <textarea id="observaciones" formControlName="observaciones" rows="3" maxlength="500"></textarea>
+        </div>
+
+        @if (puedeGestionar() && !soloLectura()) {
+          <div class="rp-field clientes-estado-field">
+            <label class="clientes-estado-field__control" for="clienteActivo">
+              <input id="clienteActivo" type="checkbox" formControlName="activo" />
+              Cliente activo
+            </label>
+          </div>
+        }
+      </div>
+
+      <div class="rp-form-actions">
+        <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelForm()">
+          {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
+        </button>
+        @if (puedeGestionar() && !soloLectura()) {
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : editingId() ? 'Guardar cambios' : 'Crear cliente' }}
+          </button>
+        }
+      </div>
+    </form>
+  </app-rp-modal>
+}

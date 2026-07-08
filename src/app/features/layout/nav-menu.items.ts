@@ -11,11 +11,11 @@ export interface NavMenuItem {
 const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Inicio', route: '/app/inicio', icon: 'inicio' },
   { label: 'Compras', route: '/app/compras', icon: 'compra' },
-  { label: 'Caja', route: '/app/caja', icon: 'caja' },
-  { label: 'Venta', route: '/app/venta', icon: 'venta' },
-  { label: 'Retribución', route: '/app/liquidacion', icon: 'liquidacion' },
+  //{ label: 'Caja', route: '/app/caja', icon: 'caja' },
+  //{ label: 'Venta', route: '/app/venta', icon: 'venta' },
+  //{ label: 'Retribución', route: '/app/liquidacion', icon: 'liquidacion' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },
-  { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
+  //{ label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
   { label: 'Proveedores', route: '/app/proveedores', icon: 'proveedores' },
   { label: 'Sucursales', route: '/app/sucursales', icon: 'sucursales' },
   { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },
@@ -27,6 +27,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
 const OPERADOR_MENU: NavMenuItem[] = [
   { label: 'Pre-compra', route: '/app/pre-compra', icon: 'compra' },
   { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
+  { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },
 ];
 
 const NAV_BY_ROLE: Record<UserRole, NavMenuItem[]> = {

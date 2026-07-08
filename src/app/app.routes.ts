@@ -56,7 +56,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/proveedores/proveedores.component').then((m) => m.ProveedoresComponent),
       },
-      { path: 'clientes', canActivate: [adminDireccion], loadComponent: loadInicio },
+      {
+        path: 'clientes',
+        canActivate: [operadorModules],
+        loadComponent: () =>
+          import('./features/clientes/clientes.component').then((m) => m.ClientesComponent),
+      },
       { path: 'aliados', canActivate: [adminDireccion], loadComponent: loadInicio },
       { path: 'perfil', canActivate: [adminDireccion], loadComponent: loadInicio },
       {
