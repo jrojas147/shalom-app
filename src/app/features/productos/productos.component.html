@@ -175,10 +175,13 @@
           <label for="precioCompra">Precio compra ($/kg)</label>
           <input
             id="precioCompra"
-            type="number"
-            formControlName="precioCompra"
-            min="0"
-            step="1"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            class="productos-precio-input"
+            [value]="precioCompraDisplay()"
+            (input)="onPrecioInput('precioCompra', $event)"
+            placeholder="$ 0"
           />
         </div>
 
@@ -186,10 +189,13 @@
           <label for="precioVenta">Precio venta ($/kg)</label>
           <input
             id="precioVenta"
-            type="number"
-            formControlName="precioVenta"
-            min="0"
-            step="1"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            class="productos-precio-input"
+            [value]="precioVentaDisplay()"
+            (input)="onPrecioInput('precioVenta', $event)"
+            placeholder="$ 0"
           />
         </div>
 

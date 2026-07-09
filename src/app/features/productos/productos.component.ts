@@ -18,6 +18,11 @@ import {
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { ProductosService } from '../../core/services/productos.service';
+import {
+  formatCurrencyCo,
+  parseCurrencyCo,
+  resolveCurrencyCoCursor,
+} from '../../core/utils/currency.util';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 const MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
@@ -83,6 +88,9 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.editingId() ? 'Editar producto' : 'Nuevo producto'
   );
 
+  readonly precioCompraDisplay = signal('');
+  readonly precioVentaDisplay = signal('');
+
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
     if (!q) {
@@ -132,6 +140,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
       descripcion: producto.descripcion ?? '',
     });
     this.imagenGuardada.set(producto.imagen ?? null);
+    this.syncPrecioDisplays();
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -256,11 +265,22 @@ export class ProductosComponent implements OnInit, OnDestroy {
     if (value == null) {
       return '—';
     }
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatCurrencyCo(value);
+  }
+
+  onPrecioInput(campo: 'precioCompra' | 'precioVenta', event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const selectionStart = input.selectionStart ?? input.value.length;
+    const digitsBefore = input.value.slice(0, selectionStart).replace(/\D/g, '').length;
+
+    const parsed = parseCurrencyCo(input.value);
+    const formatted = formatCurrencyCo(parsed);
+
+    this.form.controls[campo].setValue(parsed);
+    this.setPrecioDisplay(campo, formatted);
+
+    const cursor = resolveCurrencyCoCursor(formatted, digitsBefore);
+    requestAnimationFrame(() => input.setSelectionRange(cursor, cursor));
   }
 
   private loadProductos(): void {
@@ -307,6 +327,20 @@ export class ProductosComponent implements OnInit, OnDestroy {
       precioVenta: null,
       descripcion: '',
     });
+    this.syncPrecioDisplays();
+  }
+
+  private syncPrecioDisplays(): void {
+    this.setPrecioDisplay('precioCompra', formatCurrencyCo(this.form.controls.precioCompra.value));
+    this.setPrecioDisplay('precioVenta', formatCurrencyCo(this.form.controls.precioVenta.value));
+  }
+
+  private setPrecioDisplay(campo: 'precioCompra' | 'precioVenta', value: string): void {
+    if (campo === 'precioCompra') {
+      this.precioCompraDisplay.set(value);
+      return;
+    }
+    this.precioVentaDisplay.set(value);
   }
 
   private resetImagenState(): void {

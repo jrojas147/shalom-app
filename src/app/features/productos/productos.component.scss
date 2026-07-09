@@ -95,6 +95,11 @@
     text-transform: uppercase;
   }
 
+  .productos-precio-input {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
   .rp-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacing-sm) var(--spacing-md);
