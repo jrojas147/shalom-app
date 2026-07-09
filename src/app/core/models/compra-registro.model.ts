@@ -12,6 +12,13 @@ export interface CompraDetalleLinea {
   subtotal?: number;
 }
 
+export interface CompraResumen {
+  totalHoy: number;
+  cantidadHoy: number;
+  totalSemana: number;
+  cantidadSemana: number;
+}
+
 export interface Compra {
   id: number;
   numeroFactura: string;

@@ -7,6 +7,7 @@ import { CompraProveedorSeleccion } from '../models/compra-proveedor.model';
 import {
   Compra,
   CompraEstado,
+  CompraResumen,
   RegistrarCompraRequest,
   RegistrarCompraResponse,
 } from '../models/compra-registro.model';
@@ -26,6 +27,10 @@ export class ComprasService {
   listar(estado: CompraEstado = 'PENDIENTE'): Observable<Compra[]> {
     const params = new HttpParams().set('estado', estado);
     return this.http.get<Compra[]>(this.baseUrl, { params });
+  }
+
+  getResumen(): Observable<CompraResumen> {
+    return this.http.get<CompraResumen>(`${this.baseUrl}/resumen`);
   }
 
   obtener(id: number): Observable<Compra> {

@@ -11,14 +11,30 @@
       <div class="metric-header">
         <span class="metric-label">Compras hoy</span>
       </div>
-      <strong class="metric-value">{{ shopping }}</strong>
+      @if (loadingCompras()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (comprasError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ comprasError() }}</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(resumenCompras()?.totalHoy) }}</strong>
+        <span class="cell-secondary">{{ resumenCompras()?.cantidadHoy ?? 0 }} compra(s) confirmada(s)</span>
+      }
     </div>
 
     <div class="rp-metric-card">
       <div class="metric-header">
         <span class="metric-label">Compras en semana</span>
       </div>
-      <strong class="metric-value">{{ shoppingWeek }}</strong>
+      @if (loadingCompras()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (comprasError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ comprasError() }}</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(resumenCompras()?.totalSemana) }}</strong>
+        <span class="cell-secondary">{{ resumenCompras()?.cantidadSemana ?? 0 }} compra(s) confirmada(s)</span>
+      }
     </div>
 
     <div class="rp-metric-card">
