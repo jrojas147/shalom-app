@@ -6,6 +6,7 @@ import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/mo
 import { RetribucionInterno } from '../../core/models/retribucion.model';
 import { ComprasService } from '../../core/services/compras.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
+import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 @Component({
@@ -18,6 +19,7 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 export class RetribucionComponent implements OnInit {
   private readonly retribucionService = inject(RetribucionService);
   private readonly comprasService = inject(ComprasService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tabs = PROVEEDOR_TABS;
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
@@ -33,6 +35,7 @@ export class RetribucionComponent implements OnInit {
   readonly compraDetalleResumen = signal<Compra | null>(null);
   readonly compraDetalle = signal<Compra | null>(null);
   readonly loadingDetalle = signal(false);
+  readonly savingPago = signal(false);
   readonly errorDetalle = signal<string | null>(null);
 
   readonly tabConfig = computed(
@@ -127,6 +130,70 @@ export class RetribucionComponent implements OnInit {
     this.compraDetalle.set(null);
     this.errorDetalle.set(null);
     this.loadingDetalle.set(false);
+    this.savingPago.set(false);
+  }
+
+  aceptarPago(): void {
+    const compra = this.compraDetalle();
+    if (!compra || this.savingPago()) {
+      return;
+    }
+
+    this.confirmDialog
+      .confirm({
+        title: 'Registrar pago',
+        message: `¿Registrar el pago de la compra ${compra.numeroFactura}? El estado de pago pasará a pagado.`,
+        confirmLabel: 'Aceptar',
+        cancelLabel: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+        this.ejecutarRegistroPago(compra);
+      });
+  }
+
+  private ejecutarRegistroPago(compra: Compra): void {
+    this.savingPago.set(true);
+    this.errorDetalle.set(null);
+
+    this.comprasService.registrarPago(compra.id).subscribe({
+      next: () => {
+        this.savingPago.set(false);
+        this.cerrarDetalle();
+        this.refrescarTrasPago();
+      },
+      error: (err) => {
+        this.savingPago.set(false);
+        this.errorDetalle.set(this.extractErrorMessage(err, 'No se pudo registrar el pago.'));
+      },
+    });
+  }
+
+  private refrescarTrasPago(): void {
+    const reciclador = this.recicladorSeleccionado();
+    if (!reciclador) {
+      this.loadInternos();
+      return;
+    }
+
+    this.loadingCompras.set(true);
+    this.retribucionService.listarComprasPendientesInterno(reciclador.recicladorId).subscribe({
+      next: (data) => {
+        this.comprasPendientes.set(data);
+        this.loadingCompras.set(false);
+        this.loadInternos();
+        if (data.length === 0) {
+          this.cerrarValidacion();
+        }
+      },
+      error: (err) => {
+        this.loadingCompras.set(false);
+        this.errorModal.set(this.extractErrorMessage(err, 'No se pudieron cargar las compras.'));
+        this.loadInternos();
+      },
+    });
   }
 
   empaqueLabel(empaque?: string | null): string {

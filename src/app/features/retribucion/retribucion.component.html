@@ -236,6 +236,25 @@
             <div><span>Peso total</span><strong>{{ formatPeso(detalle.pesoTotal) }} KG</strong></div>
             <div><span>Total</span><strong>{{ formatCurrency(detalle.total) }}</strong></div>
           </div>
+
+          <div class="retribucion-detalle__actions">
+            <button
+              type="button"
+              class="rp-btn rp-btn--ghost"
+              [disabled]="savingPago()"
+              (click)="cerrarDetalle()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="rp-btn rp-btn--primary"
+              [disabled]="savingPago()"
+              (click)="aceptarPago()"
+            >
+              {{ savingPago() ? 'Registrando...' : 'Aceptar' }}
+            </button>
+          </div>
         </div>
       }
     }
