@@ -1,12 +1,15 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Compra } from '../../core/models/compra-registro.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import { RetribucionInterno } from '../../core/models/retribucion.model';
 import { RetribucionService } from '../../core/services/retribucion.service';
+import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 @Component({
   selector: 'app-retribucion',
   standalone: true,
-  imports: [],
+  imports: [DatePipe, RpModalComponent],
   templateUrl: './retribucion.component.html',
   styleUrl: './retribucion.component.scss',
 })
@@ -18,6 +21,11 @@ export class RetribucionComponent implements OnInit {
   readonly internos = signal<RetribucionInterno[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+
+  readonly recicladorSeleccionado = signal<RetribucionInterno | null>(null);
+  readonly comprasPendientes = signal<Compra[]>([]);
+  readonly loadingCompras = signal(false);
+  readonly errorModal = signal<string | null>(null);
 
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
@@ -34,6 +42,7 @@ export class RetribucionComponent implements OnInit {
       return;
     }
     this.tabActiva.set(tab.id);
+    this.cerrarValidacion();
     this.loadTab();
   }
 
@@ -49,6 +58,31 @@ export class RetribucionComponent implements OnInit {
     this.loading.set(false);
   }
 
+  abrirValidacion(item: RetribucionInterno): void {
+    this.recicladorSeleccionado.set(item);
+    this.comprasPendientes.set([]);
+    this.errorModal.set(null);
+    this.loadingCompras.set(true);
+
+    this.retribucionService.listarComprasPendientesInterno(item.recicladorId).subscribe({
+      next: (data) => {
+        this.comprasPendientes.set(data);
+        this.loadingCompras.set(false);
+      },
+      error: (err) => {
+        this.loadingCompras.set(false);
+        this.errorModal.set(this.extractErrorMessage(err, 'No se pudieron cargar las compras.'));
+      },
+    });
+  }
+
+  cerrarValidacion(): void {
+    this.recicladorSeleccionado.set(null);
+    this.comprasPendientes.set([]);
+    this.errorModal.set(null);
+    this.loadingCompras.set(false);
+  }
+
   private loadInternos(): void {
     this.loading.set(true);
 
@@ -60,7 +94,7 @@ export class RetribucionComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.internos.set([]);
-        this.error.set(this.extractErrorMessage(err));
+        this.error.set(this.extractErrorMessage(err, 'No se pudieron cargar los recicladores.'));
       },
     });
   }
@@ -80,14 +114,15 @@ export class RetribucionComponent implements OnInit {
     });
   }
 
-  private extractErrorMessage(err: {
-    error?: { message?: string; errors?: Record<string, string> };
-  }): string {
+  private extractErrorMessage(
+    err: { error?: { message?: string; errors?: Record<string, string> } },
+    fallback: string
+  ): string {
     const body = err.error;
     if (body?.errors) {
       const first = Object.values(body.errors)[0];
       if (first) return first;
     }
-    return body?.message ?? 'No se pudieron cargar los recicladores.';
+    return body?.message ?? fallback;
   }
 }
