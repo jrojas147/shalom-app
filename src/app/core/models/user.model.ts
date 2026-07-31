@@ -16,7 +16,6 @@ export interface User {
 export interface LoginRequest {
   username: string;
   password: string;
-  cerrarSesionPrevia?: boolean;
 }
 
 export interface LoginResponse {

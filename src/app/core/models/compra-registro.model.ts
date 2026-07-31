@@ -1,6 +1,7 @@
 import { CompraProveedorSeleccion } from './compra-proveedor.model';
 
 export type CompraEstado = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA';
+export type CompraEstadoPago = 'PENDIENTE' | 'PAGADO';
 
 export interface CompraDetalleLinea {
   id?: number;
@@ -23,6 +24,7 @@ export interface Compra {
   id: number;
   numeroFactura: string;
   estado: CompraEstado;
+  estadoPago: CompraEstadoPago;
   proveedorTipo: CompraProveedorSeleccion['tipo'];
   proveedorId: number;
   proveedorNombre?: string;
@@ -58,6 +60,7 @@ export interface RegistrarCompraResponse {
   factura: string;
   mensaje: string;
   estado: CompraEstado;
+  estadoPago: CompraEstadoPago;
 }
 
 export function compraProveedorFromCompra(compra: Compra): CompraProveedorSeleccion {

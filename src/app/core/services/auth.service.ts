@@ -26,10 +26,6 @@ export class AuthService {
       .pipe(tap((response) => this.persistSession(response)));
   }
 
-  closeActiveSession(username: string, password: string): Observable<void> {
-    return this.http.post<void>(`${API_AUTH_URL}/api/auth/close-session`, { username, password });
-  }
-
   refresh(): Observable<LoginResponse> {
     const refreshToken = localStorage.getItem(REFRESH_KEY);
     const body: RefreshRequest = { refreshToken: refreshToken ?? '' };

@@ -27,13 +27,8 @@
       </div>
 
       @if (error()) {
-        <div class="rp-alert" [class.rp-alert--warning]="sessionConflict()" [class.rp-alert--error]="!sessionConflict()">
+        <div class="rp-alert rp-alert--error">
           {{ error() }}
-          @if (sessionConflict()) {
-            <button type="button" class="btn-link" (click)="submit(true)">
-              Cerrar sesión anterior e ingresar
-            </button>
-          }
         </div>
       }
 

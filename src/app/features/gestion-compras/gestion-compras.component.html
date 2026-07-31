@@ -30,6 +30,7 @@
             <th>Proveedor</th>
             <th>Peso</th>
             <th>Total</th>
+            <th>Pago</th>
             <th>Registrado por</th>
             <th></th>
           </tr>
@@ -47,6 +48,15 @@
               </td>
               <td class="cell-secondary">{{ formatPeso(compra.pesoTotal) }} KG</td>
               <td class="cell-secondary">{{ formatCurrency(compra.total) }}</td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--warning]="compra.estadoPago === 'PENDIENTE'"
+                  [class.rp-badge--success]="compra.estadoPago === 'PAGADO'"
+                >
+                  {{ compra.estadoPago === 'PAGADO' ? 'Pagado' : 'Pendiente' }}
+                </span>
+              </td>
               <td class="cell-secondary">{{ compra.usuarioRegistroNombre ?? '—' }}</td>
               <td class="cell-actions">
                 <button type="button" class="rp-btn rp-btn--secondary" (click)="abrirDetalle(compra)">
@@ -56,7 +66,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="rp-empty">No hay pre-compras pendientes</td>
+              <td colspan="8" class="rp-empty">No hay pre-compras pendientes</td>
             </tr>
           }
         </tbody>
@@ -80,6 +90,16 @@
         <div>
           <span class="meta-label">Estado</span>
           <span class="rp-badge rp-badge--warning">Pendiente</span>
+        </div>
+        <div>
+          <span class="meta-label">Pago</span>
+          <span
+            class="rp-badge"
+            [class.rp-badge--warning]="compra.estadoPago === 'PENDIENTE'"
+            [class.rp-badge--success]="compra.estadoPago === 'PAGADO'"
+          >
+            {{ compra.estadoPago === 'PAGADO' ? 'Pagado' : 'Pendiente' }}
+          </span>
         </div>
         <div>
           <span class="meta-label">Fecha registro</span>
@@ -169,6 +189,11 @@
       </div>
 
       <div class="gestion-compras-modal__actions">
+        @if (!editMode()) {
+          <button type="button" class="rp-btn rp-btn--danger" [disabled]="saving()" (click)="anularCompra()">
+            Anular
+          </button>
+        }
         @if (editMode()) {
           <button type="button" class="rp-btn rp-btn--ghost" [disabled]="saving()" (click)="cancelarEdicion()">
             Cancelar edición

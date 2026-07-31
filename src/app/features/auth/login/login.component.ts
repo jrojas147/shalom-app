@@ -19,14 +19,13 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  readonly sessionConflict = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
     password: ['', Validators.required],
   });
 
-  submit(cerrarSesionPrevia = false): void {
+  submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -34,23 +33,9 @@ export class LoginComponent {
 
     this.loading.set(true);
     this.error.set(null);
-    this.sessionConflict.set(false);
 
     const { username, password } = this.form.getRawValue();
-
-    if (cerrarSesionPrevia) {
-      this.auth.closeActiveSession(username, password).subscribe({
-        next: () => this.login(username, password, false),
-        error: (err: HttpErrorResponse) => this.handleError(err),
-      });
-      return;
-    }
-
-    this.login(username, password, false);
-  }
-
-  private login(username: string, password: string, cerrarSesionPrevia: boolean): void {
-    this.auth.login({ username, password, cerrarSesionPrevia }).subscribe({
+    this.auth.login({ username, password }).subscribe({
       next: () => {
         this.loading.set(false);
         const user = this.auth.currentUser();
@@ -62,10 +47,7 @@ export class LoginComponent {
 
   private handleError(err: HttpErrorResponse): void {
     this.loading.set(false);
-    if (err.status === 409) {
-      this.sessionConflict.set(true);
-      this.error.set('Ya existe una sesión activa para este usuario.');
-    } else if (err.status === 423) {
+    if (err.status === 423) {
       this.error.set('La cuenta está inactiva.');
     } else if (err.status === 401) {
       this.error.set('Credenciales inválidas.');

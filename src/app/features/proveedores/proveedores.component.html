@@ -775,6 +775,7 @@
   <app-rp-modal
     [title]="hijoModalTitle()"
     [stacked]="true"
+    [closeOnOverlay]="false"
     (closed)="cancelHijoModal()"
   >
     <form [formGroup]="hijoForm" (ngSubmit)="saveHijoModal()">

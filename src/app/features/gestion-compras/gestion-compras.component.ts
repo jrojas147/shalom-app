@@ -222,6 +222,44 @@ export class GestionComprasComponent implements OnInit {
       });
   }
 
+  anularCompra(): void {
+    const compra = this.compraSeleccionada();
+    if (!compra) return;
+
+    this.confirmDialog
+      .confirm({
+        title: 'Anular pre-compra',
+        message: `¿Anular la pre-compra ${compra.numeroFactura}? El estado pasará a cancelada.`,
+        confirmLabel: 'Anular',
+        cancelLabel: 'Volver',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+        this.ejecutarAnulacionCompra(compra);
+      });
+  }
+
+  private ejecutarAnulacionCompra(compra: Compra): void {
+    this.saving.set(true);
+    this.error.set(null);
+
+    this.comprasService.anular(compra.id).subscribe({
+      next: (res) => {
+        this.saving.set(false);
+        this.mensaje.set(res.mensaje);
+        this.cerrarDetalle();
+        this.loadCompras();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
   private ejecutarConfirmacionCompra(
     compra: Compra,
     proveedor: CompraProveedorSeleccion
