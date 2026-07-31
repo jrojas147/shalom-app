@@ -1,0 +1,67 @@
+.caja {
+  .panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+
+    h2 {
+      margin: 0;
+    }
+  }
+}
+
+.caja__desc {
+  margin: var(--spacing-xs) 0 0;
+  font-size: 0.875rem;
+  color: var(--rp-text-secondary);
+}
+
+.caja__saldos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+
+  .meta-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--rp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  strong {
+    font-size: 1.25rem;
+    color: var(--rp-text);
+  }
+}
+
+.caja__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  align-items: end;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--rp-text-secondary);
+  }
+
+  input {
+    padding: 0.5625rem 0.75rem;
+    border: 1px solid var(--rp-border);
+    border-radius: var(--radius-md);
+    background: var(--rp-surface);
+    color: var(--rp-text);
+    font-size: 0.875rem;
+  }
+
+  .rp-btn {
+    justify-self: start;
+  }
+}

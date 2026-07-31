@@ -1,0 +1,142 @@
+<div class="caja">
+  <header class="rp-page-header">
+    <div>
+      <h1>Caja</h1>
+      <p>Apertura, movimientos y cierre de caja del comercio</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando...</p>
+  } @else if (caja(); as actual) {
+    <section class="rp-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Caja abierta</h2>
+          <p class="caja__desc">
+            Abierta por {{ actual.usuarioAperturaNombre || '—' }}
+            el {{ actual.openedAt | date: 'dd/MM/yyyy HH:mm' }}
+          </p>
+        </div>
+        <span class="rp-badge rp-badge--success">Abierta</span>
+      </div>
+
+      <div class="caja__saldos">
+        <div>
+          <span class="meta-label">Saldo inicial</span>
+          <strong>{{ formatCurrency(actual.saldoInicial) }}</strong>
+        </div>
+        <div>
+          <span class="meta-label">Saldo actual</span>
+          <strong>{{ formatCurrency(actual.saldoActual) }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>Movimientos</h2>
+      </div>
+
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Concepto</th>
+            <th>Monto</th>
+            <th>Usuario</th>
+            <th>Observación</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (mov of actual.movimientos; track mov.id) {
+            <tr>
+              <td class="cell-secondary">{{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--success]="mov.tipo === 'INGRESO'"
+                  [class.rp-badge--warning]="mov.tipo === 'EGRESO'"
+                >
+                  {{ mov.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+                </span>
+              </td>
+              <td class="cell-secondary">{{ conceptoLabel(mov.concepto) }}</td>
+              <td class="cell-secondary">{{ formatCurrency(mov.monto) }}</td>
+              <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>
+              <td class="cell-secondary">{{ mov.observacion || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="rp-empty">Sin movimientos registrados</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>Cerrar caja</h2>
+      </div>
+
+      <div class="caja__form">
+        <label>
+          <span>Saldo de cierre</span>
+          <input type="number" min="0" step="1" [(ngModel)]="saldoCierre" />
+        </label>
+        <label>
+          <span>Observación</span>
+          <input type="text" maxlength="500" [(ngModel)]="observacionCierre" />
+        </label>
+        <button
+          type="button"
+          class="rp-btn rp-btn--danger"
+          [disabled]="saving()"
+          (click)="cerrarCaja()"
+        >
+          {{ saving() ? 'Cerrando...' : 'Cerrar caja' }}
+        </button>
+      </div>
+    </section>
+  } @else {
+    <section class="rp-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Abrir caja</h2>
+          <p class="caja__desc">
+            No hay caja abierta. Indique el saldo inicial para iniciar el turno.
+          </p>
+        </div>
+      </div>
+
+      <div class="caja__form">
+        <label>
+          <span>Saldo inicial</span>
+          <input type="number" min="0" step="1" [(ngModel)]="saldoInicial" />
+        </label>
+        <label>
+          <span>Observación</span>
+          <input type="text" maxlength="500" [(ngModel)]="observacionApertura" />
+        </label>
+        <button
+          type="button"
+          class="rp-btn rp-btn--primary"
+          [disabled]="saving()"
+          (click)="abrirCaja()"
+        >
+          {{ saving() ? 'Abriendo...' : 'Abrir caja' }}
+        </button>
+      </div>
+    </section>
+  }
+</div>

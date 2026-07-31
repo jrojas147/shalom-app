@@ -40,7 +40,12 @@ export const routes: Routes = [
             (m) => m.GestionComprasComponent
           ),
       },
-      { path: 'caja', canActivate: [adminDireccion], loadComponent: loadInicio },
+      {
+        path: 'caja',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/caja/caja.component').then((m) => m.CajaComponent),
+      },
       { path: 'venta', canActivate: [adminDireccion], loadComponent: loadInicio },
       {
         path: 'liquidacion',
