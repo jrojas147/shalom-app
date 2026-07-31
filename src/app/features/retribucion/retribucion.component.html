@@ -1,0 +1,97 @@
+<div class="retribucion">
+  <header class="rp-page-header">
+    <div>
+      <h1>Retribución</h1>
+      <p>Proveedores con compras confirmadas y pago pendiente</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <div class="retribucion-tabs" role="tablist" aria-label="Tipos de retribución">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="retribucion-tab"
+        role="tab"
+        [class.active]="tabActiva() === tab.id"
+        [attr.aria-selected]="tabActiva() === tab.id"
+        (click)="setTab(tab)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <section class="rp-panel retribucion-panel">
+    <div class="panel-header">
+      <div>
+        <h2>{{ tabConfig().label }}</h2>
+        <p class="retribucion-panel__desc">
+          @if (esTabInterna()) {
+            Recicladores internos con compras confirmadas y pago pendiente.
+          } @else if (tabActiva() === 'EXTERNO') {
+            Proveedores externos con compras confirmadas y pago pendiente.
+          } @else {
+            Empresas con compras confirmadas y pago pendiente.
+          }
+        </p>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando...</p>
+    } @else if (esTabInterna()) {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Reciclador</th>
+            <th>Documento</th>
+            <th>Teléfono</th>
+            <th>Compras</th>
+            <th>Peso pendiente</th>
+            <th>Total pendiente</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of internos(); track item.recicladorId) {
+            <tr>
+              <td class="cell-primary">{{ item.nombre }}</td>
+              <td class="cell-secondary">
+                @if (item.documento) {
+                  {{ item.tipoDocumento }} {{ item.documento }}
+                } @else {
+                  —
+                }
+              </td>
+              <td class="cell-secondary">{{ item.telefono || '—' }}</td>
+              <td class="cell-secondary">{{ item.cantidadCompras }}</td>
+              <td class="cell-secondary">{{ formatPeso(item.pesoTotalPendiente) }} KG</td>
+              <td class="cell-secondary">{{ formatCurrency(item.totalPendiente) }}</td>
+              <td>
+                <span
+                  class="rp-badge"
+                  [class.rp-badge--success]="item.activo"
+                  [class.rp-badge--neutral]="!item.activo"
+                >
+                  {{ item.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="rp-empty">
+                No hay recicladores internos con pago pendiente
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="rp-empty">Próximamente disponible para este tipo de proveedor.</p>
+    }
+  </section>
+</div>

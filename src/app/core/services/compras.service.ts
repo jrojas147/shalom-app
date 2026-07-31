@@ -24,8 +24,14 @@ export class ComprasService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${API_CORE_URL}/api/compras`;
 
-  listar(estado: CompraEstado = 'PENDIENTE'): Observable<Compra[]> {
-    const params = new HttpParams().set('estado', estado);
+  listar(
+    estado: CompraEstado = 'PENDIENTE',
+    proveedorTipo?: CompraProveedorSeleccion['tipo']
+  ): Observable<Compra[]> {
+    let params = new HttpParams().set('estado', estado);
+    if (proveedorTipo) {
+      params = params.set('proveedorTipo', proveedorTipo);
+    }
     return this.http.get<Compra[]>(this.baseUrl, { params });
   }
 

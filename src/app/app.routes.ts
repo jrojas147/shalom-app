@@ -42,7 +42,14 @@ export const routes: Routes = [
       },
       { path: 'caja', canActivate: [adminDireccion], loadComponent: loadInicio },
       { path: 'venta', canActivate: [adminDireccion], loadComponent: loadInicio },
-      { path: 'liquidacion', canActivate: [adminDireccion], loadComponent: loadInicio },
+      {
+        path: 'liquidacion',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/retribucion/retribucion.component').then(
+            (m) => m.RetribucionComponent
+          ),
+      },
       {
         path: 'productos',
         canActivate: [adminDireccion],
