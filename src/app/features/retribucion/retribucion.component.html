@@ -215,13 +215,13 @@
                 </tr>
               </thead>
               <tbody>
-                @for (linea of detalle.detalle; track linea.id ?? linea.productoId) {
+                @for (linea of detalle.detalle; track $index) {
                   <tr>
                     <td class="cell-primary">{{ linea.productoNombre || ('Producto ' + linea.productoId) }}</td>
                     <td class="cell-secondary">{{ formatPeso(linea.pesoKg) }}</td>
                     <td class="cell-secondary">{{ empaqueLabel(linea.empaque) }}</td>
-                    <td class="cell-secondary">{{ formatCurrency(linea.precioUnitario ?? 0) }}</td>
-                    <td class="cell-secondary">{{ formatCurrency(linea.subtotal ?? 0) }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(linea.precioUnitario || 0) }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(linea.subtotal || 0) }}</td>
                   </tr>
                 } @empty {
                   <tr>

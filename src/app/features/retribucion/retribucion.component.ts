@@ -95,13 +95,24 @@ export class RetribucionComponent implements OnInit {
 
   abrirDetalle(compra: Compra): void {
     this.compraDetalleResumen.set(compra);
-    this.compraDetalle.set(null);
     this.errorDetalle.set(null);
+
+    const lineas = compra.detalle ?? [];
+    if (lineas.length > 0) {
+      this.compraDetalle.set({ ...compra, detalle: lineas });
+      this.loadingDetalle.set(false);
+      return;
+    }
+
+    this.compraDetalle.set(null);
     this.loadingDetalle.set(true);
 
     this.comprasService.obtener(compra.id).subscribe({
       next: (detalle) => {
-        this.compraDetalle.set(detalle);
+        this.compraDetalle.set({
+          ...detalle,
+          detalle: detalle.detalle ?? [],
+        });
         this.loadingDetalle.set(false);
       },
       error: (err) => {
