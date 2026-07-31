@@ -1,8 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Compra } from '../../core/models/compra-registro.model';
+import { EMPAQUE_OPCIONES } from '../../core/models/compra.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import { RetribucionInterno } from '../../core/models/retribucion.model';
+import { ComprasService } from '../../core/services/compras.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -15,6 +17,7 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 })
 export class RetribucionComponent implements OnInit {
   private readonly retribucionService = inject(RetribucionService);
+  private readonly comprasService = inject(ComprasService);
 
   readonly tabs = PROVEEDOR_TABS;
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
@@ -26,6 +29,11 @@ export class RetribucionComponent implements OnInit {
   readonly comprasPendientes = signal<Compra[]>([]);
   readonly loadingCompras = signal(false);
   readonly errorModal = signal<string | null>(null);
+
+  readonly compraDetalleResumen = signal<Compra | null>(null);
+  readonly compraDetalle = signal<Compra | null>(null);
+  readonly loadingDetalle = signal(false);
+  readonly errorDetalle = signal<string | null>(null);
 
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
@@ -59,6 +67,7 @@ export class RetribucionComponent implements OnInit {
   }
 
   abrirValidacion(item: RetribucionInterno): void {
+    this.cerrarDetalle();
     this.recicladorSeleccionado.set(item);
     this.comprasPendientes.set([]);
     this.errorModal.set(null);
@@ -77,10 +86,41 @@ export class RetribucionComponent implements OnInit {
   }
 
   cerrarValidacion(): void {
+    this.cerrarDetalle();
     this.recicladorSeleccionado.set(null);
     this.comprasPendientes.set([]);
     this.errorModal.set(null);
     this.loadingCompras.set(false);
+  }
+
+  abrirDetalle(compra: Compra): void {
+    this.compraDetalleResumen.set(compra);
+    this.compraDetalle.set(null);
+    this.errorDetalle.set(null);
+    this.loadingDetalle.set(true);
+
+    this.comprasService.obtener(compra.id).subscribe({
+      next: (detalle) => {
+        this.compraDetalle.set(detalle);
+        this.loadingDetalle.set(false);
+      },
+      error: (err) => {
+        this.loadingDetalle.set(false);
+        this.errorDetalle.set(this.extractErrorMessage(err, 'No se pudo cargar el detalle.'));
+      },
+    });
+  }
+
+  cerrarDetalle(): void {
+    this.compraDetalleResumen.set(null);
+    this.compraDetalle.set(null);
+    this.errorDetalle.set(null);
+    this.loadingDetalle.set(false);
+  }
+
+  empaqueLabel(empaque?: string | null): string {
+    if (!empaque) return '—';
+    return EMPAQUE_OPCIONES.find((o) => o.value === empaque)?.label ?? empaque;
   }
 
   private loadInternos(): void {

@@ -122,6 +122,7 @@
             <th>Peso</th>
             <th>Total</th>
             <th>Pago</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -137,14 +138,106 @@
               <td>
                 <span class="rp-badge rp-badge--warning">Pendiente</span>
               </td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--ghost"
+                  (click)="abrirDetalle(compra)"
+                >
+                  Detalle
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="rp-empty">No hay compras pendientes de pago</td>
+              <td colspan="7" class="rp-empty">No hay compras pendientes de pago</td>
             </tr>
           }
         </tbody>
       </table>
+    }
+  </app-rp-modal>
+}
+
+@if (compraDetalleResumen(); as resumen) {
+  <app-rp-modal
+    [title]="'Detalle compra ' + resumen.numeroFactura"
+    [wide]="true"
+    [stacked]="true"
+    (closed)="cerrarDetalle()"
+  >
+    @if (errorDetalle()) {
+      <div class="rp-alert rp-alert--error">{{ errorDetalle() }}</div>
+    }
+
+    @if (loadingDetalle()) {
+      <p class="rp-loading">Cargando detalle...</p>
+    } @else if (compraDetalle()) {
+      @if (compraDetalle(); as detalle) {
+        <div class="retribucion-detalle">
+          <div class="retribucion-detalle__meta">
+            <div>
+              <span class="meta-label">Estado</span>
+              <span class="rp-badge rp-badge--success">Confirmada</span>
+            </div>
+            <div>
+              <span class="meta-label">Pago</span>
+              <span class="rp-badge rp-badge--warning">Pendiente</span>
+            </div>
+            <div>
+              <span class="meta-label">Fecha confirmación</span>
+              <strong>{{ (detalle.confirmedAt || detalle.createdAt) | date: 'dd/MM/yyyy HH:mm' }}</strong>
+            </div>
+            <div>
+              <span class="meta-label">Registrado por</span>
+              <strong>{{ detalle.usuarioRegistroNombre ?? '—' }}</strong>
+            </div>
+            <div>
+              <span class="meta-label">Sucursal</span>
+              <strong>{{ detalle.sucursalNombre || '—' }}</strong>
+            </div>
+            <div>
+              <span class="meta-label">Proveedor</span>
+              <strong>{{ detalle.proveedorNombre || '—' }}</strong>
+            </div>
+          </div>
+
+          <div class="retribucion-detalle__section">
+            <h3>Productos</h3>
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Peso (KG)</th>
+                  <th>Empaque</th>
+                  <th>Precio/kg</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (linea of detalle.detalle; track linea.id ?? linea.productoId) {
+                  <tr>
+                    <td class="cell-primary">{{ linea.productoNombre || ('Producto ' + linea.productoId) }}</td>
+                    <td class="cell-secondary">{{ formatPeso(linea.pesoKg) }}</td>
+                    <td class="cell-secondary">{{ empaqueLabel(linea.empaque) }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(linea.precioUnitario ?? 0) }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(linea.subtotal ?? 0) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="rp-empty">Sin productos en esta compra</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="retribucion-detalle__totals">
+            <div><span>Peso total</span><strong>{{ formatPeso(detalle.pesoTotal) }} KG</strong></div>
+            <div><span>Total</span><strong>{{ formatCurrency(detalle.total) }}</strong></div>
+          </div>
+        </div>
+      }
     }
   </app-rp-modal>
 }
