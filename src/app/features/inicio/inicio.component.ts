@@ -1,14 +1,18 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { CajaService } from '../../core/services/caja.service';
 import { HealthService } from '../../core/services/health.service';
 import { InicioService } from '../../core/services/inicio.service';
+import { RetribucionService } from '../../core/services/retribucion.service';
 import { CompraResumen } from '../../core/models/compra-registro.model';
+import { RetribucionInterno } from '../../core/models/retribucion.model';
 import { HealthResponse } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-inicio',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.scss',
 })
@@ -16,6 +20,7 @@ export class InicioComponent implements OnInit {
   private readonly healthService = inject(HealthService);
   private readonly inicioService = inject(InicioService);
   private readonly cajaService = inject(CajaService);
+  private readonly retribucionService = inject(RetribucionService);
   readonly auth = inject(AuthService);
 
   readonly health = signal<HealthResponse | null>(null);
@@ -31,11 +36,28 @@ export class InicioComponent implements OnInit {
   readonly cajaError = signal<string | null>(null);
   readonly loadingCaja = signal(false);
 
-  pendingPayments = '$1.200,00';
+  readonly pagosPendientes = signal<RetribucionInterno[]>([]);
+  readonly pagosError = signal<string | null>(null);
+  readonly loadingPagos = signal(false);
+
+  readonly totalPagosPendientes = computed(() =>
+    this.pagosPendientes().reduce(
+      (sum, item) => sum + this.toNumber(item.totalPendiente),
+      0
+    )
+  );
+
+  readonly cantidadComprasPendientes = computed(() =>
+    this.pagosPendientes().reduce(
+      (sum, item) => sum + this.toNumber(item.cantidadCompras),
+      0
+    )
+  );
 
   ngOnInit(): void {
     this.cargarResumenCompras();
     this.cargarSaldoCaja();
+    this.cargarPagosPendientes();
   }
 
   cargarResumenCompras(): void {
@@ -91,6 +113,27 @@ export class InicioComponent implements OnInit {
     });
   }
 
+  cargarPagosPendientes(): void {
+    this.loadingPagos.set(true);
+    this.pagosError.set(null);
+
+    this.retribucionService.listarInternosPendientesPago().subscribe({
+      next: (data) => {
+        this.pagosPendientes.set(data);
+        this.loadingPagos.set(false);
+      },
+      error: (err) => {
+        this.pagosPendientes.set([]);
+        this.pagosError.set(
+          typeof err?.error?.message === 'string'
+            ? err.error.message
+            : 'No se pudieron cargar los pagos pendientes.'
+        );
+        this.loadingPagos.set(false);
+      },
+    });
+  }
+
   checkHealth(): void {
     this.loading.set(true);
     this.healthError.set(null);
@@ -114,6 +157,14 @@ export class InicioComponent implements OnInit {
       currency: 'COP',
       maximumFractionDigits: 0,
     }).format(amount);
+  }
+
+  formatPeso(value: number | string | null | undefined): string {
+    const amount = this.toNumber(value);
+    return amount.toLocaleString('es-CO', {
+      minimumFractionDigits: amount % 1 === 0 ? 0 : 1,
+      maximumFractionDigits: 1,
+    });
   }
 
   private normalizeResumen(raw: CompraResumen): CompraResumen {

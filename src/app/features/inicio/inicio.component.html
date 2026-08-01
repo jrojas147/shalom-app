@@ -65,49 +65,75 @@
     <div class="rp-metric-card">
       <div class="metric-header">
         <span class="metric-label">Pagos pendientes</span>
-        <span class="rp-badge rp-badge--presupuestado">Presupuestado</span>
+        <span class="rp-badge rp-badge--warning">Internos</span>
       </div>
-      <strong class="metric-value">{{ pendingPayments }}</strong>
+      @if (loadingPagos()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (pagosError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ pagosError() }}</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(totalPagosPendientes()) }}</strong>
+        <span class="cell-secondary">
+          {{ pagosPendientes().length }} reciclador(es) · {{ cantidadComprasPendientes() }} compra(s)
+        </span>
+      }
     </div>
   </div>
 
   <section class="rp-panel">
     <div class="panel-header">
-      <h2>Actividad reciente</h2>
-      <button type="button" class="link">Ver todo</button>
+      <h2>Pagos pendientes — recicladores internos</h2>
+      <a routerLink="/app/liquidacion" class="link">Ir a Retribución</a>
     </div>
 
-    <table class="rp-table">
-      <thead>
-        <tr>
-          <th>Transacción</th>
-          <th>Detalles</th>
-          <th>Estado</th>
-          <th>Hora</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <span class="row-icon">⌂</span>
-            <span class="cell-primary">Venta plastico</span>
-          </td>
-          <td class="cell-secondary">Venta material bodega</td>
-          <td><span class="rp-badge rp-badge--success">$358.000</span></td>
-          <td class="cell-secondary">Ahora</td>
-        </tr>
-        @if (health(); as h) {
+    @if (pagosError()) {
+      <div class="rp-alert rp-alert--error">{{ pagosError() }}</div>
+    }
+
+    @if (loadingPagos()) {
+      <p class="rp-loading">Cargando pagos pendientes...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
           <tr>
-            <td>
-              <span class="row-icon">⚡</span>
-              <span class="cell-primary">Health check</span>
-            </td>
-            <td class="cell-secondary">Validación JWT en shalom-core</td>
-            <td><span class="rp-badge rp-badge--success">{{ h.status }}</span></td>
-            <td class="cell-secondary">Reciente</td>
+            <th>Reciclador</th>
+            <th>Documento</th>
+            <th>Teléfono</th>
+            <th>Compras</th>
+            <th>Peso pendiente</th>
+            <th>Total pendiente</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (item of pagosPendientes(); track item.recicladorId) {
+            <tr>
+              <td class="cell-primary">{{ item.nombre }}</td>
+              <td class="cell-secondary">
+                @if (item.documento) {
+                  {{ item.tipoDocumento }} {{ item.documento }}
+                } @else {
+                  —
+                }
+              </td>
+              <td class="cell-secondary">{{ item.telefono || '—' }}</td>
+              <td class="cell-secondary">{{ item.cantidadCompras }}</td>
+              <td class="cell-secondary">{{ formatPeso(item.pesoTotalPendiente) }} KG</td>
+              <td>
+                <span class="rp-badge rp-badge--warning">
+                  {{ formatCurrency(item.totalPendiente) }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="rp-empty">
+                No hay pagos pendientes de recicladores internos
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </section>
 </div>
