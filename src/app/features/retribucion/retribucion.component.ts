@@ -4,7 +4,9 @@ import { Compra } from '../../core/models/compra-registro.model';
 import { EMPAQUE_OPCIONES } from '../../core/models/compra.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import { RetribucionInterno } from '../../core/models/retribucion.model';
+import { AuthService } from '../../core/services/auth.service';
 import { ComprasService } from '../../core/services/compras.service';
+import { PagoComprobantePrintService } from '../../core/services/pago-comprobante-print.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
@@ -20,6 +22,8 @@ export class RetribucionComponent implements OnInit {
   private readonly retribucionService = inject(RetribucionService);
   private readonly comprasService = inject(ComprasService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
+  private readonly auth = inject(AuthService);
+  private readonly pagoPrintService = inject(PagoComprobantePrintService);
 
   readonly tabs = PROVEEDOR_TABS;
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
@@ -158,8 +162,12 @@ export class RetribucionComponent implements OnInit {
     this.savingPago.set(true);
     this.errorDetalle.set(null);
 
+    const detalle = this.compraDetalle() ?? compra;
+    const reciclador = this.recicladorSeleccionado();
+
     this.comprasService.registrarPago(compra.id).subscribe({
       next: () => {
+        this.imprimirComprobantePago(detalle, reciclador);
         this.savingPago.set(false);
         this.cerrarDetalle();
         this.refrescarTrasPago();
@@ -168,6 +176,39 @@ export class RetribucionComponent implements OnInit {
         this.savingPago.set(false);
         this.errorDetalle.set(this.extractErrorMessage(err, 'No se pudo registrar el pago.'));
       },
+    });
+  }
+
+  private imprimirComprobantePago(
+    compra: Compra,
+    reciclador: RetribucionInterno | null
+  ): void {
+    const user = this.auth.currentUser();
+    const nombreUsuario = [user?.nombre, user?.apellido].filter(Boolean).join(' ').trim();
+    const documento =
+      reciclador?.documento != null
+        ? `${reciclador.tipoDocumento ?? ''} ${reciclador.documento}`.trim()
+        : null;
+
+    this.pagoPrintService.imprimir({
+      factura: compra.numeroFactura,
+      fecha: new Date(),
+      comercioNombre: user?.comercioNombre ?? 'Comercio',
+      usuarioNombre: nombreUsuario || user?.username || 'Usuario',
+      usuarioUsername: user?.username ?? '',
+      beneficiarioNombre:
+        reciclador?.nombre ?? compra.proveedorNombre ?? 'Proveedor interno',
+      beneficiarioDocumento: documento,
+      sucursalNombre: compra.sucursalNombre,
+      items: (compra.detalle ?? []).map((linea) => ({
+        nombre: linea.productoNombre ?? `Producto ${linea.productoId}`,
+        pesoKg: Number(linea.pesoKg) || 0,
+        precioKg: Number(linea.precioUnitario) || 0,
+        total: Number(linea.subtotal) || 0,
+        empaque: this.empaqueLabel(linea.empaque),
+      })),
+      total: Number(compra.total) || 0,
+      pesoTotal: Number(compra.pesoTotal) || 0,
     });
   }
 
