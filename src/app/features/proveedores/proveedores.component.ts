@@ -33,6 +33,7 @@ import {
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import { TIPOS_CUENTA, TipoCuenta } from '../../core/models/sucursal.model';
 import { Departamento, Municipio } from '../../core/models/ubicacion.model';
+import { AuthService } from '../../core/services/auth.service';
 import { EntidadesBancariasService } from '../../core/services/entidades-bancarias.service';
 import { ProveedoresEmpresasService } from '../../core/services/proveedores-empresas.service';
 import { ProveedoresExternosService } from '../../core/services/proveedores-externos.service';
@@ -52,6 +53,7 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 })
 export class ProveedoresComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
   private readonly proveedoresInternosService = inject(ProveedoresInternosService);
   private readonly proveedoresExternosService = inject(ProveedoresExternosService);
   private readonly proveedoresEmpresasService = inject(ProveedoresEmpresasService);
@@ -79,10 +81,12 @@ export class ProveedoresComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly showForm = signal(false);
+  readonly soloLectura = signal(false);
   readonly showHijoForm = signal(false);
   readonly showRecicladoresModal = signal(false);
   readonly showSucursalesModal = signal(false);
   readonly editingId = signal<number | null>(null);
+  readonly puedeGestionar = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
   readonly editingHijoIndex = signal<number | null>(null);
   readonly hijoFormError = signal<string | null>(null);
   readonly hijosSectionOpen = signal(false);
@@ -116,6 +120,12 @@ export class ProveedoresComponent implements OnInit {
   });
 
   readonly modalTitle = computed(() => {
+    if (this.soloLectura()) {
+      if (this.esTabEmpresa()) {
+        return 'Detalle empresa proveedora';
+      }
+      return this.esTabExterna() ? 'Detalle proveedor externo' : 'Detalle proveedor interno';
+    }
     if (this.esTabEmpresa()) {
       return this.editingId() ? 'Editar empresa proveedora' : 'Nueva empresa proveedora';
     }
@@ -376,6 +386,9 @@ export class ProveedoresComponent implements OnInit {
   }
 
   openRecicladoresModal(): void {
+    if (this.soloLectura() || !this.puedeGestionar()) {
+      return;
+    }
     this.ensureInternosLoaded(() => this.showRecicladoresModal.set(true));
   }
 
@@ -384,6 +397,9 @@ export class ProveedoresComponent implements OnInit {
   }
 
   openSucursalesModal(): void {
+    if (this.soloLectura() || !this.puedeGestionar()) {
+      return;
+    }
     if (this.sucursales().length === 0) {
       this.loadSucursales();
     }
@@ -427,6 +443,9 @@ export class ProveedoresComponent implements OnInit {
   }
 
   openHijoModal(index?: number): void {
+    if (this.soloLectura() || !this.puedeGestionar()) {
+      return;
+    }
     this.hijoFormError.set(null);
     this.editingHijoIndex.set(index ?? null);
 
@@ -463,6 +482,9 @@ export class ProveedoresComponent implements OnInit {
   }
 
   saveHijoModal(): void {
+    if (this.soloLectura() || !this.puedeGestionar()) {
+      return;
+    }
     if (this.hijoForm.invalid) {
       this.hijoForm.markAllAsTouched();
       return;
@@ -523,11 +545,12 @@ export class ProveedoresComponent implements OnInit {
   }
 
   openCreate(): void {
-    if (!this.esTabIntegrada()) {
+    if (!this.esTabIntegrada() || !this.puedeGestionar()) {
       return;
     }
 
     this.editingId.set(null);
+    this.soloLectura.set(false);
     if (this.esTabEmpresa()) {
       this.resetEmpresaForm();
       this.ensureInternosLoaded();
@@ -541,75 +564,37 @@ export class ProveedoresComponent implements OnInit {
     this.error.set(null);
   }
 
-  openEdit(proveedor: ProveedorInterno): void {
-    this.editingId.set(proveedor.id);
-    this.resetInternoForm();
-    this.internoForm.patchValue({
-      nombre: proveedor.nombre,
-      tipoDocumento: proveedor.tipoDocumento,
-      documento: proveedor.documento,
-      fechaNacimiento: proveedor.fechaNacimiento ?? '',
-      sexo: proveedor.sexo ?? '',
-      email: proveedor.email ?? '',
-      fechaIngreso: proveedor.fechaIngreso ?? '',
-      arl: proveedor.arl ?? '',
-      eps: proveedor.eps ?? '',
-      telefono: proveedor.telefono ?? '',
-      rh: proveedor.rh ?? '',
-      direccion: proveedor.direccion ?? '',
-      nombreContacto: proveedor.nombreContacto ?? '',
-      telefonoContacto: proveedor.telefonoContacto ?? '',
-      activo: proveedor.activo,
-    });
+  openView(proveedor: ProveedorInterno): void {
+    this.patchInternoForm(proveedor, true);
+  }
 
-    proveedor.hijos.forEach((hijo) => this.hijosArray.push(this.createHijoGroup(hijo)));
-    this.hijosSectionOpen.set(proveedor.hijos.length > 0);
-    this.selectedSucursalIds.set(
-      proveedor.sucursalesAsociadas.map((s) => s.sucursalId)
-    );
-    this.patchUbicacion(proveedor.departamento, proveedor.municipio);
-    this.showForm.set(true);
-    this.error.set(null);
+  openEdit(proveedor: ProveedorInterno): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
+    this.patchInternoForm(proveedor, false);
+  }
+
+  openViewExterno(proveedor: ProveedorExterno): void {
+    this.patchExternoForm(proveedor, true);
   }
 
   openEditExterno(proveedor: ProveedorExterno): void {
-    this.editingId.set(proveedor.id);
-    this.resetExternoForm();
-    this.externoForm.patchValue({
-      nombre: proveedor.nombre,
-      tipoDocumento: proveedor.tipoDocumento,
-      documento: proveedor.documento,
-      email: proveedor.email ?? '',
-      nombreContacto: proveedor.nombreContacto ?? '',
-      telefonoContacto: proveedor.telefonoContacto ?? '',
-      activo: proveedor.activo,
-    });
-    this.showForm.set(true);
-    this.error.set(null);
+    if (!this.puedeGestionar()) {
+      return;
+    }
+    this.patchExternoForm(proveedor, false);
+  }
+
+  openViewEmpresa(empresa: ProveedorEmpresa): void {
+    this.patchEmpresaForm(empresa, true);
   }
 
   openEditEmpresa(empresa: ProveedorEmpresa): void {
-    this.editingId.set(empresa.id);
-    this.resetEmpresaForm();
-    this.empresaForm.patchValue({
-      nit: empresa.nit,
-      razonSocial: empresa.razonSocial,
-      personaContacto: empresa.personaContacto ?? '',
-      telefonoContacto: empresa.telefonoContacto ?? '',
-      direccion: empresa.direccion ?? '',
-      tipoPago: empresa.tipoPago ?? '',
-      entidadBancariaId: empresa.entidadBancariaId ?? null,
-      tipoCuenta: empresa.tipoCuenta ?? '',
-      numeroCuenta: empresa.numeroCuenta ?? '',
-      activo: empresa.activo,
-    });
-    this.selectedRecicladorIds.set(
-      empresa.recicladoresAsociados.map((r) => r.recicladorId)
-    );
-    this.ensureInternosLoaded();
-    this.patchEmpresaUbicacion(empresa.departamento, empresa.municipio);
-    this.showForm.set(true);
-    this.error.set(null);
+    if (!this.puedeGestionar()) {
+      return;
+    }
+    this.patchEmpresaForm(empresa, false);
   }
 
   cancelForm(): void {
@@ -618,6 +603,7 @@ export class ProveedoresComponent implements OnInit {
     this.closeSucursalesModal();
     this.showForm.set(false);
     this.editingId.set(null);
+    this.soloLectura.set(false);
     this.hijosSectionOpen.set(false);
     this.error.set(null);
     this.resetInternoForm();
@@ -626,6 +612,10 @@ export class ProveedoresComponent implements OnInit {
   }
 
   saveInterno(): void {
+    if (this.soloLectura() || !this.puedeGestionar()) {
+      return;
+    }
+
     if (this.internoForm.invalid) {
       this.internoForm.markAllAsTouched();
       return;
@@ -681,6 +671,10 @@ export class ProveedoresComponent implements OnInit {
   }
 
   saveExterno(): void {
+    if (this.soloLectura() || !this.puedeGestionar()) {
+      return;
+    }
+
     if (this.externoForm.invalid) {
       this.externoForm.markAllAsTouched();
       return;
@@ -721,6 +715,10 @@ export class ProveedoresComponent implements OnInit {
   }
 
   saveEmpresa(): void {
+    if (this.soloLectura() || !this.puedeGestionar()) {
+      return;
+    }
+
     if (this.empresaForm.invalid) {
       this.empresaForm.markAllAsTouched();
       return;
@@ -770,6 +768,9 @@ export class ProveedoresComponent implements OnInit {
   }
 
   deleteEmpresa(empresa: ProveedorEmpresa): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
     if (!confirm(`¿Eliminar la empresa "${empresa.razonSocial}"?`)) {
       return;
     }
@@ -786,6 +787,9 @@ export class ProveedoresComponent implements OnInit {
   }
 
   deleteExterno(proveedor: ProveedorExterno): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
     if (!confirm(`¿Eliminar el proveedor externo "${proveedor.nombre}"?`)) {
       return;
     }
@@ -802,6 +806,9 @@ export class ProveedoresComponent implements OnInit {
   }
 
   deleteInterno(proveedor: ProveedorInterno): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
     if (!confirm(`¿Eliminar el proveedor interno "${proveedor.nombre}"?`)) {
       return;
     }
@@ -821,9 +828,112 @@ export class ProveedoresComponent implements OnInit {
     return `${proveedor.tipoDocumento} ${proveedor.documento}`;
   }
 
+  private patchInternoForm(proveedor: ProveedorInterno, readOnly: boolean): void {
+    this.editingId.set(readOnly ? null : proveedor.id);
+    this.soloLectura.set(readOnly);
+    this.resetInternoForm();
+    this.loadSucursales();
+    this.internoForm.patchValue({
+      nombre: proveedor.nombre,
+      tipoDocumento: proveedor.tipoDocumento,
+      documento: proveedor.documento,
+      fechaNacimiento: proveedor.fechaNacimiento ?? '',
+      sexo: proveedor.sexo ?? '',
+      email: proveedor.email ?? '',
+      fechaIngreso: proveedor.fechaIngreso ?? '',
+      arl: proveedor.arl ?? '',
+      eps: proveedor.eps ?? '',
+      telefono: proveedor.telefono ?? '',
+      rh: proveedor.rh ?? '',
+      direccion: proveedor.direccion ?? '',
+      nombreContacto: proveedor.nombreContacto ?? '',
+      telefonoContacto: proveedor.telefonoContacto ?? '',
+      activo: proveedor.activo,
+    });
+
+    proveedor.hijos.forEach((hijo) => this.hijosArray.push(this.createHijoGroup(hijo)));
+    this.hijosSectionOpen.set(proveedor.hijos.length > 0);
+    this.selectedSucursalIds.set(
+      proveedor.sucursalesAsociadas.map((s) => s.sucursalId)
+    );
+    this.patchUbicacion(proveedor.departamento, proveedor.municipio);
+
+    if (readOnly) {
+      this.internoForm.disable();
+    } else {
+      this.internoForm.enable();
+      if (!this.internoForm.controls.departamentoId.value) {
+        this.internoForm.controls.municipioId.disable();
+      }
+    }
+
+    this.showForm.set(true);
+    this.error.set(null);
+  }
+
+  private patchExternoForm(proveedor: ProveedorExterno, readOnly: boolean): void {
+    this.editingId.set(readOnly ? null : proveedor.id);
+    this.soloLectura.set(readOnly);
+    this.resetExternoForm();
+    this.externoForm.patchValue({
+      nombre: proveedor.nombre,
+      tipoDocumento: proveedor.tipoDocumento,
+      documento: proveedor.documento,
+      email: proveedor.email ?? '',
+      nombreContacto: proveedor.nombreContacto ?? '',
+      telefonoContacto: proveedor.telefonoContacto ?? '',
+      activo: proveedor.activo,
+    });
+
+    if (readOnly) {
+      this.externoForm.disable();
+    } else {
+      this.externoForm.enable();
+    }
+
+    this.showForm.set(true);
+    this.error.set(null);
+  }
+
+  private patchEmpresaForm(empresa: ProveedorEmpresa, readOnly: boolean): void {
+    this.editingId.set(readOnly ? null : empresa.id);
+    this.soloLectura.set(readOnly);
+    this.resetEmpresaForm();
+    this.empresaForm.patchValue({
+      nit: empresa.nit,
+      razonSocial: empresa.razonSocial,
+      personaContacto: empresa.personaContacto ?? '',
+      telefonoContacto: empresa.telefonoContacto ?? '',
+      direccion: empresa.direccion ?? '',
+      tipoPago: empresa.tipoPago ?? '',
+      entidadBancariaId: empresa.entidadBancariaId ?? null,
+      tipoCuenta: empresa.tipoCuenta ?? '',
+      numeroCuenta: empresa.numeroCuenta ?? '',
+      activo: empresa.activo,
+    });
+    this.selectedRecicladorIds.set(
+      empresa.recicladoresAsociados.map((r) => r.recicladorId)
+    );
+    this.ensureInternosLoaded();
+    this.patchEmpresaUbicacion(empresa.departamento, empresa.municipio);
+
+    if (readOnly) {
+      this.empresaForm.disable();
+    } else {
+      this.empresaForm.enable();
+      if (!this.empresaForm.controls.departamentoId.value) {
+        this.empresaForm.controls.municipioId.disable();
+      }
+    }
+
+    this.showForm.set(true);
+    this.error.set(null);
+  }
+
   private resetEmpresaForm(): void {
     this.empresaMunicipios.set([]);
     this.selectedRecicladorIds.set([]);
+    this.empresaForm.enable();
     this.empresaForm.reset({
       nit: '',
       razonSocial: '',
@@ -842,6 +952,7 @@ export class ProveedoresComponent implements OnInit {
   }
 
   private resetExternoForm(): void {
+    this.externoForm.enable();
     this.externoForm.reset({
       nombre: '',
       tipoDocumento: 'CC',
@@ -857,6 +968,7 @@ export class ProveedoresComponent implements OnInit {
     this.hijosArray.clear();
     this.selectedSucursalIds.set([]);
     this.municipios.set([]);
+    this.internoForm.enable();
     this.internoForm.reset({
       nombre: '',
       tipoDocumento: 'CC',
@@ -918,7 +1030,9 @@ export class ProveedoresComponent implements OnInit {
     }
 
     this.empresaForm.patchValue({ departamentoId: departamento.id });
-    this.empresaForm.controls.municipioId.enable();
+    if (!this.soloLectura()) {
+      this.empresaForm.controls.municipioId.enable();
+    }
     this.ubicacionesService.getMunicipiosByDepartamento(departamento.id).subscribe({
       next: (municipios) => {
         this.empresaMunicipios.set(municipios);
@@ -926,6 +1040,9 @@ export class ProveedoresComponent implements OnInit {
           (m) => m.nombre.toLowerCase() === (municipioNombre ?? '').toLowerCase()
         );
         this.empresaForm.patchValue({ municipioId: municipio?.id ?? null });
+        if (this.soloLectura()) {
+          this.empresaForm.disable();
+        }
       },
     });
   }
@@ -943,7 +1060,9 @@ export class ProveedoresComponent implements OnInit {
     }
 
     this.internoForm.patchValue({ departamentoId: departamento.id });
-    this.internoForm.controls.municipioId.enable();
+    if (!this.soloLectura()) {
+      this.internoForm.controls.municipioId.enable();
+    }
     this.ubicacionesService.getMunicipiosByDepartamento(departamento.id).subscribe({
       next: (municipios) => {
         this.municipios.set(municipios);
@@ -951,6 +1070,9 @@ export class ProveedoresComponent implements OnInit {
           (m) => m.nombre.toLowerCase() === (municipioNombre ?? '').toLowerCase()
         );
         this.internoForm.patchValue({ municipioId: municipio?.id ?? null });
+        if (this.soloLectura()) {
+          this.internoForm.disable();
+        }
       },
     });
   }

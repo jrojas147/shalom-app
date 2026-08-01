@@ -1,6 +1,11 @@
 import { UserRole } from '../models/user.model';
 
-export const OPERADOR_APP_ROUTES = ['/app/pre-compra', '/app/inventario', '/app/clientes'] as const;
+export const OPERADOR_APP_ROUTES = [
+  '/app/pre-compra',
+  '/app/inventario',
+  '/app/proveedores',
+  '/app/clientes',
+] as const;
 
 export function normalizeUserRole(rol: string | null | undefined): UserRole | null {
   if (!rol) {

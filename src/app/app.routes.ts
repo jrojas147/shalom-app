@@ -74,7 +74,7 @@ export const routes: Routes = [
       },
       {
         path: 'proveedores',
-        canActivate: [adminDireccion],
+        canActivate: [operadorModules],
         loadComponent: () =>
           import('./features/proveedores/proveedores.component').then((m) => m.ProveedoresComponent),
       },

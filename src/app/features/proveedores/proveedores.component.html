@@ -2,7 +2,13 @@
   <header class="rp-page-header">
     <div>
       <h1>Proveedores</h1>
-      <p>Gestión de proveedores internos, externos y empresas</p>
+      <p>
+        @if (puedeGestionar()) {
+          Gestión de proveedores internos, externos y empresas
+        } @else {
+          Consulta de proveedores internos, externos y empresas
+        }
+      </p>
     </div>
   </header>
 
@@ -31,7 +37,7 @@
         <h2>{{ tabConfig().label }}</h2>
         <p class="proveedores-panel__desc">{{ tabConfig().descripcion }}</p>
       </div>
-      @if (esTabIntegrada()) {
+      @if (esTabIntegrada() && puedeGestionar()) {
         <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
           {{ esTabEmpresa() ? '+ Nueva empresa' : '+ Nuevo proveedor' }}
         </button>
@@ -107,22 +113,32 @@
                   </span>
                 </td>
                 <td class="cell-actions">
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon"
-                    (click)="openEdit(proveedor)"
-                    title="Editar"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon danger"
-                    (click)="deleteInterno(proveedor)"
-                    title="Eliminar"
-                  >
-                    🗑
-                  </button>
+                  @if (puedeGestionar()) {
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon"
+                      (click)="openEdit(proveedor)"
+                      title="Editar"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon danger"
+                      (click)="deleteInterno(proveedor)"
+                      title="Eliminar"
+                    >
+                      🗑
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--secondary"
+                      (click)="openView(proveedor)"
+                    >
+                      Ver
+                    </button>
+                  }
                 </td>
               </tr>
             } @empty {
@@ -172,22 +188,32 @@
                   </span>
                 </td>
                 <td class="cell-actions">
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon"
-                    (click)="openEditExterno(proveedor)"
-                    title="Editar"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon danger"
-                    (click)="deleteExterno(proveedor)"
-                    title="Eliminar"
-                  >
-                    🗑
-                  </button>
+                  @if (puedeGestionar()) {
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon"
+                      (click)="openEditExterno(proveedor)"
+                      title="Editar"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon danger"
+                      (click)="deleteExterno(proveedor)"
+                      title="Eliminar"
+                    >
+                      🗑
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--secondary"
+                      (click)="openViewExterno(proveedor)"
+                    >
+                      Ver
+                    </button>
+                  }
                 </td>
               </tr>
             } @empty {
@@ -245,22 +271,32 @@
                   </span>
                 </td>
                 <td class="cell-actions">
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon"
-                    (click)="openEditEmpresa(empresa)"
-                    title="Editar"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon danger"
-                    (click)="deleteEmpresa(empresa)"
-                    title="Eliminar"
-                  >
-                    🗑
-                  </button>
+                  @if (puedeGestionar()) {
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon"
+                      (click)="openEditEmpresa(empresa)"
+                      title="Editar"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon danger"
+                      (click)="deleteEmpresa(empresa)"
+                      title="Eliminar"
+                    >
+                      🗑
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--secondary"
+                      (click)="openViewEmpresa(empresa)"
+                    >
+                      Ver
+                    </button>
+                  }
                 </td>
               </tr>
             } @empty {
@@ -397,18 +433,24 @@
               <span class="proveedores-hijos__header-title">Recicladores asociados</span>
               <span class="proveedores-hijos__count">{{ selectedRecicladorIds().length }}</span>
             </div>
-            <button
-              type="button"
-              class="rp-btn rp-btn--secondary proveedores-hijos__manage"
-              (click)="openRecicladoresModal()"
-            >
-              Gestionar recicladores
-            </button>
+            @if (puedeGestionar() && !soloLectura()) {
+              <button
+                type="button"
+                class="rp-btn rp-btn--secondary proveedores-hijos__manage"
+                (click)="openRecicladoresModal()"
+              >
+                Gestionar recicladores
+              </button>
+            }
           </div>
 
           @if (recicladoresSeleccionados().length === 0) {
             <p class="proveedores-hijos__empty proveedores-hijos__empty--inline">
-              No hay recicladores asociados. Use el botón para seleccionarlos.
+              @if (puedeGestionar() && !soloLectura()) {
+                No hay recicladores asociados. Use el botón para seleccionarlos.
+              } @else {
+                No hay recicladores asociados.
+              }
             </p>
           } @else {
             <ul class="proveedores-hijos-list proveedores-hijos-list--compact">
@@ -423,16 +465,18 @@
                       }
                     </span>
                   </div>
-                  <div class="proveedores-hijos-list__actions">
-                    <button
-                      type="button"
-                      class="rp-btn rp-btn--icon danger"
-                      (click)="removeReciclador(reciclador.id)"
-                      title="Quitar reciclador"
-                    >
-                      ✕
-                    </button>
-                  </div>
+                  @if (puedeGestionar() && !soloLectura()) {
+                    <div class="proveedores-hijos-list__actions">
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--icon danger"
+                        (click)="removeReciclador(reciclador.id)"
+                        title="Quitar reciclador"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  }
                 </li>
               }
             </ul>
@@ -441,11 +485,13 @@
 
         <div class="rp-form-actions proveedores-modal-actions">
           <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
-            Cancelar
+            {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
           </button>
-          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
-            {{ saving() ? 'Guardando...' : 'Guardar' }}
-          </button>
+          @if (puedeGestionar() && !soloLectura()) {
+            <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+              {{ saving() ? 'Guardando...' : 'Guardar' }}
+            </button>
+          }
         </div>
       </form>
     } @else if (esTabExterna()) {
@@ -505,11 +551,13 @@
 
         <div class="rp-form-actions proveedores-modal-actions">
           <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
-            Cancelar
+            {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
           </button>
-          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
-            {{ saving() ? 'Guardando...' : 'Guardar' }}
-          </button>
+          @if (puedeGestionar() && !soloLectura()) {
+            <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+              {{ saving() ? 'Guardando...' : 'Guardar' }}
+            </button>
+          }
         </div>
       </form>
     } @else {
@@ -653,18 +701,24 @@
             <span class="proveedores-hijos__header-title">Sucursales asociadas</span>
             <span class="proveedores-hijos__count">{{ selectedSucursalIds().length }}</span>
           </div>
-          <button
-            type="button"
-            class="rp-btn rp-btn--secondary proveedores-hijos__manage"
-            (click)="openSucursalesModal()"
-          >
-            Gestionar sucursales
-          </button>
+          @if (puedeGestionar() && !soloLectura()) {
+            <button
+              type="button"
+              class="rp-btn rp-btn--secondary proveedores-hijos__manage"
+              (click)="openSucursalesModal()"
+            >
+              Gestionar sucursales
+            </button>
+          }
         </div>
 
         @if (sucursalesSeleccionadas().length === 0) {
           <p class="proveedores-hijos__empty proveedores-hijos__empty--inline">
-            No hay sucursales asociadas. Use el botón para seleccionarlas.
+            @if (puedeGestionar() && !soloLectura()) {
+              No hay sucursales asociadas. Use el botón para seleccionarlas.
+            } @else {
+              No hay sucursales asociadas.
+            }
           </p>
         } @else {
           <ul class="proveedores-hijos-list proveedores-hijos-list--compact">
@@ -676,16 +730,18 @@
                     NIT {{ sucursal.nit }} · {{ sucursal.municipio }}
                   </span>
                 </div>
-                <div class="proveedores-hijos-list__actions">
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon danger"
-                    (click)="removeSucursal(sucursal.id)"
-                    title="Quitar sucursal"
-                  >
-                    ✕
-                  </button>
-                </div>
+                @if (puedeGestionar() && !soloLectura()) {
+                  <div class="proveedores-hijos-list__actions">
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon danger"
+                      (click)="removeSucursal(sucursal.id)"
+                      title="Quitar sucursal"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                }
               </li>
             }
           </ul>
@@ -706,9 +762,11 @@
 
         @if (hijosSectionOpen()) {
           <div class="proveedores-hijos__body">
-            <p class="proveedores-hijos__desc">
-              Registre los hijos del reciclador. Se guardan al confirmar el proveedor.
-            </p>
+            @if (puedeGestionar() && !soloLectura()) {
+              <p class="proveedores-hijos__desc">
+                Registre los hijos del reciclador. Se guardan al confirmar el proveedor.
+              </p>
+            }
 
             @if (hijosArray.length === 0) {
               <p class="proveedores-hijos__empty">No hay hijos registrados.</p>
@@ -728,43 +786,49 @@
                         }
                       </span>
                     </div>
-                    <div class="proveedores-hijos-list__actions">
-                      <button
-                        type="button"
-                        class="rp-btn rp-btn--icon"
-                        (click)="openHijoModal(i)"
-                        title="Editar hijo"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        type="button"
-                        class="rp-btn rp-btn--icon danger"
-                        (click)="removeHijoRow(i)"
-                        title="Quitar hijo"
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    @if (puedeGestionar() && !soloLectura()) {
+                      <div class="proveedores-hijos-list__actions">
+                        <button
+                          type="button"
+                          class="rp-btn rp-btn--icon"
+                          (click)="openHijoModal(i)"
+                          title="Editar hijo"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          class="rp-btn rp-btn--icon danger"
+                          (click)="removeHijoRow(i)"
+                          title="Quitar hijo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    }
                   </li>
                 }
               </ul>
             }
 
-            <button type="button" class="rp-btn rp-btn--secondary proveedores-hijos__add" (click)="openHijoModal()">
-              + Agregar hijo
-            </button>
+            @if (puedeGestionar() && !soloLectura()) {
+              <button type="button" class="rp-btn rp-btn--secondary proveedores-hijos__add" (click)="openHijoModal()">
+                + Agregar hijo
+              </button>
+            }
           </div>
         }
       </section>
 
       <div class="rp-form-actions proveedores-modal-actions">
         <button type="button" class="rp-btn rp-btn--secondary" (click)="cancelForm()">
-          Cancelar
+          {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
         </button>
-        <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
-          {{ saving() ? 'Guardando...' : 'Guardar' }}
-        </button>
+        @if (puedeGestionar() && !soloLectura()) {
+          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        }
       </div>
     </form>
     }
