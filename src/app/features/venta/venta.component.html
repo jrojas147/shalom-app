@@ -132,7 +132,12 @@
                 [value]="formatPeso(item.pesoKg)"
                 (change)="onPesoInput(item.productoId, $any($event.target).value)"
               />
-              <button type="button" (click)="ajustarPeso(item.productoId, 0.5)" aria-label="Más peso">+</button>
+              <button
+                type="button"
+                [disabled]="!puedeAumentarPeso(item.productoId, item.pesoKg)"
+                (click)="ajustarPeso(item.productoId, 0.5)"
+                aria-label="Más peso"
+              >+</button>
               <span class="weight-unit">KG</span>
             </div>
             <div class="item-pricing">

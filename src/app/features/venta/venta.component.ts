@@ -146,6 +146,12 @@ export class VentaComponent implements OnInit {
 
     const existente = this.items().find((i) => i.productoId === producto.id);
     if (existente) {
+      if (existente.pesoKg >= stock) {
+        this.error.set(
+          `No puede vender más de ${this.formatPeso(stock)} KG de ${producto.nombreInterno}.`
+        );
+        return;
+      }
       this.ajustarPeso(producto.id, 0.5);
       return;
     }
@@ -163,26 +169,52 @@ export class VentaComponent implements OnInit {
 
   ajustarPeso(productoId: number, delta: number): void {
     const stock = this.stockProducto(productoId);
+    const actual = this.items().find((i) => i.productoId === productoId);
+    if (!actual) return;
+
+    const pesoDeseado = Math.max(0.5, Math.round((actual.pesoKg + delta) * 2) / 2);
+    if (pesoDeseado > stock) {
+      this.error.set(
+        `Stock insuficiente para ${actual.producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
+      );
+      return;
+    }
+
+    this.error.set(null);
     this.items.update((list) =>
-      list.map((item) => {
-        if (item.productoId !== productoId) return item;
-        const peso = Math.max(0.5, Math.round((item.pesoKg + delta) * 2) / 2);
-        return { ...item, pesoKg: Math.min(peso, stock) };
-      })
+      list.map((item) =>
+        item.productoId === productoId ? { ...item, pesoKg: pesoDeseado } : item
+      )
     );
   }
 
   onPesoInput(productoId: number, value: string): void {
     const parsed = parseFloat(value.replace(',', '.'));
     if (Number.isNaN(parsed) || parsed < 0.5) return;
+
     const stock = this.stockProducto(productoId);
+    const actual = this.items().find((i) => i.productoId === productoId);
+    if (!actual) return;
+
+    if (parsed > stock) {
+      this.error.set(
+        `Stock insuficiente para ${actual.producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
+      );
+      // Fuerza refresco visual al stock máximo permitido
+      this.items.update((list) => [...list]);
+      return;
+    }
+
+    this.error.set(null);
     this.items.update((list) =>
       list.map((item) =>
-        item.productoId === productoId
-          ? { ...item, pesoKg: Math.min(parsed, stock) }
-          : item
+        item.productoId === productoId ? { ...item, pesoKg: parsed } : item
       )
     );
+  }
+
+  puedeAumentarPeso(productoId: number, pesoActual: number): boolean {
+    return pesoActual < this.stockProducto(productoId);
   }
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
