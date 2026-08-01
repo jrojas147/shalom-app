@@ -1,18 +1,187 @@
-<div class="venta">
-  <header class="rp-page-header">
-    <div>
-      <h1>Venta</h1>
-      <p>Registro de ventas del comercio</p>
-    </div>
-  </header>
+<div class="compras-pos">
+  <section class="compras-main">
+    <div class="compras-toolbar">
+      <div class="compras-search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M9 12h6"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+        <input
+          type="search"
+          placeholder="Buscar producto..."
+          [ngModel]="busqueda()"
+          (ngModelChange)="onBusqueda($event)"
+        />
+      </div>
 
-  <section class="rp-panel">
-    <div class="panel-header">
-      <h2>Módulo habilitado</h2>
+      <div class="compras-ciiu-filter">
+        <label class="compras-ciiu-filter__label" for="ventaCiiuFiltro">CIIU</label>
+        <select
+          id="ventaCiiuFiltro"
+          class="compras-ciiu-filter__select"
+          [ngModel]="codigoCiiuFiltro()"
+          (ngModelChange)="onCodigoCiiuFiltro($event)"
+        >
+          <option [ngValue]="null">Todos los nombres CIIU</option>
+          @for (ciiu of codigosCiiu(); track ciiu.id) {
+            <option [ngValue]="ciiu.id">{{ ciiu.nombre }}</option>
+          }
+        </select>
+      </div>
     </div>
-    <p class="venta__hint">
-      El módulo de venta está disponible para roles administrativos. Próximamente se
-      habilitará el registro de ventas y su impacto en caja e inventario.
-    </p>
+
+    @if (error() && !showClienteModal()) {
+      <div class="compras-alert">{{ error() }}</div>
+    }
+
+    @if (mensaje()) {
+      <div class="compras-success">{{ mensaje() }}</div>
+    }
+
+    @if (loading()) {
+      <p class="compras-loading">Cargando productos con inventario...</p>
+    } @else {
+      <div class="compras-grid">
+        @for (producto of productosFiltrados(); track producto.id) {
+          <button type="button" class="product-card" (click)="agregarProducto(producto)">
+            <div class="product-image-wrap">
+              <div class="product-image">
+                @if (productoImagenUrl(producto.imagen); as imagenSrc) {
+                  <img [src]="imagenSrc" [alt]="producto.nombreInterno" loading="lazy" />
+                } @else {
+                  <span>{{ productoIcono() }}</span>
+                }
+              </div>
+            </div>
+            <div class="product-body">
+              <h3>{{ producto.nombreInterno }}</h3>
+              <p class="product-price">{{ formatPrecioKg(precioVentaKg(producto)) }} /kg</p>
+              <p class="product-price">Stock: {{ formatPeso(stockProducto(producto.id)) }} KG</p>
+            </div>
+          </button>
+        } @empty {
+          <p class="compras-empty">No hay productos con inventario disponible</p>
+        }
+      </div>
+    }
   </section>
+
+  <aside class="compras-detail">
+    <header class="detail-header">
+      <div class="detail-client">
+        <span class="detail-label">Cliente:</span>
+        @if (clienteSeleccionado(); as cliente) {
+          <div class="detail-proveedor">
+            <strong>{{ ventaClienteEtiqueta(cliente) }}</strong>
+            <span class="detail-proveedor__tipo">{{ tipoClienteLabel(cliente.tipoCliente) }}</span>
+          </div>
+        } @else {
+          <strong class="muted">Sin cliente</strong>
+        }
+        <button type="button" class="btn-agregar" (click)="abrirModalCliente()">
+          {{ clienteSeleccionado() ? 'Cambiar' : 'Seleccionar' }}
+        </button>
+      </div>
+      <div class="detail-meta">
+        <span>Factura: <strong>{{ factura() }}</strong></span>
+        <span class="items-badge">{{ cantidadItems() }} ítems</span>
+      </div>
+    </header>
+
+    <div class="detail-items">
+      @for (item of items(); track item.productoId) {
+        <article class="detail-item">
+          <div class="item-top">
+            <span class="item-icon">{{ productoIcono() }}</span>
+            <div class="item-info">
+              <strong class="item-name">{{ item.producto.nombreInterno }}</strong>
+            </div>
+            <button
+              type="button"
+              class="item-delete"
+              (click)="eliminarItem(item.productoId)"
+              aria-label="Eliminar"
+            >
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 7h12M10 7V5h4v2M9 11v6M15 11v6M8 7l1 12h6l1-12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="item-empaque-row">
+            <label class="item-empaque-label" [for]="'venta-empaque-' + item.productoId">Empaque</label>
+            <select
+              [id]="'venta-empaque-' + item.productoId"
+              class="item-empaque"
+              [ngModel]="item.empaque"
+              (ngModelChange)="setEmpaque(item.productoId, $event)"
+            >
+              @for (op of empaqueOpciones; track op.value) {
+                <option [value]="op.value">{{ op.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="item-bottom">
+            <div class="weight-control">
+              <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
+              <input
+                type="text"
+                [value]="formatPeso(item.pesoKg)"
+                (change)="onPesoInput(item.productoId, $any($event.target).value)"
+              />
+              <button type="button" (click)="ajustarPeso(item.productoId, 0.5)" aria-label="Más peso">+</button>
+              <span class="weight-unit">KG</span>
+            </div>
+            <div class="item-pricing">
+              <span class="price-kg">{{ formatPrecioKg(precioVentaKg(item.producto)) }} /kg</span>
+              <strong class="price-total">{{ formatCurrency(itemTotal(item)) }}</strong>
+            </div>
+          </div>
+        </article>
+      } @empty {
+        <div class="detail-empty">
+          <p>Seleccione productos con inventario para agregar a la venta</p>
+        </div>
+      }
+    </div>
+
+    <footer class="detail-footer">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>{{ formatCurrency(subtotal()) }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Peso Bruto Total</span>
+        <span>{{ formatPeso(pesoTotal()) }} KG</span>
+      </div>
+      <div class="summary-total">
+        <span>Total a Cobrar</span>
+        <strong>{{ formatCurrency(subtotal()) }}</strong>
+      </div>
+
+      <button
+        type="button"
+        class="rp-btn rp-btn--primary action-pago"
+        [disabled]="procesando() || !puedeRegistrarVenta()"
+        (click)="registrarVenta()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/>
+        </svg>
+        {{ procesando() ? 'Registrando...' : 'REGISTRAR VENTA' }}
+      </button>
+    </footer>
+  </aside>
 </div>
+
+@if (showClienteModal()) {
+  <app-venta-cliente-modal
+    [seleccionActual]="clienteSeleccionado()"
+    (closed)="cerrarModalCliente()"
+    (seleccionado)="seleccionarCliente($event)"
+  />
+}

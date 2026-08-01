@@ -1,0 +1,44 @@
+<app-rp-modal title="Seleccionar cliente" [wide]="true" (closed)="cerrar()">
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <p class="cliente-modal-desc">Seleccione el cliente para registrar la venta.</p>
+
+  <input
+    type="search"
+    class="cliente-modal-search"
+    placeholder="Buscar por nombre, documento o email..."
+    [value]="busqueda()"
+    (input)="onBusqueda($any($event.target).value)"
+  />
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando clientes...</p>
+  } @else {
+    <ul class="cliente-modal-list">
+      @for (cliente of clientesFiltrados(); track cliente.id) {
+        <li>
+          <button
+            type="button"
+            class="cliente-modal-item"
+            [class.selected]="esSeleccionado(cliente.id)"
+            (click)="seleccionar(cliente)"
+          >
+            <span class="cliente-modal-item__avatar">{{ cliente.nombre.charAt(0) }}</span>
+            <span class="cliente-modal-item__body">
+              <strong>{{ cliente.nombre }}</strong>
+              <span>{{ cliente.tipoDocumento }} {{ cliente.documento }}</span>
+              <span class="cliente-modal-item__tipo">{{ tipoClienteLabel(cliente.tipoCliente) }}</span>
+            </span>
+            @if (esSeleccionado(cliente.id)) {
+              <span class="cliente-modal-item__check">✓</span>
+            }
+          </button>
+        </li>
+      } @empty {
+        <li class="rp-empty">No hay clientes activos</li>
+      }
+    </ul>
+  }
+</app-rp-modal>
