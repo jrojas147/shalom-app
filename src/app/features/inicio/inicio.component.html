@@ -40,9 +40,26 @@
     <div class="rp-metric-card">
       <div class="metric-header">
         <span class="metric-label">Saldo en caja</span>
-        <span class="rp-badge rp-badge--disponible">Disponible</span>
+        @if (loadingCaja()) {
+          <span class="rp-badge rp-badge--neutral">Cargando</span>
+        } @else if (cajaAbierta()) {
+          <span class="rp-badge rp-badge--disponible">Abierta</span>
+        } @else {
+          <span class="rp-badge rp-badge--neutral">Cerrada</span>
+        }
       </div>
-      <strong class="metric-value">{{ cashBalance }}</strong>
+      @if (loadingCaja()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (cajaError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ cajaError() }}</span>
+      } @else if (cajaAbierta()) {
+        <strong class="metric-value">{{ formatCurrency(saldoCaja()) }}</strong>
+        <span class="cell-secondary">Saldo actual del turno</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(0) }}</strong>
+        <span class="cell-secondary">Sin caja abierta</span>
+      }
     </div>
 
     <div class="rp-metric-card">

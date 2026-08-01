@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
+import { CajaService } from '../../core/services/caja.service';
 import { HealthService } from '../../core/services/health.service';
 import { InicioService } from '../../core/services/inicio.service';
 import { CompraResumen } from '../../core/models/compra-registro.model';
@@ -14,6 +15,7 @@ import { HealthResponse } from '../../core/models/user.model';
 export class InicioComponent implements OnInit {
   private readonly healthService = inject(HealthService);
   private readonly inicioService = inject(InicioService);
+  private readonly cajaService = inject(CajaService);
   readonly auth = inject(AuthService);
 
   readonly health = signal<HealthResponse | null>(null);
@@ -24,11 +26,16 @@ export class InicioComponent implements OnInit {
   readonly comprasError = signal<string | null>(null);
   readonly loadingCompras = signal(false);
 
-  cashBalance = '$3.840.000';
+  readonly saldoCaja = signal<number | null>(null);
+  readonly cajaAbierta = signal(false);
+  readonly cajaError = signal<string | null>(null);
+  readonly loadingCaja = signal(false);
+
   pendingPayments = '$1.200,00';
 
   ngOnInit(): void {
     this.cargarResumenCompras();
+    this.cargarSaldoCaja();
   }
 
   cargarResumenCompras(): void {
@@ -47,6 +54,39 @@ export class InicioComponent implements OnInit {
             : 'No se pudo cargar el resumen de compras.';
         this.comprasError.set(msg);
         this.loadingCompras.set(false);
+      },
+    });
+  }
+
+  cargarSaldoCaja(): void {
+    this.loadingCaja.set(true);
+    this.cajaError.set(null);
+
+    this.cajaService.obtenerActual().subscribe({
+      next: (caja) => {
+        if (caja) {
+          this.cajaAbierta.set(true);
+          this.saldoCaja.set(this.toNumber(caja.saldoActual));
+        } else {
+          this.cajaAbierta.set(false);
+          this.saldoCaja.set(0);
+        }
+        this.loadingCaja.set(false);
+      },
+      error: (err) => {
+        if (err?.status === 204) {
+          this.cajaAbierta.set(false);
+          this.saldoCaja.set(0);
+          this.loadingCaja.set(false);
+          return;
+        }
+        this.cajaError.set(
+          typeof err?.error?.message === 'string'
+            ? err.error.message
+            : 'No se pudo cargar el saldo de caja.'
+        );
+        this.saldoCaja.set(null);
+        this.loadingCaja.set(false);
       },
     });
   }
