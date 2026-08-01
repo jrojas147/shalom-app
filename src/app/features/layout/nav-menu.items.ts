@@ -12,7 +12,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Inicio', route: '/app/inicio', icon: 'inicio' },
   { label: 'Compras', route: '/app/compras', icon: 'compra' },
   { label: 'Caja', route: '/app/caja', icon: 'caja' },
-  //{ label: 'Venta', route: '/app/venta', icon: 'venta' },
+  { label: 'Venta', route: '/app/venta', icon: 'venta' },
   { label: 'Retribución', route: '/app/liquidacion', icon: 'liquidacion' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },
   //{ label: 'Inventario', route: '/app/inventario', icon: 'inventario' },

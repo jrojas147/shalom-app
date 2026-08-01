@@ -46,7 +46,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/caja/caja.component').then((m) => m.CajaComponent),
       },
-      { path: 'venta', canActivate: [adminDireccion], loadComponent: loadInicio },
+      {
+        path: 'venta',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/venta/venta.component').then((m) => m.VentaComponent),
+      },
       {
         path: 'liquidacion',
         canActivate: [adminDireccion],
