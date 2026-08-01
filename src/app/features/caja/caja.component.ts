@@ -1,11 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CAJA_CONCEPTO_LABEL,
   Caja,
   CajaMovimientoConcepto,
 } from '../../core/models/caja.model';
+import { AuthService } from '../../core/services/auth.service';
+import { CajaCierrePrintService } from '../../core/services/caja-cierre-print.service';
 import { CajaService } from '../../core/services/caja.service';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 
@@ -19,6 +21,8 @@ import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialo
 export class CajaComponent implements OnInit {
   private readonly cajaService = inject(CajaService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
+  private readonly auth = inject(AuthService);
+  private readonly cierrePrintService = inject(CajaCierrePrintService);
 
   readonly caja = signal<Caja | null>(null);
   readonly loading = signal(false);
@@ -26,10 +30,17 @@ export class CajaComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
 
+  readonly saldoCierre = signal(0);
+  readonly observacionCierre = signal('');
+
   saldoInicial = 0;
   observacionApertura = '';
-  saldoCierre = 0;
-  observacionCierre = '';
+
+  readonly saldoTeorico = computed(() =>
+    Number(this.caja()?.saldoTeorico ?? this.caja()?.saldoActual ?? 0)
+  );
+  readonly diferencia = computed(() => this.saldoCierre() - this.saldoTeorico());
+  readonly tieneDiferencia = computed(() => Math.abs(this.diferencia()) > 0.009);
 
   ngOnInit(): void {
     this.cargarCaja();
@@ -43,7 +54,7 @@ export class CajaComponent implements OnInit {
       next: (data) => {
         this.caja.set(data);
         if (data) {
-          this.saldoCierre = Number(data.saldoActual ?? 0);
+          this.saldoCierre.set(Number(data.saldoActual ?? 0));
         }
         this.loading.set(false);
       },
@@ -77,7 +88,7 @@ export class CajaComponent implements OnInit {
         next: (data) => {
           this.saving.set(false);
           this.caja.set(data);
-          this.saldoCierre = Number(data.saldoActual ?? 0);
+          this.saldoCierre.set(Number(data.saldoActual ?? 0));
           this.mensaje.set('Caja abierta correctamente.');
           this.observacionApertura = '';
         },
@@ -92,10 +103,30 @@ export class CajaComponent implements OnInit {
     const actual = this.caja();
     if (!actual) return;
 
+    if (this.saldoCierre() < 0) {
+      this.error.set('El efectivo contado no puede ser negativo.');
+      return;
+    }
+
+    if (this.tieneDiferencia() && !this.observacionCierre().trim()) {
+      this.error.set(
+        'Debe indicar una observación cuando el efectivo contado difiere del saldo teórico.'
+      );
+      return;
+    }
+
+    const diferencia = this.diferencia();
+    const diferenciaTexto =
+      diferencia === 0
+        ? 'sin diferencia'
+        : diferencia > 0
+          ? `sobrante de ${this.formatCurrency(diferencia)}`
+          : `faltante de ${this.formatCurrency(Math.abs(diferencia))}`;
+
     this.confirmDialog
       .confirm({
         title: 'Cerrar caja',
-        message: '¿Cerrar la caja actual? No podrá registrar más movimientos en este turno.',
+        message: `¿Cerrar la caja con efectivo contado ${this.formatCurrency(this.saldoCierre())} (${diferenciaTexto})? No podrá registrar más movimientos en este turno.`,
         confirmLabel: 'Cerrar caja',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',
@@ -109,17 +140,18 @@ export class CajaComponent implements OnInit {
 
         this.cajaService
           .cerrar({
-            saldoCierre: this.saldoCierre,
-            observacion: this.observacionCierre.trim() || undefined,
+            saldoCierre: this.saldoCierre(),
+            observacion: this.observacionCierre().trim() || undefined,
           })
           .subscribe({
-            next: () => {
+            next: (cerrada) => {
+              this.imprimirCierre(cerrada);
               this.saving.set(false);
               this.caja.set(null);
               this.saldoInicial = 0;
-              this.saldoCierre = 0;
-              this.observacionCierre = '';
-              this.mensaje.set('Caja cerrada correctamente.');
+              this.saldoCierre.set(0);
+              this.observacionCierre.set('');
+              this.mensaje.set('Caja cerrada correctamente. Se generó el comprobante de cierre.');
             },
             error: (err) => {
               this.saving.set(false);
@@ -129,16 +161,53 @@ export class CajaComponent implements OnInit {
       });
   }
 
+  usarSaldoTeorico(): void {
+    this.saldoCierre.set(this.saldoTeorico());
+  }
+
+  onSaldoCierreChange(value: number | string | null): void {
+    this.saldoCierre.set(Number(value) || 0);
+  }
+
+  onObservacionCierreChange(value: string): void {
+    this.observacionCierre.set(value ?? '');
+  }
+
   conceptoLabel(concepto: CajaMovimientoConcepto): string {
     return CAJA_CONCEPTO_LABEL[concepto] ?? concepto;
   }
 
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CL', {
+    return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'CLP',
+      currency: 'COP',
       maximumFractionDigits: 0,
     }).format(value ?? 0);
+  }
+
+  private imprimirCierre(caja: Caja): void {
+    const user = this.auth.currentUser();
+    const nombreUsuario = [user?.nombre, user?.apellido].filter(Boolean).join(' ').trim();
+    const usuarioCierre =
+      caja.usuarioCierreNombre ?? (nombreUsuario || user?.username || 'Usuario');
+
+    this.cierrePrintService.imprimir({
+      cajaId: caja.id,
+      comercioNombre: user?.comercioNombre ?? 'Comercio',
+      usuarioApertura: caja.usuarioAperturaNombre ?? '—',
+      usuarioCierre,
+      openedAt: new Date(caja.openedAt),
+      closedAt: caja.closedAt ? new Date(caja.closedAt) : new Date(),
+      saldoInicial: Number(caja.saldoInicial) || 0,
+      totalVentas: Number(caja.totalVentas) || 0,
+      totalPagosProveedor: Number(caja.totalPagosProveedor) || 0,
+      totalIngresos: Number(caja.totalIngresos) || 0,
+      totalEgresos: Number(caja.totalEgresos) || 0,
+      saldoTeorico: Number(caja.saldoTeorico ?? caja.saldoActual) || 0,
+      saldoCierre: Number(caja.saldoCierre) || 0,
+      diferencia: Number(caja.diferencia) || 0,
+      observacion: caja.observacion,
+    });
   }
 
   private extractErrorMessage(

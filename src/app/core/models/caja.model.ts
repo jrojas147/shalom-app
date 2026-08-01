@@ -32,6 +32,12 @@ export interface Caja {
   saldoInicial: number;
   saldoActual: number;
   saldoCierre?: number | null;
+  saldoTeorico?: number | null;
+  diferencia?: number | null;
+  totalIngresos?: number;
+  totalEgresos?: number;
+  totalVentas?: number;
+  totalPagosProveedor?: number;
   estado: CajaEstado;
   openedAt: string;
   closedAt?: string | null;
