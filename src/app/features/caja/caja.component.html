@@ -216,5 +216,63 @@
         </div>
       </section>
     }
+
+    <section class="rp-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Historial de cajas</h2>
+          <p class="caja__desc">Últimos turnos cerrados del comercio</p>
+        </div>
+      </div>
+
+      @if (loadingHistorial()) {
+        <p class="rp-loading">Cargando historial...</p>
+      } @else {
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th>Caja</th>
+              <th>Apertura</th>
+              <th>Cierre</th>
+              <th>Abrió</th>
+              <th>Cerró</th>
+              <th>Saldo inicial</th>
+              <th>Saldo teórico</th>
+              <th>Efectivo contado</th>
+              <th>Diferencia</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of historial(); track item.id) {
+              <tr>
+                <td class="cell-secondary">#{{ item.id }}</td>
+                <td class="cell-secondary">{{ item.openedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="cell-secondary">
+                  {{ item.closedAt ? (item.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                </td>
+                <td class="cell-secondary">{{ item.usuarioAperturaNombre || '—' }}</td>
+                <td class="cell-secondary">{{ item.usuarioCierreNombre || '—' }}</td>
+                <td class="cell-secondary">{{ formatCurrency(item.saldoInicial) }}</td>
+                <td class="cell-secondary">{{ formatCurrency(item.saldoTeorico) }}</td>
+                <td class="cell-secondary">{{ formatCurrency(item.saldoCierre) }}</td>
+                <td
+                  class="cell-secondary"
+                  [class.caja__diff--ok]="!tieneDiferenciaValor(item.diferencia)"
+                  [class.caja__diff--warn]="tieneDiferenciaValor(item.diferencia)"
+                >
+                  {{ diferenciaLabel(item.diferencia) }}
+                </td>
+                <td class="cell-secondary">{{ item.observacion || '—' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="10" class="rp-empty">Aún no hay cajas cerradas</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
   }
 </div>

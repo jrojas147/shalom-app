@@ -28,4 +28,8 @@ export class CajaService {
   cerrar(payload: CerrarCajaRequest): Observable<Caja> {
     return this.http.post<Caja>(`${this.baseUrl}/cerrar`, payload);
   }
+
+  historial(): Observable<Caja[]> {
+    return this.http.get<Caja[]>(`${this.baseUrl}/historial`);
+  }
 }

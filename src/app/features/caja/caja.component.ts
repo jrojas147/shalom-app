@@ -25,7 +25,9 @@ export class CajaComponent implements OnInit {
   private readonly cierrePrintService = inject(CajaCierrePrintService);
 
   readonly caja = signal<Caja | null>(null);
+  readonly historial = signal<Caja[]>([]);
   readonly loading = signal(false);
+  readonly loadingHistorial = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
@@ -44,6 +46,7 @@ export class CajaComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarCaja();
+    this.cargarHistorial();
   }
 
   cargarCaja(): void {
@@ -65,6 +68,21 @@ export class CajaComponent implements OnInit {
           return;
         }
         this.error.set(this.extractErrorMessage(err, 'No se pudo cargar la caja.'));
+      },
+    });
+  }
+
+  cargarHistorial(): void {
+    this.loadingHistorial.set(true);
+
+    this.cajaService.historial().subscribe({
+      next: (data) => {
+        this.historial.set(data ?? []);
+        this.loadingHistorial.set(false);
+      },
+      error: () => {
+        this.historial.set([]);
+        this.loadingHistorial.set(false);
       },
     });
   }
@@ -91,6 +109,7 @@ export class CajaComponent implements OnInit {
           this.saldoCierre.set(Number(data.saldoActual ?? 0));
           this.mensaje.set('Caja abierta correctamente.');
           this.observacionApertura = '';
+          this.cargarHistorial();
         },
         error: (err) => {
           this.saving.set(false);
@@ -152,6 +171,7 @@ export class CajaComponent implements OnInit {
               this.saldoCierre.set(0);
               this.observacionCierre.set('');
               this.mensaje.set('Caja cerrada correctamente. Se generó el comprobante de cierre.');
+              this.cargarHistorial();
             },
             error: (err) => {
               this.saving.set(false);
@@ -177,12 +197,27 @@ export class CajaComponent implements OnInit {
     return CAJA_CONCEPTO_LABEL[concepto] ?? concepto;
   }
 
-  formatCurrency(value: number): string {
+  formatCurrency(value: number | null | undefined): string {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
       maximumFractionDigits: 0,
     }).format(value ?? 0);
+  }
+
+  diferenciaLabel(value: number | null | undefined): string {
+    const diferencia = Number(value) || 0;
+    if (!this.tieneDiferenciaValor(diferencia)) {
+      return 'Cuadra';
+    }
+    if (diferencia > 0) {
+      return `Sobrante ${this.formatCurrency(diferencia)}`;
+    }
+    return `Faltante ${this.formatCurrency(Math.abs(diferencia))}`;
+  }
+
+  tieneDiferenciaValor(value: number | null | undefined): boolean {
+    return Math.abs(Number(value) || 0) >= 0.009;
   }
 
   private imprimirCierre(caja: Caja): void {
