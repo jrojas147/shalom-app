@@ -24,7 +24,8 @@
             <h2>Caja abierta</h2>
             <p class="caja__desc">
               Abierta por {{ actual.usuarioAperturaNombre || '—' }}
-              el {{ actual.openedAt | date: 'dd/MM/yyyy HH:mm' }}
+              el {{ actual.openedAt | date: 'dd/MM/yyyy HH:mm' }}.
+              Cuente el efectivo y cierre el turno cuando corresponda.
             </p>
           </div>
           <span class="rp-badge rp-badge--success">Abierta</span>
@@ -36,152 +37,65 @@
             <strong>{{ formatCurrency(actual.saldoInicial) }}</strong>
           </div>
           <div>
-            <span class="meta-label">Ingresos</span>
-            <strong>{{ formatCurrency(actual.totalIngresos ?? 0) }}</strong>
-          </div>
-          <div>
-            <span class="meta-label">Egresos</span>
-            <strong>{{ formatCurrency(actual.totalEgresos ?? 0) }}</strong>
-          </div>
-          <div>
-            <span class="meta-label">Saldo teórico</span>
+            <span class="meta-label">Saldo Actual</span>
             <strong>{{ formatCurrency(saldoTeorico()) }}</strong>
           </div>
-        </div>
-
-        <div class="caja__resumen">
           <div>
             <span class="meta-label">Ventas</span>
-            <span>{{ formatCurrency(actual.totalVentas ?? 0) }}</span>
+            <strong>{{ formatCurrency(actual.totalVentas ?? 0) }}</strong>
           </div>
           <div>
             <span class="meta-label">Pagos proveedor</span>
-            <span>{{ formatCurrency(actual.totalPagosProveedor ?? 0) }}</span>
+            <strong>{{ formatCurrency(actual.totalPagosProveedor ?? 0) }}</strong>
           </div>
-        </div>
-      </section>
 
-      <section class="rp-panel">
-        <div class="panel-header">
-          <h2>Movimientos</h2>
         </div>
 
-        <table class="rp-table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Concepto</th>
-              <th>Monto</th>
-              <th>Usuario</th>
-              <th>Observación</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (mov of actual.movimientos; track mov.id) {
-              <tr>
-                <td class="cell-secondary">{{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td>
-                  <span
-                    class="rp-badge"
-                    [class.rp-badge--success]="mov.tipo === 'INGRESO'"
-                    [class.rp-badge--warning]="mov.tipo === 'EGRESO'"
-                  >
-                    {{ mov.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
-                  </span>
-                </td>
-                <td class="cell-secondary">{{ conceptoLabel(mov.concepto) }}</td>
-                <td class="cell-secondary">{{ formatCurrency(mov.monto) }}</td>
-                <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>
-                <td class="cell-secondary">{{ mov.observacion || '—' }}</td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="rp-empty">Sin movimientos registrados</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </section>
-
-      <section class="rp-panel">
-        <div class="panel-header">
-          <div>
-            <h2>Cerrar caja</h2>
-            <p class="caja__desc">
-              Cuente el efectivo y compare con el saldo teórico del turno.
-            </p>
-          </div>
-        </div>
-
-        <div class="caja__cierre-resumen">
-          <div>
-            <span class="meta-label">Saldo teórico</span>
-            <strong>{{ formatCurrency(saldoTeorico()) }}</strong>
-          </div>
-          <div>
-            <span class="meta-label">Efectivo contado</span>
-            <strong>{{ formatCurrency(saldoCierre()) }}</strong>
-          </div>
-          <div>
-            <span class="meta-label">Diferencia</span>
-            <strong
-              [class.caja__diff--ok]="!tieneDiferencia()"
-              [class.caja__diff--warn]="tieneDiferencia()"
-            >
-              @if (!tieneDiferencia()) {
-                Cuadra
-              } @else if (diferencia() > 0) {
-                Sobrante {{ formatCurrency(diferencia()) }}
-              } @else {
-                Faltante {{ formatCurrency(diferencia() * -1) }}
-              }
-            </strong>
-          </div>
-        </div>
-
-        <div class="caja__form">
-          <label>
-            <span>Efectivo contado</span>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              [ngModel]="saldoCierre()"
-              (ngModelChange)="onSaldoCierreChange($event)"
-            />
-          </label>
-          <label>
-            <span>
-              Observación
-              @if (tieneDiferencia()) {
-                <em>(obligatoria por diferencia)</em>
-              }
-            </span>
-            <input
-              type="text"
-              maxlength="500"
-              [ngModel]="observacionCierre()"
-              (ngModelChange)="onObservacionCierreChange($event)"
-            />
-          </label>
-          <div class="caja__form-actions">
-            <button
-              type="button"
-              class="rp-btn rp-btn--secondary"
-              [disabled]="saving()"
-              (click)="usarSaldoTeorico()"
-            >
-              Usar saldo teórico
-            </button>
-            <button
-              type="button"
-              class="rp-btn rp-btn--danger"
-              [disabled]="saving()"
-              (click)="cerrarCaja()"
-            >
-              {{ saving() ? 'Cerrando...' : 'Cerrar caja' }}
-            </button>
+        <div class="caja__cierre">
+          <h3 class="caja__cierre-title">Cierre del turno</h3>
+          <div class="caja__form">
+            <label>
+              <span>Efectivo contado</span>
+              <input
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                [value]="saldoCierreDisplay()"
+                (input)="onSaldoCierreInput($event)"
+              />
+            </label>
+            <label>
+              <span>
+                Observación
+                @if (tieneDiferencia()) {
+                  <em>(obligatoria por diferencia)</em>
+                }
+              </span>
+              <input
+                type="text"
+                maxlength="500"
+                [ngModel]="observacionCierre()"
+                (ngModelChange)="onObservacionCierreChange($event)"
+              />
+            </label>
+            <div class="caja__form-actions">
+              <button
+                type="button"
+                class="rp-btn rp-btn--secondary"
+                [disabled]="saving()"
+                (click)="usarSaldoTeorico()"
+              >
+                Usar saldo teórico
+              </button>
+              <button
+                type="button"
+                class="rp-btn rp-btn--danger"
+                [disabled]="saving()"
+                (click)="cerrarCaja()"
+              >
+                {{ saving() ? 'Cerrando...' : 'Cerrar caja' }}
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -199,7 +113,13 @@
         <div class="caja__form">
           <label>
             <span>Saldo inicial</span>
-            <input type="number" min="0" step="1" [(ngModel)]="saldoInicial" />
+            <input
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              [value]="saldoInicialDisplay()"
+              (input)="onSaldoInicialInput($event)"
+            />
           </label>
           <label>
             <span>Observación</span>
@@ -217,61 +137,126 @@
       </section>
     }
 
-    <section class="rp-panel">
-      <div class="panel-header">
-        <div>
-          <h2>Historial de cajas</h2>
-          <p class="caja__desc">Últimos turnos cerrados del comercio</p>
-        </div>
-      </div>
+    <div class="caja-tabs" role="tablist" aria-label="Movimientos e historial de caja">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          class="caja-tab"
+          role="tab"
+          [class.active]="tabActiva() === tab.id"
+          [attr.aria-selected]="tabActiva() === tab.id"
+          (click)="setTab(tab.id)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
 
-      @if (loadingHistorial()) {
-        <p class="rp-loading">Cargando historial...</p>
-      } @else {
-        <table class="rp-table">
-          <thead>
-            <tr>
-              <th>Caja</th>
-              <th>Apertura</th>
-              <th>Cierre</th>
-              <th>Abrió</th>
-              <th>Cerró</th>
-              <th>Saldo inicial</th>
-              <th>Saldo teórico</th>
-              <th>Efectivo contado</th>
-              <th>Diferencia</th>
-              <th>Observación</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of historial(); track item.id) {
+    <section class="rp-panel caja-panel">
+      @if (esTabMovimientos()) {
+        <div class="panel-header">
+          <div>
+            <h2>Movimientos</h2>
+            <p class="caja__desc">Movimientos del turno de caja actual</p>
+          </div>
+        </div>
+
+        @if (caja(); as actual) {
+          <table class="rp-table">
+            <thead>
               <tr>
-                <td class="cell-secondary">#{{ item.id }}</td>
-                <td class="cell-secondary">{{ item.openedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td class="cell-secondary">
-                  {{ item.closedAt ? (item.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
-                </td>
-                <td class="cell-secondary">{{ item.usuarioAperturaNombre || '—' }}</td>
-                <td class="cell-secondary">{{ item.usuarioCierreNombre || '—' }}</td>
-                <td class="cell-secondary">{{ formatCurrency(item.saldoInicial) }}</td>
-                <td class="cell-secondary">{{ formatCurrency(item.saldoTeorico) }}</td>
-                <td class="cell-secondary">{{ formatCurrency(item.saldoCierre) }}</td>
-                <td
-                  class="cell-secondary"
-                  [class.caja__diff--ok]="!tieneDiferenciaValor(item.diferencia)"
-                  [class.caja__diff--warn]="tieneDiferenciaValor(item.diferencia)"
-                >
-                  {{ diferenciaLabel(item.diferencia) }}
-                </td>
-                <td class="cell-secondary">{{ item.observacion || '—' }}</td>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Concepto</th>
+                <th>Monto</th>
+                <th>Usuario</th>
+                <th>Observación</th>
               </tr>
-            } @empty {
+            </thead>
+            <tbody>
+              @for (mov of actual.movimientos; track mov.id) {
+                <tr>
+                  <td class="cell-secondary">{{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <span
+                      class="rp-badge"
+                      [class.rp-badge--success]="mov.tipo === 'INGRESO'"
+                      [class.rp-badge--warning]="mov.tipo === 'EGRESO'"
+                    >
+                      {{ mov.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+                    </span>
+                  </td>
+                  <td class="cell-secondary">{{ conceptoLabel(mov.concepto) }}</td>
+                  <td class="cell-secondary">{{ formatCurrency(mov.monto) }}</td>
+                  <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>
+                  <td class="cell-secondary">{{ mov.observacion || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="rp-empty">Sin movimientos registrados</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="rp-empty">No hay caja abierta. Abra un turno para ver movimientos.</p>
+        }
+      } @else if (esTabHistorial()) {
+        <div class="panel-header">
+          <div>
+            <h2>Historial de cajas</h2>
+            <p class="caja__desc">Últimos turnos cerrados del comercio</p>
+          </div>
+        </div>
+
+        @if (loadingHistorial()) {
+          <p class="rp-loading">Cargando historial...</p>
+        } @else {
+          <table class="rp-table">
+            <thead>
               <tr>
-                <td colspan="10" class="rp-empty">Aún no hay cajas cerradas</td>
+                <th>Caja</th>
+                <th>Apertura</th>
+                <th>Cierre</th>
+                <th>Abrió</th>
+                <th>Cerró</th>
+                <th>Saldo inicial</th>
+                <th>Saldo teórico</th>
+                <th>Efectivo contado</th>
+                <th>Diferencia</th>
+                <th>Observación</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of historial(); track item.id) {
+                <tr>
+                  <td class="cell-secondary">#{{ item.id }}</td>
+                  <td class="cell-secondary">{{ item.openedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td class="cell-secondary">
+                    {{ item.closedAt ? (item.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                  </td>
+                  <td class="cell-secondary">{{ item.usuarioAperturaNombre || '—' }}</td>
+                  <td class="cell-secondary">{{ item.usuarioCierreNombre || '—' }}</td>
+                  <td class="cell-secondary">{{ formatCurrency(item.saldoInicial) }}</td>
+                  <td class="cell-secondary">{{ formatCurrency(item.saldoTeorico) }}</td>
+                  <td class="cell-secondary">{{ formatCurrency(item.saldoCierre) }}</td>
+                  <td
+                    class="cell-secondary"
+                    [class.caja__diff--ok]="!tieneDiferenciaValor(item.diferencia)"
+                    [class.caja__diff--warn]="tieneDiferenciaValor(item.diferencia)"
+                  >
+                    {{ diferenciaLabel(item.diferencia) }}
+                  </td>
+                  <td class="cell-secondary">{{ item.observacion || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="10" class="rp-empty">Aún no hay cajas cerradas</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       }
     </section>
   }

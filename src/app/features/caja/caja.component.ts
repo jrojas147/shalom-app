@@ -9,6 +9,11 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { CajaCierrePrintService } from '../../core/services/caja-cierre-print.service';
 import { CajaService } from '../../core/services/caja.service';
+import {
+  formatCurrencyCo,
+  parseCurrencyCo,
+  resolveCurrencyCoCursor,
+} from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 
 @Component({
@@ -24,6 +29,12 @@ export class CajaComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly cierrePrintService = inject(CajaCierrePrintService);
 
+  readonly tabs = [
+    { id: 'movimientos' as const, label: 'Movimientos' },
+    { id: 'historial' as const, label: 'Historial de cajas' },
+  ];
+  readonly tabActiva = signal<'movimientos' | 'historial'>('movimientos');
+
   readonly caja = signal<Caja | null>(null);
   readonly historial = signal<Caja[]>([]);
   readonly loading = signal(false);
@@ -32,10 +43,15 @@ export class CajaComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
 
+  readonly esTabMovimientos = computed(() => this.tabActiva() === 'movimientos');
+  readonly esTabHistorial = computed(() => this.tabActiva() === 'historial');
+
   readonly saldoCierre = signal(0);
+  readonly saldoCierreDisplay = signal(formatCurrencyCo(0));
   readonly observacionCierre = signal('');
 
   saldoInicial = 0;
+  readonly saldoInicialDisplay = signal(formatCurrencyCo(0));
   observacionApertura = '';
 
   readonly saldoTeorico = computed(() =>
@@ -49,6 +65,10 @@ export class CajaComponent implements OnInit {
     this.cargarHistorial();
   }
 
+  setTab(tabId: 'movimientos' | 'historial'): void {
+    this.tabActiva.set(tabId);
+  }
+
   cargarCaja(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -57,7 +77,7 @@ export class CajaComponent implements OnInit {
       next: (data) => {
         this.caja.set(data);
         if (data) {
-          this.saldoCierre.set(Number(data.saldoActual ?? 0));
+          this.setSaldoCierre(Number(data.saldoActual ?? 0));
         }
         this.loading.set(false);
       },
@@ -106,7 +126,8 @@ export class CajaComponent implements OnInit {
         next: (data) => {
           this.saving.set(false);
           this.caja.set(data);
-          this.saldoCierre.set(Number(data.saldoActual ?? 0));
+          this.setSaldoCierre(Number(data.saldoActual ?? 0));
+          this.setSaldoInicial(0);
           this.mensaje.set('Caja abierta correctamente.');
           this.observacionApertura = '';
           this.cargarHistorial();
@@ -167,8 +188,8 @@ export class CajaComponent implements OnInit {
               this.imprimirCierre(cerrada);
               this.saving.set(false);
               this.caja.set(null);
-              this.saldoInicial = 0;
-              this.saldoCierre.set(0);
+              this.setSaldoInicial(0);
+              this.setSaldoCierre(0);
               this.observacionCierre.set('');
               this.mensaje.set('Caja cerrada correctamente. Se generó el comprobante de cierre.');
               this.cargarHistorial();
@@ -182,11 +203,15 @@ export class CajaComponent implements OnInit {
   }
 
   usarSaldoTeorico(): void {
-    this.saldoCierre.set(this.saldoTeorico());
+    this.setSaldoCierre(this.saldoTeorico());
   }
 
-  onSaldoCierreChange(value: number | string | null): void {
-    this.saldoCierre.set(Number(value) || 0);
+  onSaldoInicialInput(event: Event): void {
+    this.applyCurrencyInput(event, (value) => this.setSaldoInicial(value));
+  }
+
+  onSaldoCierreInput(event: Event): void {
+    this.applyCurrencyInput(event, (value) => this.setSaldoCierre(value));
   }
 
   onObservacionCierreChange(value: string): void {
@@ -198,11 +223,31 @@ export class CajaComponent implements OnInit {
   }
 
   formatCurrency(value: number | null | undefined): string {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0,
-    }).format(value ?? 0);
+    return formatCurrencyCo(value ?? 0);
+  }
+
+  private applyCurrencyInput(event: Event, apply: (value: number) => void): void {
+    const input = event.target as HTMLInputElement;
+    const selectionStart = input.selectionStart ?? input.value.length;
+    const digitsBefore = input.value.slice(0, selectionStart).replace(/\D/g, '').length;
+
+    const parsed = parseCurrencyCo(input.value) ?? 0;
+    const formatted = formatCurrencyCo(parsed);
+    apply(parsed);
+    input.value = formatted;
+
+    const cursor = resolveCurrencyCoCursor(formatted, digitsBefore);
+    requestAnimationFrame(() => input.setSelectionRange(cursor, cursor));
+  }
+
+  private setSaldoInicial(value: number): void {
+    this.saldoInicial = value;
+    this.saldoInicialDisplay.set(formatCurrencyCo(value));
+  }
+
+  private setSaldoCierre(value: number): void {
+    this.saldoCierre.set(value);
+    this.saldoCierreDisplay.set(formatCurrencyCo(value));
   }
 
   diferenciaLabel(value: number | null | undefined): string {

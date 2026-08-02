@@ -11,6 +11,7 @@ import {
   RetribucionProveedorPendiente,
 } from '../../core/models/retribucion.model';
 import { AuthService } from '../../core/services/auth.service';
+import { CajaService } from '../../core/services/caja.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { PagoComprobantePrintService } from '../../core/services/pago-comprobante-print.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
@@ -27,6 +28,7 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 export class RetribucionComponent implements OnInit {
   private readonly retribucionService = inject(RetribucionService);
   private readonly comprasService = inject(ComprasService);
+  private readonly cajaService = inject(CajaService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
   private readonly auth = inject(AuthService);
   private readonly pagoPrintService = inject(PagoComprobantePrintService);
@@ -165,19 +167,50 @@ export class RetribucionComponent implements OnInit {
       return;
     }
 
-    this.confirmDialog
-      .confirm({
-        title: 'Registrar pago',
-        message: `¿Registrar el pago de la compra ${compra.numeroFactura}? El estado de pago pasará a pagado.`,
-        confirmLabel: 'Aceptar',
-        cancelLabel: 'Cancelar',
-      })
-      .subscribe((confirmed) => {
-        if (!confirmed) {
+    this.errorDetalle.set(null);
+    this.savingPago.set(true);
+
+    this.cajaService.obtenerActual().subscribe({
+      next: (caja) => {
+        this.savingPago.set(false);
+
+        if (!caja) {
+          this.errorDetalle.set(
+            'Debe abrir la caja antes de registrar el pago de la retribución.'
+          );
           return;
         }
-        this.ejecutarRegistroPago(compra);
-      });
+
+        const saldoCaja = Number(caja.saldoActual ?? 0);
+        const totalPago = Number(compra.total) || 0;
+        if (saldoCaja < totalPago) {
+          this.errorDetalle.set(
+            `Saldo de caja insuficiente. Disponible: ${this.formatCurrency(saldoCaja)}. Requerido: ${this.formatCurrency(totalPago)}.`
+          );
+          return;
+        }
+
+        this.confirmDialog
+          .confirm({
+            title: 'Registrar pago',
+            message: `¿Registrar el pago de la compra ${compra.numeroFactura} por ${this.formatCurrency(totalPago)}? Saldo de caja disponible: ${this.formatCurrency(saldoCaja)}.`,
+            confirmLabel: 'Aceptar',
+            cancelLabel: 'Cancelar',
+          })
+          .subscribe((confirmed) => {
+            if (!confirmed) {
+              return;
+            }
+            this.ejecutarRegistroPago(compra);
+          });
+      },
+      error: (err) => {
+        this.savingPago.set(false);
+        this.errorDetalle.set(
+          this.extractErrorMessage(err, 'No se pudo validar el saldo de caja.')
+        );
+      },
+    });
   }
 
   private ejecutarRegistroPago(compra: Compra): void {

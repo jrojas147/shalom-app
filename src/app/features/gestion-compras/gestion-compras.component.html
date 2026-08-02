@@ -27,6 +27,7 @@
           <tr>
             <th>Factura</th>
             <th>Fecha</th>
+            <th>Tipo proveedor</th>
             <th>Proveedor</th>
             <th>Peso</th>
             <th>Total</th>
@@ -40,6 +41,7 @@
             <tr>
               <td class="cell-mono">{{ compra.numeroFactura }}</td>
               <td class="cell-secondary">{{ compra.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="cell-secondary">{{ compraProveedorTipoLabel(compra.proveedorTipo) }}</td>
               <td>
                 <span class="cell-primary">{{ compra.proveedorNombre }}</span>
                 @if (compra.sucursalNombre) {
@@ -66,7 +68,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="rp-empty">No hay pre-compras pendientes</td>
+              <td colspan="9" class="rp-empty">No hay pre-compras pendientes</td>
             </tr>
           }
         </tbody>
