@@ -3,7 +3,13 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Compra } from '../../core/models/compra-registro.model';
 import { EMPAQUE_OPCIONES } from '../../core/models/compra.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
-import { RetribucionInterno } from '../../core/models/retribucion.model';
+import {
+  mapExternoPendiente,
+  mapInternoPendiente,
+  RetribucionExterno,
+  RetribucionInterno,
+  RetribucionProveedorPendiente,
+} from '../../core/models/retribucion.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { PagoComprobantePrintService } from '../../core/services/pago-comprobante-print.service';
@@ -28,10 +34,11 @@ export class RetribucionComponent implements OnInit {
   readonly tabs = PROVEEDOR_TABS;
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
   readonly internos = signal<RetribucionInterno[]>([]);
+  readonly externos = signal<RetribucionExterno[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  readonly recicladorSeleccionado = signal<RetribucionInterno | null>(null);
+  readonly proveedorSeleccionado = signal<RetribucionProveedorPendiente | null>(null);
   readonly comprasPendientes = signal<Compra[]>([]);
   readonly loadingCompras = signal(false);
   readonly errorModal = signal<string | null>(null);
@@ -47,6 +54,7 @@ export class RetribucionComponent implements OnInit {
   );
 
   readonly esTabInterna = computed(() => this.tabActiva() === 'INTERNO');
+  readonly esTabExterna = computed(() => this.tabActiva() === 'EXTERNO');
 
   ngOnInit(): void {
     this.loadTab();
@@ -69,18 +77,32 @@ export class RetribucionComponent implements OnInit {
       return;
     }
 
+    if (this.tabActiva() === 'EXTERNO') {
+      this.loadExternos();
+      return;
+    }
+
     this.internos.set([]);
+    this.externos.set([]);
     this.loading.set(false);
   }
 
-  abrirValidacion(item: RetribucionInterno): void {
+  abrirValidacionInterno(item: RetribucionInterno): void {
+    this.abrirValidacion(mapInternoPendiente(item));
+  }
+
+  abrirValidacionExterno(item: RetribucionExterno): void {
+    this.abrirValidacion(mapExternoPendiente(item));
+  }
+
+  abrirValidacion(item: RetribucionProveedorPendiente): void {
     this.cerrarDetalle();
-    this.recicladorSeleccionado.set(item);
+    this.proveedorSeleccionado.set(item);
     this.comprasPendientes.set([]);
     this.errorModal.set(null);
     this.loadingCompras.set(true);
 
-    this.retribucionService.listarComprasPendientesInterno(item.recicladorId).subscribe({
+    this.cargarComprasPendientes(item).subscribe({
       next: (data) => {
         this.comprasPendientes.set(data);
         this.loadingCompras.set(false);
@@ -94,7 +116,7 @@ export class RetribucionComponent implements OnInit {
 
   cerrarValidacion(): void {
     this.cerrarDetalle();
-    this.recicladorSeleccionado.set(null);
+    this.proveedorSeleccionado.set(null);
     this.comprasPendientes.set([]);
     this.errorModal.set(null);
     this.loadingCompras.set(false);
@@ -163,11 +185,11 @@ export class RetribucionComponent implements OnInit {
     this.errorDetalle.set(null);
 
     const detalle = this.compraDetalle() ?? compra;
-    const reciclador = this.recicladorSeleccionado();
+    const proveedor = this.proveedorSeleccionado();
 
     this.comprasService.registrarPago(compra.id).subscribe({
       next: () => {
-        this.imprimirComprobantePago(detalle, reciclador);
+        this.imprimirComprobantePago(detalle, proveedor);
         this.savingPago.set(false);
         this.cerrarDetalle();
         this.refrescarTrasPago();
@@ -181,14 +203,17 @@ export class RetribucionComponent implements OnInit {
 
   private imprimirComprobantePago(
     compra: Compra,
-    reciclador: RetribucionInterno | null
+    proveedor: RetribucionProveedorPendiente | null
   ): void {
     const user = this.auth.currentUser();
     const nombreUsuario = [user?.nombre, user?.apellido].filter(Boolean).join(' ').trim();
     const documento =
-      reciclador?.documento != null
-        ? `${reciclador.tipoDocumento ?? ''} ${reciclador.documento}`.trim()
+      proveedor?.documento != null
+        ? `${proveedor.tipoDocumento ?? ''} ${proveedor.documento}`.trim()
         : null;
+
+    const fallbackNombre =
+      proveedor?.tipo === 'EXTERNO' ? 'Proveedor externo' : 'Proveedor interno';
 
     this.pagoPrintService.imprimir({
       factura: compra.numeroFactura,
@@ -196,8 +221,7 @@ export class RetribucionComponent implements OnInit {
       comercioNombre: user?.comercioNombre ?? 'Comercio',
       usuarioNombre: nombreUsuario || user?.username || 'Usuario',
       usuarioUsername: user?.username ?? '',
-      beneficiarioNombre:
-        reciclador?.nombre ?? compra.proveedorNombre ?? 'Proveedor interno',
+      beneficiarioNombre: proveedor?.nombre ?? compra.proveedorNombre ?? fallbackNombre,
       beneficiarioDocumento: documento,
       sucursalNombre: compra.sucursalNombre,
       items: (compra.detalle ?? []).map((linea) => ({
@@ -213,18 +237,18 @@ export class RetribucionComponent implements OnInit {
   }
 
   private refrescarTrasPago(): void {
-    const reciclador = this.recicladorSeleccionado();
-    if (!reciclador) {
-      this.loadInternos();
+    const proveedor = this.proveedorSeleccionado();
+    if (!proveedor) {
+      this.loadTab();
       return;
     }
 
     this.loadingCompras.set(true);
-    this.retribucionService.listarComprasPendientesInterno(reciclador.recicladorId).subscribe({
+    this.cargarComprasPendientes(proveedor).subscribe({
       next: (data) => {
         this.comprasPendientes.set(data);
         this.loadingCompras.set(false);
-        this.loadInternos();
+        this.loadTab();
         if (data.length === 0) {
           this.cerrarValidacion();
         }
@@ -232,9 +256,16 @@ export class RetribucionComponent implements OnInit {
       error: (err) => {
         this.loadingCompras.set(false);
         this.errorModal.set(this.extractErrorMessage(err, 'No se pudieron cargar las compras.'));
-        this.loadInternos();
+        this.loadTab();
       },
     });
+  }
+
+  private cargarComprasPendientes(proveedor: RetribucionProveedorPendiente) {
+    if (proveedor.tipo === 'EXTERNO') {
+      return this.retribucionService.listarComprasPendientesExterno(proveedor.proveedorId);
+    }
+    return this.retribucionService.listarComprasPendientesInterno(proveedor.proveedorId);
   }
 
   empaqueLabel(empaque?: string | null): string {
@@ -254,6 +285,24 @@ export class RetribucionComponent implements OnInit {
         this.loading.set(false);
         this.internos.set([]);
         this.error.set(this.extractErrorMessage(err, 'No se pudieron cargar los recicladores.'));
+      },
+    });
+  }
+
+  private loadExternos(): void {
+    this.loading.set(true);
+
+    this.retribucionService.listarExternosPendientesPago().subscribe({
+      next: (data) => {
+        this.externos.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.externos.set([]);
+        this.error.set(
+          this.extractErrorMessage(err, 'No se pudieron cargar los proveedores externos.')
+        );
       },
     });
   }

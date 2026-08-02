@@ -32,7 +32,7 @@
         <p class="retribucion-panel__desc">
           @if (esTabInterna()) {
             Recicladores internos con compras confirmadas y pago pendiente.
-          } @else if (tabActiva() === 'EXTERNO') {
+          } @else if (esTabExterna()) {
             Proveedores externos con compras confirmadas y pago pendiente.
           } @else {
             Empresas con compras confirmadas y pago pendiente.
@@ -75,7 +75,7 @@
                 <button
                   type="button"
                   class="rp-btn rp-btn--secondary"
-                  (click)="abrirValidacion(item)"
+                  (click)="abrirValidacionInterno(item)"
                 >
                   Validar
                 </button>
@@ -90,15 +90,62 @@
           }
         </tbody>
       </table>
+    } @else if (esTabExterna()) {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Proveedor</th>
+            <th>Documento</th>
+            <th>Contacto</th>
+            <th>Compras</th>
+            <th>Peso pendiente</th>
+            <th>Total pendiente</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of externos(); track item.proveedorId) {
+            <tr>
+              <td class="cell-primary">{{ item.nombre }}</td>
+              <td class="cell-secondary">
+                @if (item.documento) {
+                  {{ item.tipoDocumento }} {{ item.documento }}
+                } @else {
+                  —
+                }
+              </td>
+              <td class="cell-secondary">{{ item.telefono || item.email || '—' }}</td>
+              <td class="cell-secondary">{{ item.cantidadCompras }}</td>
+              <td class="cell-secondary">{{ formatPeso(item.pesoTotalPendiente) }} KG</td>
+              <td class="cell-secondary">{{ formatCurrency(item.totalPendiente) }}</td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--secondary"
+                  (click)="abrirValidacionExterno(item)"
+                >
+                  Validar
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="rp-empty">
+                No hay proveedores externos con pago pendiente
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     } @else {
       <p class="rp-empty">Próximamente disponible para este tipo de proveedor.</p>
     }
   </section>
 </div>
 
-@if (recicladorSeleccionado(); as reciclador) {
+@if (proveedorSeleccionado(); as proveedor) {
   <app-rp-modal
-    [title]="'Validar — ' + reciclador.nombre"
+    [title]="'Validar — ' + proveedor.nombre"
     [wide]="true"
     (closed)="cerrarValidacion()"
   >
@@ -107,7 +154,11 @@
     }
 
     <p class="retribucion-modal__hint">
-      Compras confirmadas con pago pendiente de este reciclador.
+      @if (proveedor.tipo === 'EXTERNO') {
+        Compras confirmadas con pago pendiente de este proveedor externo.
+      } @else {
+        Compras confirmadas con pago pendiente de este reciclador.
+      }
     </p>
 
     @if (loadingCompras()) {

@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import { Compra } from '../models/compra-registro.model';
-import { RetribucionInterno } from '../models/retribucion.model';
+import { RetribucionExterno, RetribucionInterno } from '../models/retribucion.model';
 
 @Injectable({ providedIn: 'root' })
 export class RetribucionService {
@@ -16,5 +16,13 @@ export class RetribucionService {
 
   listarComprasPendientesInterno(recicladorId: number): Observable<Compra[]> {
     return this.http.get<Compra[]>(`${this.baseUrl}/internos/${recicladorId}/compras`);
+  }
+
+  listarExternosPendientesPago(): Observable<RetribucionExterno[]> {
+    return this.http.get<RetribucionExterno[]>(`${this.baseUrl}/externos`);
+  }
+
+  listarComprasPendientesExterno(proveedorId: number): Observable<Compra[]> {
+    return this.http.get<Compra[]>(`${this.baseUrl}/externos/${proveedorId}/compras`);
   }
 }
