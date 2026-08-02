@@ -202,10 +202,6 @@ export class CajaComponent implements OnInit {
       });
   }
 
-  usarSaldoTeorico(): void {
-    this.setSaldoCierre(this.saldoTeorico());
-  }
-
   onSaldoInicialInput(event: Event): void {
     this.applyCurrencyInput(event, (value) => this.setSaldoInicial(value));
   }
