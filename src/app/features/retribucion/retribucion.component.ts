@@ -51,6 +51,10 @@ export class RetribucionComponent implements OnInit {
   readonly savingPago = signal(false);
   readonly errorDetalle = signal<string | null>(null);
 
+  readonly saldoCaja = signal<number | null>(null);
+  readonly cajaAbierta = signal(false);
+  readonly loadingCaja = signal(false);
+
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
   );
@@ -59,6 +63,7 @@ export class RetribucionComponent implements OnInit {
   readonly esTabExterna = computed(() => this.tabActiva() === 'EXTERNO');
 
   ngOnInit(): void {
+    this.cargarSaldoCaja();
     this.loadTab();
   }
 
@@ -175,6 +180,8 @@ export class RetribucionComponent implements OnInit {
         this.savingPago.set(false);
 
         if (!caja) {
+          this.cajaAbierta.set(false);
+          this.saldoCaja.set(0);
           this.errorDetalle.set(
             'Debe abrir la caja antes de registrar el pago de la retribución.'
           );
@@ -182,6 +189,8 @@ export class RetribucionComponent implements OnInit {
         }
 
         const saldoCaja = Number(caja.saldoActual ?? 0);
+        this.cajaAbierta.set(true);
+        this.saldoCaja.set(saldoCaja);
         const totalPago = Number(compra.total) || 0;
         if (saldoCaja < totalPago) {
           this.errorDetalle.set(
@@ -225,11 +234,34 @@ export class RetribucionComponent implements OnInit {
         this.imprimirComprobantePago(detalle, proveedor);
         this.savingPago.set(false);
         this.cerrarDetalle();
+        this.cargarSaldoCaja();
         this.refrescarTrasPago();
       },
       error: (err) => {
         this.savingPago.set(false);
         this.errorDetalle.set(this.extractErrorMessage(err, 'No se pudo registrar el pago.'));
+      },
+    });
+  }
+
+  private cargarSaldoCaja(): void {
+    this.loadingCaja.set(true);
+
+    this.cajaService.obtenerActual().subscribe({
+      next: (caja) => {
+        if (caja) {
+          this.cajaAbierta.set(true);
+          this.saldoCaja.set(Number(caja.saldoActual ?? 0));
+        } else {
+          this.cajaAbierta.set(false);
+          this.saldoCaja.set(0);
+        }
+        this.loadingCaja.set(false);
+      },
+      error: () => {
+        this.cajaAbierta.set(false);
+        this.saldoCaja.set(null);
+        this.loadingCaja.set(false);
       },
     });
   }

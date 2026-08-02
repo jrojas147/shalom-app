@@ -1,8 +1,23 @@
 <div class="retribucion">
-  <header class="rp-page-header">
+  <header class="rp-page-header retribucion-header">
     <div>
       <h1>Retribución</h1>
       <p>Proveedores con compras confirmadas y pago pendiente</p>
+    </div>
+    <div class="retribucion-saldo-caja">
+      <span class="meta-label">Saldo actual de caja</span>
+      @if (loadingCaja()) {
+        <strong>Cargando…</strong>
+      } @else if (cajaAbierta()) {
+        <strong>{{ formatCurrency(saldoCaja() ?? 0) }}</strong>
+        <span class="cell-secondary">Caja abierta</span>
+      } @else if (saldoCaja() === null) {
+        <strong>—</strong>
+        <span class="cell-secondary">No disponible</span>
+      } @else {
+        <strong>{{ formatCurrency(0) }}</strong>
+        <span class="cell-secondary">Sin caja abierta</span>
+      }
     </div>
   </header>
 

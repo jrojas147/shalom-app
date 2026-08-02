@@ -1,3 +1,41 @@
+.retribucion-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.retribucion-saldo-caja {
+  min-width: 180px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+
+  .meta-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--rp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  strong {
+    display: block;
+    font-size: 1.25rem;
+    color: var(--rp-text);
+  }
+
+  .cell-secondary {
+    display: block;
+    margin-top: 0.125rem;
+    font-size: 0.8125rem;
+    color: var(--rp-text-secondary);
+  }
+}
+
 .retribucion-tabs {
   display: flex;
   flex-wrap: wrap;
