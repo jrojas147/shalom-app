@@ -1,6 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CodigoCiiu, CodigoCiiuRequest } from '../../../core/models/codigo-ciiu.model';
+import {
+  CodigoCiiu,
+  CodigoCiiuEstado,
+  CodigoCiiuRequest,
+} from '../../../core/models/codigo-ciiu.model';
 import { CodigosCiiuService } from '../../../core/services/codigos-ciiu.service';
 import { RpConfirmDialogService } from '../../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 
@@ -96,7 +100,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
     this.confirmDialog
       .confirm({
         title: 'Eliminar código CIIU',
-        message: `¿Eliminar el código CIIU "${item.codigo}"?`,
+        message: `¿Eliminar el código CIIU "${item.codigo}"? Quedará marcado como eliminado y se mantendrá el historial en productos.`,
         confirmLabel: 'Eliminar',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',
@@ -115,5 +119,18 @@ export class CodigosCiiuConfigComponent implements OnInit {
             this.error.set(err.error?.message ?? 'No se pudo eliminar el código CIIU.'),
         });
       });
+  }
+
+  estadoLabel(estado: CodigoCiiuEstado): string {
+    switch (estado) {
+      case 'ACTIVO':
+        return 'Activo';
+      case 'INACTIVO':
+        return 'Inactivo';
+      case 'ELIMINADO':
+        return 'Eliminado';
+      default:
+        return estado;
+    }
   }
 }
