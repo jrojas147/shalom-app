@@ -325,6 +325,8 @@ export class GestionComprasComponent implements OnInit {
           comercioId: 0,
           nombreInterno: linea.productoNombre ?? `Producto ${linea.productoId}`,
           activo: true,
+          estado: 'ACTIVO',
+          fechaEstado: new Date(0).toISOString(),
           precioCompra: linea.precioUnitario ?? null,
           precioVenta: null,
         } satisfies Producto);
