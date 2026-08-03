@@ -19,8 +19,4 @@ export class RpConfirmDialogComponent {
   cancel(): void {
     this.confirmDialog.cancel();
   }
-
-  onOverlayClick(): void {
-    this.cancel();
-  }
 }

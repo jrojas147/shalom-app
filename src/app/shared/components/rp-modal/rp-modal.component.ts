@@ -36,7 +36,7 @@ export class RpModalComponent {
   wide = input(false);
   compact = input(false);
   stacked = input(false);
-  closeOnOverlay = input(true);
+  closeOnOverlay = input(false);
 
   closed = output<void>();
 
