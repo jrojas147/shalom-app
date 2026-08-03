@@ -156,8 +156,8 @@
 
 .compras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 220px);
-  column-gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fill, 150px);
+  column-gap: var(--spacing-sm);
   row-gap: var(--spacing-sm);
   flex: 1;
   min-height: 0;
@@ -169,12 +169,12 @@
 .product-card {
   display: flex;
   flex-direction: column;
-  width: 220px;
-  height: 280px;
+  width: 150px;
+  height: 210px;
   border: none;
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--rp-surface);
-  padding: 0.625rem;
+  padding: 0.45rem;
   cursor: pointer;
   text-align: left;
   box-shadow: 0 2px 8px rgba(30, 42, 46, 0.07);
@@ -192,12 +192,13 @@
 }
 
 .product-image-wrap {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 96px;
+  height: 96px;
+  min-height: 96px;
   background: #f0f4f7;
-  border-radius: 10px;
-  padding: 0.625rem;
-  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  padding: 0.35rem;
+  margin-bottom: 0.35rem;
 }
 
 .product-image {
@@ -216,7 +217,7 @@
   }
 
   span {
-    font-size: 2.5rem;
+    font-size: 1.75rem;
     line-height: 1;
     opacity: 0.65;
   }
