@@ -92,7 +92,12 @@
               }
             </ul>
             <div class="proveedor-modal-actions">
-              <button type="button" class="rp-btn rp-btn--primary" (click)="confirmarInterno()">
+              <button
+                type="button"
+                class="rp-btn rp-btn--primary"
+                [disabled]="sucursalPendienteId() == null"
+                (click)="confirmarInterno()"
+              >
                 Confirmar selección
               </button>
             </div>
