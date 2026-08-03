@@ -5,6 +5,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { RolesService } from '../../core/services/roles.service';
 import { UsuariosService } from '../../core/services/usuarios.service';
 import { Rol, User, UsuarioRequest } from '../../core/models/user.model';
+import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -17,6 +18,7 @@ export class UsuariosComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly usuariosService = inject(UsuariosService);
   private readonly rolesService = inject(RolesService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
   readonly auth = inject(AuthService);
 
   readonly users = signal<User[]>([]);
@@ -164,14 +166,23 @@ export class UsuariosComponent implements OnInit {
   }
 
   deleteUser(user: User): void {
-    if (!confirm(`¿Eliminar usuario ${user.username}?`)) {
-      return;
-    }
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar usuario',
+        message: `¿Eliminar usuario ${user.username}?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.usuariosService.delete(user.id).subscribe({
-      next: () => this.loadPage(this.currentPage()),
-      error: (err) => this.error.set(err.error?.message ?? 'No se pudo eliminar el usuario.'),
-    });
+        this.usuariosService.delete(user.id).subscribe({
+          next: () => this.loadPage(this.currentPage()),
+          error: (err) =>
+            this.error.set(err.error?.message ?? 'No se pudo eliminar el usuario.'),
+        });
+      });
   }
 
   prevPage(): void {

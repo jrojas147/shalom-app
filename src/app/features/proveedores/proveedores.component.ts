@@ -42,6 +42,7 @@ import { SucursalesService } from '../../core/services/sucursales.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { EntidadBancaria } from '../../core/models/entidad-bancaria.model';
 import { Sucursal } from '../../core/models/sucursal.model';
+import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 @Component({
@@ -60,6 +61,7 @@ export class ProveedoresComponent implements OnInit {
   private readonly ubicacionesService = inject(UbicacionesService);
   private readonly entidadesBancariasService = inject(EntidadesBancariasService);
   private readonly sucursalesService = inject(SucursalesService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tabs = PROVEEDOR_TABS;
   readonly tiposDocumento = TIPOS_DOCUMENTO;
@@ -771,57 +773,84 @@ export class ProveedoresComponent implements OnInit {
     if (!this.puedeGestionar()) {
       return;
     }
-    if (!confirm(`¿Eliminar la empresa "${empresa.razonSocial}"?`)) {
-      return;
-    }
 
-    this.proveedoresEmpresasService.delete(empresa.id).subscribe({
-      next: () => {
-        if (this.editingId() === empresa.id) {
-          this.cancelForm();
-        }
-        this.loadEmpresas();
-      },
-      error: (err) => this.error.set(this.extractErrorMessage(err)),
-    });
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar empresa',
+        message: `¿Eliminar la empresa "${empresa.razonSocial}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.proveedoresEmpresasService.delete(empresa.id).subscribe({
+          next: () => {
+            if (this.editingId() === empresa.id) {
+              this.cancelForm();
+            }
+            this.loadEmpresas();
+          },
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
   }
 
   deleteExterno(proveedor: ProveedorExterno): void {
     if (!this.puedeGestionar()) {
       return;
     }
-    if (!confirm(`¿Eliminar el proveedor externo "${proveedor.nombre}"?`)) {
-      return;
-    }
 
-    this.proveedoresExternosService.delete(proveedor.id).subscribe({
-      next: () => {
-        if (this.editingId() === proveedor.id) {
-          this.cancelForm();
-        }
-        this.loadExternos();
-      },
-      error: (err) => this.error.set(this.extractErrorMessage(err)),
-    });
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar proveedor externo',
+        message: `¿Eliminar el proveedor externo "${proveedor.nombre}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.proveedoresExternosService.delete(proveedor.id).subscribe({
+          next: () => {
+            if (this.editingId() === proveedor.id) {
+              this.cancelForm();
+            }
+            this.loadExternos();
+          },
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
   }
 
   deleteInterno(proveedor: ProveedorInterno): void {
     if (!this.puedeGestionar()) {
       return;
     }
-    if (!confirm(`¿Eliminar el proveedor interno "${proveedor.nombre}"?`)) {
-      return;
-    }
 
-    this.proveedoresInternosService.delete(proveedor.id).subscribe({
-      next: () => {
-        if (this.editingId() === proveedor.id) {
-          this.cancelForm();
-        }
-        this.loadInternos();
-      },
-      error: (err) => this.error.set(this.extractErrorMessage(err)),
-    });
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar proveedor interno',
+        message: `¿Eliminar el proveedor interno "${proveedor.nombre}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.proveedoresInternosService.delete(proveedor.id).subscribe({
+          next: () => {
+            if (this.editingId() === proveedor.id) {
+              this.cancelForm();
+            }
+            this.loadInternos();
+          },
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
   }
 
   formatDocumento(proveedor: ProveedorInterno | ProveedorExterno): string {

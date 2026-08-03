@@ -21,6 +21,7 @@ import { AdministradoresConjuntoService } from '../../core/services/administrado
 import { EntidadesBancariasService } from '../../core/services/entidades-bancarias.service';
 import { SucursalesService } from '../../core/services/sucursales.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
+import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 type SucursalesTab = 'conjuntos' | 'administradores';
@@ -62,6 +63,7 @@ export class SucursalesComponent implements OnInit {
   private readonly administradoresService = inject(AdministradoresConjuntoService);
   private readonly ubicacionesService = inject(UbicacionesService);
   private readonly entidadesBancariasService = inject(EntidadesBancariasService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tiposDocumento = TIPOS_DOCUMENTO;
   readonly tiposCuenta = TIPOS_CUENTA;
@@ -457,37 +459,55 @@ export class SucursalesComponent implements OnInit {
   }
 
   deleteConjunto(sucursal: Sucursal): void {
-    if (!confirm(`¿Eliminar el conjunto "${sucursal.nombre}"?`)) {
-      return;
-    }
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar conjunto',
+        message: `¿Eliminar el conjunto "${sucursal.nombre}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.sucursalesService.delete(sucursal.id).subscribe({
-      next: () => {
-        if (this.editingId() === sucursal.id) {
-          this.cancelForm();
-        }
-        this.loadData();
-      },
-      error: (err) =>
-        this.error.set(err.error?.message ?? 'No se pudo eliminar el conjunto.'),
-    });
+        this.sucursalesService.delete(sucursal.id).subscribe({
+          next: () => {
+            if (this.editingId() === sucursal.id) {
+              this.cancelForm();
+            }
+            this.loadData();
+          },
+          error: (err) =>
+            this.error.set(err.error?.message ?? 'No se pudo eliminar el conjunto.'),
+        });
+      });
   }
 
   deleteAdministrador(admin: AdministradorConjunto): void {
-    if (!confirm(`¿Eliminar el administrador "${admin.nombre}"?`)) {
-      return;
-    }
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar administrador',
+        message: `¿Eliminar el administrador "${admin.nombre}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.administradoresService.delete(admin.id).subscribe({
-      next: () => {
-        if (this.editingId() === admin.id) {
-          this.cancelForm();
-        }
-        this.loadData();
-      },
-      error: (err) =>
-        this.error.set(err.error?.message ?? 'No se pudo eliminar el administrador.'),
-    });
+        this.administradoresService.delete(admin.id).subscribe({
+          next: () => {
+            if (this.editingId() === admin.id) {
+              this.cancelForm();
+            }
+            this.loadData();
+          },
+          error: (err) =>
+            this.error.set(
+              err.error?.message ?? 'No se pudo eliminar el administrador.'
+            ),
+        });
+      });
   }
 
   formatFecha(fecha?: string): string {

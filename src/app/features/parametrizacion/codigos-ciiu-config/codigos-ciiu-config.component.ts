@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CodigoCiiu, CodigoCiiuRequest } from '../../../core/models/codigo-ciiu.model';
 import { CodigosCiiuService } from '../../../core/services/codigos-ciiu.service';
+import { RpConfirmDialogService } from '../../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 
 @Component({
   selector: 'app-codigos-ciiu-config',
@@ -13,6 +14,7 @@ import { CodigosCiiuService } from '../../../core/services/codigos-ciiu.service'
 export class CodigosCiiuConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
   readonly loading = signal(false);
@@ -91,19 +93,27 @@ export class CodigosCiiuConfigComponent implements OnInit {
   }
 
   deleteCodigo(item: CodigoCiiu): void {
-    if (!confirm(`¿Eliminar el código CIIU "${item.codigo}"?`)) {
-      return;
-    }
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar código CIIU',
+        message: `¿Eliminar el código CIIU "${item.codigo}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.codigosCiiuService.delete(item.id).subscribe({
-      next: () => {
-        if (this.editingId() === item.id) {
-          this.cancelEdit();
-        }
-        this.loadCodigosCiiu();
-      },
-      error: (err) =>
-        this.error.set(err.error?.message ?? 'No se pudo eliminar el código CIIU.'),
-    });
+        this.codigosCiiuService.delete(item.id).subscribe({
+          next: () => {
+            if (this.editingId() === item.id) {
+              this.cancelEdit();
+            }
+            this.loadCodigosCiiu();
+          },
+          error: (err) =>
+            this.error.set(err.error?.message ?? 'No se pudo eliminar el código CIIU.'),
+        });
+      });
   }
 }

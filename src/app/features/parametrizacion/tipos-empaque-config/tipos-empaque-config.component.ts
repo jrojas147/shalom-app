@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TiposEmpaqueService } from '../../../core/services/tipos-empaque.service';
 import { TipoEmpaque, TipoEmpaqueRequest } from '../../../core/models/tipo-empaque.model';
+import { RpConfirmDialogService } from '../../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 
 @Component({
   selector: 'app-tipos-empaque-config',
@@ -13,6 +14,7 @@ import { TipoEmpaque, TipoEmpaqueRequest } from '../../../core/models/tipo-empaq
 export class TiposEmpaqueConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
   readonly loading = signal(false);
@@ -91,20 +93,30 @@ export class TiposEmpaqueConfigComponent implements OnInit {
   }
 
   deleteTipo(tipo: TipoEmpaque): void {
-    if (!confirm(`¿Eliminar el tipo de empaque "${tipo.nombre}"?`)) {
-      return;
-    }
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar tipo de empaque',
+        message: `¿Eliminar el tipo de empaque "${tipo.nombre}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.tiposEmpaqueService.delete(tipo.id).subscribe({
-      next: () => {
-        if (this.editingId() === tipo.id) {
-          this.cancelEdit();
-        }
-        this.loadTiposEmpaque();
-      },
-      error: (err) =>
-        this.error.set(err.error?.message ?? 'No se pudo eliminar el tipo de empaque.'),
-    });
+        this.tiposEmpaqueService.delete(tipo.id).subscribe({
+          next: () => {
+            if (this.editingId() === tipo.id) {
+              this.cancelEdit();
+            }
+            this.loadTiposEmpaque();
+          },
+          error: (err) =>
+            this.error.set(
+              err.error?.message ?? 'No se pudo eliminar el tipo de empaque.'
+            ),
+        });
+      });
   }
 
   formatPeso(peso: number): string {

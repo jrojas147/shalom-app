@@ -12,6 +12,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Producto,
+  ProductoEstado,
   productoImagenUrl,
   ProductoRequest,
 } from '../../core/models/producto.model';
@@ -23,6 +24,7 @@ import {
   parseCurrencyCo,
   resolveCurrencyCoCursor,
 } from '../../core/utils/currency.util';
+import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 const MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
@@ -42,6 +44,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   private previewObjectUrl: string | null = null;
 
@@ -246,19 +249,40 @@ export class ProductosComponent implements OnInit, OnDestroy {
   }
 
   deleteProducto(producto: Producto): void {
-    if (!confirm(`¿Eliminar el producto "${producto.nombreInterno}"?`)) {
-      return;
-    }
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar producto',
+        message: `¿Eliminar el producto "${producto.nombreInterno}"? Quedará marcado como eliminado y no se borrará del historial.`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.productosService.delete(producto.id).subscribe({
-      next: () => {
-        if (this.editingId() === producto.id) {
-          this.cancelForm();
-        }
-        this.loadProductos();
-      },
-      error: (err) => this.error.set(this.extractErrorMessage(err)),
-    });
+        this.productosService.delete(producto.id).subscribe({
+          next: () => {
+            if (this.editingId() === producto.id) {
+              this.cancelForm();
+            }
+            this.loadProductos();
+          },
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
+  }
+
+  estadoLabel(estado: ProductoEstado): string {
+    switch (estado) {
+      case 'ACTIVO':
+        return 'Activo';
+      case 'INACTIVO':
+        return 'Inactivo';
+      case 'ELIMINADO':
+        return 'Eliminado';
+      default:
+        return estado;
+    }
   }
 
   formatPrecio(value?: number | null): string {

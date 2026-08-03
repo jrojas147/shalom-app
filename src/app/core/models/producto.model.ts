@@ -1,10 +1,14 @@
 import { API_CORE_URL } from '../config/api.config';
 
+export type ProductoEstado = 'ACTIVO' | 'INACTIVO' | 'ELIMINADO';
+
 export interface Producto {
   id: number;
   comercioId: number;
   nombreInterno: string;
   activo: boolean;
+  estado: ProductoEstado;
+  fechaEstado: string;
   codigoCiiuId?: number | null;
   codigoCiiu?: string | null;
   nombreCiiu?: string | null;

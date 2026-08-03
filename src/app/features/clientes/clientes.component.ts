@@ -21,6 +21,7 @@ import { Departamento, Municipio } from '../../core/models/ubicacion.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ClientesService } from '../../core/services/clientes.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
+import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 @Component({
@@ -35,6 +36,7 @@ export class ClientesComponent implements OnInit {
   private readonly clientesService = inject(ClientesService);
   private readonly ubicacionesService = inject(UbicacionesService);
   private readonly auth = inject(AuthService);
+  private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tiposCliente = TIPOS_CLIENTE;
   readonly tiposDocumento = TIPOS_DOCUMENTO;
@@ -213,19 +215,28 @@ export class ClientesComponent implements OnInit {
     if (!this.puedeGestionar()) {
       return;
     }
-    if (!confirm(`¿Eliminar el cliente "${cliente.nombre}"?`)) {
-      return;
-    }
 
-    this.clientesService.delete(cliente.id).subscribe({
-      next: () => {
-        if (this.editingId() === cliente.id) {
-          this.cancelForm();
-        }
-        this.loadClientes();
-      },
-      error: (err) => this.error.set(this.extractErrorMessage(err)),
-    });
+    this.confirmDialog
+      .confirm({
+        title: 'Eliminar cliente',
+        message: `¿Eliminar el cliente "${cliente.nombre}"?`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.clientesService.delete(cliente.id).subscribe({
+          next: () => {
+            if (this.editingId() === cliente.id) {
+              this.cancelForm();
+            }
+            this.loadClientes();
+          },
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
   }
 
   esEmpresa(): boolean {

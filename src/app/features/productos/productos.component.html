@@ -81,10 +81,11 @@
               <td>
                 <span
                   class="rp-badge"
-                  [class.rp-badge--success]="producto.activo"
-                  [class.rp-badge--danger]="!producto.activo"
+                  [class.rp-badge--success]="producto.estado === 'ACTIVO'"
+                  [class.rp-badge--neutral]="producto.estado === 'INACTIVO'"
+                  [class.rp-badge--danger]="producto.estado === 'ELIMINADO'"
                 >
-                  {{ producto.activo ? 'Activo' : 'Inactivo' }}
+                  {{ estadoLabel(producto.estado) }}
                 </span>
               </td>
               <td class="cell-actions">
