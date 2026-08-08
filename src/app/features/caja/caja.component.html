@@ -6,7 +6,7 @@
     </div>
   </header>
 
-  @if (error()) {
+  @if (error() && !showCierreModal()) {
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
 
@@ -25,10 +25,19 @@
             <p class="caja__desc">
               Abierta por {{ actual.usuarioAperturaNombre || '—' }}
               el {{ actual.openedAt | date: 'dd/MM/yyyy HH:mm' }}.
-              Cuente el efectivo y cierre el turno cuando corresponda.
             </p>
           </div>
-          <span class="rp-badge rp-badge--success">Abierta</span>
+          <div class="caja__header-actions">
+            <span class="rp-badge rp-badge--success">Abierta</span>
+            <button
+              type="button"
+              class="rp-btn rp-btn--danger"
+              [disabled]="saving()"
+              (click)="abrirCierreModal()"
+            >
+              Cerrar caja
+            </button>
+          </div>
         </div>
 
         <div class="caja__saldos">
@@ -48,44 +57,40 @@
             <span class="meta-label">Pagos proveedor</span>
             <strong>{{ formatCurrency(actual.totalPagosProveedor ?? 0) }}</strong>
           </div>
-
         </div>
 
-        <div class="caja__cierre">
-          <h3 class="caja__cierre-title">Cierre del turno</h3>
+        <div class="caja__abono">
+          <h3 class="caja__abono-title">Abono a caja</h3>
+          <p class="caja__desc">Registre un ingreso de efectivo al turno actual.</p>
           <div class="caja__form">
             <label>
-              <span>Efectivo contado</span>
+              <span>Monto</span>
               <input
                 type="text"
                 inputmode="numeric"
                 autocomplete="off"
-                [value]="saldoCierreDisplay()"
-                (input)="onSaldoCierreInput($event)"
+                [value]="montoAbonoDisplay()"
+                (input)="onMontoAbonoInput($event)"
               />
             </label>
             <label>
-              <span>
-                Observación
-                @if (tieneDiferencia()) {
-                  <em>(obligatoria por diferencia)</em>
-                }
-              </span>
+              <span>Observación</span>
               <input
                 type="text"
                 maxlength="500"
-                [ngModel]="observacionCierre()"
-                (ngModelChange)="onObservacionCierreChange($event)"
+                [ngModel]="observacionAbono()"
+                (ngModelChange)="onObservacionAbonoChange($event)"
+                placeholder="Motivo del abono"
               />
             </label>
             <div class="caja__form-actions">
               <button
                 type="button"
-                class="rp-btn rp-btn--danger"
-                [disabled]="saving()"
-                (click)="cerrarCaja()"
+                class="rp-btn rp-btn--primary"
+                [disabled]="saving() || montoAbono() <= 0"
+                (click)="registrarAbono()"
               >
-                {{ saving() ? 'Cerrando...' : 'Cerrar caja' }}
+                {{ saving() ? 'Registrando...' : 'Registrar abono' }}
               </button>
             </div>
           </div>
@@ -253,3 +258,63 @@
     </section>
   }
 </div>
+
+@if (showCierreModal() && caja(); as actual) {
+  <app-rp-modal title="Cerrar caja" (closed)="cancelarCierreModal()">
+    @if (error()) {
+      <div class="rp-alert rp-alert--error">{{ error() }}</div>
+    }
+
+    <p class="caja__desc">
+      Saldo teórico actual:
+      <strong>{{ formatCurrency(saldoTeorico()) }}</strong>
+    </p>
+
+    <div class="caja__form caja__form--modal">
+      <label>
+        <span>Efectivo contado</span>
+        <input
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          [value]="saldoCierreDisplay()"
+          (input)="onSaldoCierreInput($event)"
+        />
+      </label>
+      <label>
+        <span>
+          Observación
+          @if (tieneDiferencia()) {
+            <em>(obligatoria por diferencia)</em>
+          }
+        </span>
+        <input
+          type="text"
+          maxlength="500"
+          [ngModel]="observacionCierre()"
+          (ngModelChange)="onObservacionCierreChange($event)"
+        />
+      </label>
+      <div
+        class="caja__modal-diff"
+        [class.caja__diff--ok]="!tieneDiferencia()"
+        [class.caja__diff--warn]="tieneDiferencia()"
+      >
+        Diferencia: {{ diferenciaLabel(diferencia()) }}
+      </div>
+      <div class="caja__form-actions">
+        <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelarCierreModal()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="rp-btn rp-btn--danger"
+          [disabled]="saving()"
+          (click)="confirmarCierreDesdeModal()"
+        >
+          {{ saving() ? 'Cerrando...' : 'Cerrar caja' }}
+        </button>
+      </div>
+    </div>
+  </app-rp-modal>
+}

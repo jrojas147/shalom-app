@@ -15,11 +15,12 @@ import {
   resolveCurrencyCoCursor,
 } from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
+import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 @Component({
   selector: 'app-caja',
   standalone: true,
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, RpModalComponent],
   templateUrl: './caja.component.html',
   styleUrl: './caja.component.scss',
 })
@@ -42,6 +43,7 @@ export class CajaComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
+  readonly showCierreModal = signal(false);
 
   readonly esTabMovimientos = computed(() => this.tabActiva() === 'movimientos');
   readonly esTabHistorial = computed(() => this.tabActiva() === 'historial');
@@ -49,6 +51,10 @@ export class CajaComponent implements OnInit {
   readonly saldoCierre = signal(0);
   readonly saldoCierreDisplay = signal(formatCurrencyCo(0));
   readonly observacionCierre = signal('');
+
+  readonly montoAbono = signal(0);
+  readonly montoAbonoDisplay = signal(formatCurrencyCo(0));
+  readonly observacionAbono = signal('');
 
   saldoInicial = 0;
   readonly saldoInicialDisplay = signal(formatCurrencyCo(0));
@@ -139,7 +145,55 @@ export class CajaComponent implements OnInit {
       });
   }
 
-  cerrarCaja(): void {
+  registrarAbono(): void {
+    if (!this.caja()) return;
+
+    if (this.montoAbono() <= 0) {
+      this.error.set('El monto del abono debe ser mayor a cero.');
+      return;
+    }
+
+    this.saving.set(true);
+    this.error.set(null);
+    this.mensaje.set(null);
+
+    this.cajaService
+      .abono({
+        monto: this.montoAbono(),
+        observacion: this.observacionAbono().trim() || undefined,
+      })
+      .subscribe({
+        next: (data) => {
+          this.saving.set(false);
+          this.caja.set(data);
+          this.setSaldoCierre(Number(data.saldoActual ?? 0));
+          this.setMontoAbono(0);
+          this.observacionAbono.set('');
+          this.mensaje.set('Abono registrado correctamente.');
+          this.tabActiva.set('movimientos');
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.error.set(this.extractErrorMessage(err, 'No se pudo registrar el abono.'));
+        },
+      });
+  }
+
+  abrirCierreModal(): void {
+    const actual = this.caja();
+    if (!actual) return;
+
+    this.error.set(null);
+    this.setSaldoCierre(Number(actual.saldoActual ?? 0));
+    this.observacionCierre.set('');
+    this.showCierreModal.set(true);
+  }
+
+  cancelarCierreModal(): void {
+    this.showCierreModal.set(false);
+  }
+
+  confirmarCierreDesdeModal(): void {
     const actual = this.caja();
     if (!actual) return;
 
@@ -187,6 +241,7 @@ export class CajaComponent implements OnInit {
             next: (cerrada) => {
               this.imprimirCierre(cerrada);
               this.saving.set(false);
+              this.showCierreModal.set(false);
               this.caja.set(null);
               this.setSaldoInicial(0);
               this.setSaldoCierre(0);
@@ -210,8 +265,16 @@ export class CajaComponent implements OnInit {
     this.applyCurrencyInput(event, (value) => this.setSaldoCierre(value));
   }
 
+  onMontoAbonoInput(event: Event): void {
+    this.applyCurrencyInput(event, (value) => this.setMontoAbono(value));
+  }
+
   onObservacionCierreChange(value: string): void {
     this.observacionCierre.set(value ?? '');
+  }
+
+  onObservacionAbonoChange(value: string): void {
+    this.observacionAbono.set(value ?? '');
   }
 
   conceptoLabel(concepto: CajaMovimientoConcepto): string {
@@ -244,6 +307,11 @@ export class CajaComponent implements OnInit {
   private setSaldoCierre(value: number): void {
     this.saldoCierre.set(value);
     this.saldoCierreDisplay.set(formatCurrencyCo(value));
+  }
+
+  private setMontoAbono(value: number): void {
+    this.montoAbono.set(value);
+    this.montoAbonoDisplay.set(formatCurrencyCo(value));
   }
 
   diferenciaLabel(value: number | null | undefined): string {

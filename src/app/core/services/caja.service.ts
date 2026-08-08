@@ -3,7 +3,12 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { API_CORE_URL } from '../config/api.config';
-import { AbrirCajaRequest, Caja, CerrarCajaRequest } from '../models/caja.model';
+import {
+  AbonoCajaRequest,
+  AbrirCajaRequest,
+  Caja,
+  CerrarCajaRequest,
+} from '../models/caja.model';
 
 @Injectable({ providedIn: 'root' })
 export class CajaService {
@@ -27,6 +32,10 @@ export class CajaService {
 
   cerrar(payload: CerrarCajaRequest): Observable<Caja> {
     return this.http.post<Caja>(`${this.baseUrl}/cerrar`, payload);
+  }
+
+  abono(payload: AbonoCajaRequest): Observable<Caja> {
+    return this.http.post<Caja>(`${this.baseUrl}/abono`, payload);
   }
 
   historial(): Observable<Caja[]> {

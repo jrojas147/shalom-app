@@ -6,7 +6,8 @@ export type CajaMovimientoConcepto =
   | 'COMPRA'
   | 'PAGO_PROVEEDOR'
   | 'AJUSTE'
-  | 'CIERRE';
+  | 'CIERRE'
+  | 'ABONO_CAJA';
 
 export interface CajaMovimiento {
   id: number;
@@ -55,6 +56,11 @@ export interface CerrarCajaRequest {
   observacion?: string;
 }
 
+export interface AbonoCajaRequest {
+  monto: number;
+  observacion?: string;
+}
+
 export const CAJA_CONCEPTO_LABEL: Record<CajaMovimientoConcepto, string> = {
   APERTURA: 'Apertura',
   VENTA: 'Venta',
@@ -62,4 +68,5 @@ export const CAJA_CONCEPTO_LABEL: Record<CajaMovimientoConcepto, string> = {
   PAGO_PROVEEDOR: 'Pago proveedor',
   AJUSTE: 'Ajuste',
   CIERRE: 'Cierre',
+  ABONO_CAJA: 'Abono a caja',
 };
