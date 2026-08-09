@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Inventario</h1>
-      <p>Consulta de existencias por producto y entradas registradas al confirmar compras.</p>
+      <p>Consulta de existencias por producto y movimientos de inventario.</p>
     </div>
   </header>
 
@@ -42,7 +42,7 @@
           [class.active]="vista() === 'detalle'"
           (click)="setVista('detalle')"
         >
-          Entradas detalladas
+          Movimientos detallados
         </button>
       </div>
       <button type="button" class="rp-btn rp-btn--secondary" (click)="loadInventario()">
@@ -62,19 +62,6 @@
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
-
-      @if (vista() === 'detalle') {
-        <select
-          class="inventario__estado-filter"
-          [ngModel]="estadoFiltro()"
-          (ngModelChange)="onEstadoFiltroChange($event)"
-        >
-          <option value="">Todos los estados</option>
-          @for (estado of inventarioEstados; track estado) {
-            <option [value]="estado">{{ inventarioEstadoLabel(estado) }}</option>
-          }
-        </select>
-      }
     </div>
 
     @if (vista() === 'detalle' && productoFiltroId() !== null) {
@@ -108,9 +95,9 @@
                 <button
                   type="button"
                   class="rp-btn rp-btn--ghost"
-                  (click)="verEntradasProducto(item)"
+                  (click)="verMovimientosProducto(item)"
                 >
-                  Ver entradas
+                  Ver movimientos
                 </button>
               </td>
             </tr>
@@ -133,39 +120,44 @@
             <th>Estado</th>
             <th>Ubicación</th>
             <th>Fecha entrada</th>
+            <th>Fecha salida</th>
             <th>Proveedor</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          @for (entrada of entradasFiltradas(); track entrada.idInventario) {
+          @for (movimiento of movimientosFiltrados(); track movimiento.idInventario) {
             <tr>
-              <td class="cell-mono">{{ entrada.idInventario }}</td>
+              <td class="cell-mono">{{ movimiento.idInventario }}</td>
               <td>
-                <span class="cell-primary">{{ entrada.nombreProducto }}</span>
-                <span class="cell-secondary cell-sub">#{{ entrada.codigoProducto }}</span>
+                <span class="cell-primary">{{ movimiento.nombreProducto }}</span>
+                <span class="cell-secondary cell-sub">#{{ movimiento.codigoProducto }}</span>
               </td>
-              <td class="cell-num">{{ formatPeso(entrada.cantidadDisponible) }}</td>
-              <td class="cell-num cell-secondary">{{ formatCurrency(entrada.precioCompraUnitario) }}</td>
-              <td class="cell-num cell-secondary">{{ formatCurrency(entrada.precioVentaUnitario) }}</td>
+              <td class="cell-num">{{ formatPeso(movimiento.cantidadDisponible) }}</td>
+              <td class="cell-num cell-secondary">{{ formatCurrency(movimiento.precioCompraUnitario) }}</td>
+              <td class="cell-num cell-secondary">{{ formatCurrency(movimiento.precioVentaUnitario) }}</td>
               <td>
                 <span
                   class="rp-badge"
-                  [class.rp-badge--success]="entrada.estado === 'DISPONIBLE'"
-                  [class.rp-badge--danger]="entrada.estado === 'AGOTADO'"
-                  [class.rp-badge--warning]="entrada.estado === 'BLOQUEADO'"
+                  [class.rp-badge--success]="movimiento.estado === 'DISPONIBLE'"
+                  [class.rp-badge--danger]="movimiento.estado === 'AGOTADO'"
+                  [class.rp-badge--neutral]="movimiento.estado === 'SALIDA'"
+                  [class.rp-badge--warning]="movimiento.estado === 'BLOQUEADO'"
                 >
-                  {{ inventarioEstadoLabel(entrada.estado) }}
+                  {{ inventarioEstadoLabel(movimiento.estado) }}
                 </span>
               </td>
-              <td class="cell-secondary">{{ entrada.ubicacion || '—' }}</td>
-              <td class="cell-secondary">{{ entrada.fechaEntrada | date: 'dd/MM/yyyy HH:mm' }}</td>
-              <td class="cell-secondary">{{ proveedorResumen(entrada) }}</td>
+              <td class="cell-secondary">{{ movimiento.ubicacion || '—' }}</td>
+              <td class="cell-secondary">{{ movimiento.fechaEntrada | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="cell-secondary">
+                {{ movimiento.fechaSalida ? (movimiento.fechaSalida | date: 'dd/MM/yyyy HH:mm') : '—' }}
+              </td>
+              <td class="cell-secondary">{{ proveedorResumen(movimiento) }}</td>
               <td class="cell-actions">
                 <button
                   type="button"
                   class="rp-btn rp-btn--ghost"
-                  (click)="openDetalle(entrada)"
+                  (click)="openDetalle(movimiento)"
                 >
                   Ver
                 </button>
@@ -173,7 +165,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="10" class="cell-empty">No hay entradas que coincidan con la búsqueda.</td>
+              <td colspan="11" class="cell-empty">No hay movimientos que coincidan con la búsqueda.</td>
             </tr>
           }
         </tbody>
@@ -183,7 +175,7 @@
 </div>
 
 @if (showDetalle() && entradaSeleccionada(); as entrada) {
-  <app-rp-modal title="Detalle de entrada" (closed)="cerrarDetalle()">
+  <app-rp-modal title="Detalle de movimiento" (closed)="cerrarDetalle()">
     <div class="inventario-detalle">
       <dl class="inventario-detalle__grid">
         <div>

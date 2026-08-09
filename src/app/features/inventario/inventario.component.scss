@@ -146,17 +146,6 @@
   }
 }
 
-.inventario__estado-filter {
-  flex: 0 0 auto;
-  min-width: 160px;
-  padding: 0.4375rem 0.75rem;
-  border: 1px solid var(--rp-border);
-  border-radius: var(--radius-md);
-  background: var(--rp-surface);
-  color: var(--rp-text);
-  font-size: 0.8125rem;
-}
-
 .inventario__product-filter {
   display: flex;
   flex-wrap: wrap;

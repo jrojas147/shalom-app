@@ -1,13 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { compraProveedorTipoLabel } from '../../core/models/compra-proveedor.model';
 import {
   ExistenciaProducto,
-  INVENTARIO_ESTADOS,
   InventarioEntrada,
-  InventarioEstado,
   inventarioEstadoLabel,
 } from '../../core/models/inventario.model';
 import { InventarioService } from '../../core/services/inventario.service';
@@ -18,21 +15,19 @@ type VistaInventario = 'resumen' | 'detalle';
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [DatePipe, FormsModule, RpModalComponent],
+  imports: [DatePipe, RpModalComponent],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.scss',
 })
 export class InventarioComponent implements OnInit {
   private readonly inventarioService = inject(InventarioService);
 
-  readonly inventarioEstados = INVENTARIO_ESTADOS;
   readonly inventarioEstadoLabel = inventarioEstadoLabel;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
 
   readonly resumen = signal<ExistenciaProducto[]>([]);
-  readonly entradas = signal<InventarioEntrada[]>([]);
+  readonly movimientos = signal<InventarioEntrada[]>([]);
   readonly busqueda = signal('');
-  readonly estadoFiltro = signal<InventarioEstado | ''>('');
   readonly productoFiltroId = signal<number | null>(null);
   readonly vista = signal<VistaInventario>('resumen');
   readonly loading = signal(false);
@@ -47,7 +42,7 @@ export class InventarioComponent implements OnInit {
   );
 
   readonly entradasDisponibles = computed(
-    () => this.entradas().filter((e) => e.estado === 'DISPONIBLE').length
+    () => this.movimientos().filter((e) => e.estado === 'DISPONIBLE').length
   );
 
   readonly resumenFiltrado = computed(() => {
@@ -58,22 +53,18 @@ export class InventarioComponent implements OnInit {
     return this.resumen().filter((item) => this.matchesResumen(item, q));
   });
 
-  readonly entradasFiltradas = computed(() => {
+  readonly movimientosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
-    const estado = this.estadoFiltro();
     const productoId = this.productoFiltroId();
 
-    return this.entradas().filter((entrada) => {
-      if (productoId !== null && entrada.codigoProducto !== productoId) {
-        return false;
-      }
-      if (estado && entrada.estado !== estado) {
+    return this.movimientos().filter((movimiento) => {
+      if (productoId !== null && movimiento.codigoProducto !== productoId) {
         return false;
       }
       if (!q) {
         return true;
       }
-      return this.matchesEntrada(entrada, q);
+      return this.matchesMovimiento(movimiento, q);
     });
   });
 
@@ -84,7 +75,7 @@ export class InventarioComponent implements OnInit {
     }
     return (
       this.resumen().find((item) => item.codigoProducto === id)?.nombreProducto ??
-      this.entradas().find((item) => item.codigoProducto === id)?.nombreProducto ??
+      this.movimientos().find((item) => item.codigoProducto === id)?.nombreProducto ??
       `Producto #${id}`
     );
   });
@@ -99,11 +90,11 @@ export class InventarioComponent implements OnInit {
 
     forkJoin({
       resumen: this.inventarioService.getResumen(),
-      entradas: this.inventarioService.getAll(),
+      movimientos: this.inventarioService.getAll(),
     }).subscribe({
-      next: ({ resumen, entradas }) => {
+      next: ({ resumen, movimientos }) => {
         this.resumen.set(resumen);
-        this.entradas.set(entradas);
+        this.movimientos.set(movimientos);
         this.loading.set(false);
       },
       error: (err) => {
@@ -124,14 +115,9 @@ export class InventarioComponent implements OnInit {
     this.busqueda.set(value);
   }
 
-  onEstadoFiltroChange(value: InventarioEstado | ''): void {
-    this.estadoFiltro.set(value);
-  }
-
-  verEntradasProducto(item: ExistenciaProducto): void {
+  verMovimientosProducto(item: ExistenciaProducto): void {
     this.productoFiltroId.set(item.codigoProducto);
     this.busqueda.set('');
-    this.estadoFiltro.set('');
     this.vista.set('detalle');
   }
 
@@ -185,17 +171,17 @@ export class InventarioComponent implements OnInit {
     );
   }
 
-  private matchesEntrada(entrada: InventarioEntrada, q: string): boolean {
+  private matchesMovimiento(movimiento: InventarioEntrada, q: string): boolean {
     const fields = [
-      String(entrada.idInventario),
-      String(entrada.codigoProducto),
-      entrada.nombreProducto,
-      entrada.estado,
-      inventarioEstadoLabel(entrada.estado),
-      entrada.ubicacion,
-      compraProveedorTipoLabel(entrada.proveedorTipo),
-      String(entrada.proveedorId),
-      entrada.compraDetalleId ? String(entrada.compraDetalleId) : null,
+      String(movimiento.idInventario),
+      String(movimiento.codigoProducto),
+      movimiento.nombreProducto,
+      movimiento.estado,
+      inventarioEstadoLabel(movimiento.estado),
+      movimiento.ubicacion,
+      compraProveedorTipoLabel(movimiento.proveedorTipo),
+      String(movimiento.proveedorId),
+      movimiento.compraDetalleId ? String(movimiento.compraDetalleId) : null,
     ];
     return fields.some((value) => value?.toLowerCase().includes(q));
   }
