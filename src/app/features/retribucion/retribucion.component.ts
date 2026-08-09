@@ -1,7 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Compra } from '../../core/models/compra-registro.model';
-import { EMPAQUE_OPCIONES } from '../../core/models/compra.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import {
   mapExternoPendiente,
@@ -334,8 +333,7 @@ export class RetribucionComponent implements OnInit {
   }
 
   empaqueLabel(empaque?: string | null): string {
-    if (!empaque) return '—';
-    return EMPAQUE_OPCIONES.find((o) => o.value === empaque)?.label ?? empaque;
+    return empaque?.trim() || '—';
   }
 
   private loadInternos(): void {

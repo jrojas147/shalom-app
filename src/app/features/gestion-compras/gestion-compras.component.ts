@@ -10,14 +10,12 @@ import {
   compraProveedorEtiqueta,
   compraProveedorTipoLabel,
 } from '../../core/models/compra-proveedor.model';
-import {
-  CompraDetalleItem,
-  EMPAQUE_OPCIONES,
-  EmpaqueTipo,
-} from '../../core/models/compra.model';
+import { CompraDetalleItem, EmpaqueTipo } from '../../core/models/compra.model';
 import { Producto, productoPrecioKg } from '../../core/models/producto.model';
+import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
+import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal/compra-proveedor-modal.component';
@@ -37,15 +35,16 @@ import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal
 export class GestionComprasComponent implements OnInit {
   private readonly comprasService = inject(ComprasService);
   private readonly productosService = inject(ProductosService);
+  private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly compraProveedorEtiqueta = compraProveedorEtiqueta;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
-  readonly empaqueOpciones = EMPAQUE_OPCIONES;
   readonly productoPrecioKg = productoPrecioKg;
 
   readonly compras = signal<Compra[]>([]);
   readonly productos = signal<Producto[]>([]);
+  readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -70,6 +69,10 @@ export class GestionComprasComponent implements OnInit {
     this.productosService.getActivos().subscribe({
       next: (data) => this.productos.set(data),
       error: () => this.productos.set([]),
+    });
+    this.tiposEmpaqueService.getAll().subscribe({
+      next: (data) => this.tiposEmpaque.set(data),
+      error: () => this.tiposEmpaque.set([]),
     });
   }
 
@@ -306,7 +309,22 @@ export class GestionComprasComponent implements OnInit {
 
   empaqueLabel(empaque?: EmpaqueTipo | string | null): string {
     if (!empaque) return '—';
-    return this.empaqueOpciones.find((o) => o.value === empaque)?.label ?? empaque;
+    const tipo = this.tiposEmpaque().find((t) => t.nombre === empaque);
+    if (!tipo) {
+      return empaque;
+    }
+    return `${tipo.nombre} (${this.formatPeso(tipo.peso)} KG)`;
+  }
+
+  esEmpaqueFueraDeCatalogo(empaque?: string | null): boolean {
+    if (!empaque?.trim()) {
+      return false;
+    }
+    return !this.tiposEmpaque().some((t) => t.nombre === empaque);
+  }
+
+  private empaquePorDefecto(): string {
+    return this.tiposEmpaque()[0]?.nombre ?? '';
   }
 
   private syncEditState(compra: Compra): void {
@@ -335,7 +353,7 @@ export class GestionComprasComponent implements OnInit {
         productoId: linea.productoId,
         producto,
         pesoKg: Number(linea.pesoKg),
-        empaque: (linea.empaque as EmpaqueTipo) ?? 'Globo Grande',
+        empaque: linea.empaque?.trim() || this.empaquePorDefecto(),
       };
     });
   }

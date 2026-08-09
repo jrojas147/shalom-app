@@ -1,17 +1,14 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import {
-  CompraDetalleItem,
-  EMPAQUE_OPCIONES,
-  EmpaqueTipo,
-} from '../../core/models/compra.model';
+import { CompraDetalleItem, EmpaqueTipo } from '../../core/models/compra.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import {
   Producto,
   productoImagenUrl,
 } from '../../core/models/producto.model';
 import { tipoClienteLabel } from '../../core/models/cliente.model';
+import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
 import {
   VentaClienteSeleccion,
   ventaClienteEtiqueta,
@@ -19,6 +16,7 @@ import {
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
+import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { VentasService } from '../../core/services/ventas.service';
 import { VentaClienteModalComponent } from './venta-cliente-modal/venta-cliente-modal.component';
 
@@ -33,16 +31,17 @@ export class VentaComponent implements OnInit {
   private readonly productosService = inject(ProductosService);
   private readonly inventarioService = inject(InventarioService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
+  private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly ventasService = inject(VentasService);
 
   readonly ventaClienteEtiqueta = ventaClienteEtiqueta;
   readonly tipoClienteLabel = tipoClienteLabel;
-  readonly empaqueOpciones = EMPAQUE_OPCIONES;
   readonly productoImagenUrl = productoImagenUrl;
 
   readonly productos = signal<Producto[]>([]);
   readonly existencias = signal<Map<number, number>>(new Map());
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
+  readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
   readonly items = signal<CompraDetalleItem[]>([]);
   readonly clienteSeleccionado = signal<VentaClienteSeleccion | null>(null);
   readonly busqueda = signal('');
@@ -119,6 +118,11 @@ export class VentaComponent implements OnInit {
       next: (data) => this.codigosCiiu.set(data),
       error: () => this.codigosCiiu.set([]),
     });
+
+    this.tiposEmpaqueService.getAll().subscribe({
+      next: (data) => this.tiposEmpaque.set(data),
+      error: () => this.tiposEmpaque.set([]),
+    });
   }
 
   onBusqueda(value: string): void {
@@ -138,6 +142,13 @@ export class VentaComponent implements OnInit {
   }
 
   agregarProducto(producto: Producto): void {
+    if (this.tiposEmpaque().length === 0) {
+      this.error.set(
+        'No hay tipos de empaque parametrizados. Configure al menos uno en Parametrización.'
+      );
+      return;
+    }
+
     const stock = this.stockProducto(producto.id);
     if (stock <= 0) {
       this.error.set(`Sin stock disponible para ${producto.nombreInterno}.`);
@@ -160,7 +171,7 @@ export class VentaComponent implements OnInit {
       productoId: producto.id,
       producto,
       pesoKg: Math.min(1, stock),
-      empaque: 'Globo Grande',
+      empaque: this.tiposEmpaque()[0]?.nombre ?? '',
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);

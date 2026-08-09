@@ -5,22 +5,20 @@ import {
   compraProveedorEtiqueta,
   compraProveedorTipoLabel,
 } from '../../core/models/compra-proveedor.model';
-import {
-  CompraDetalleItem,
-  EMPAQUE_OPCIONES,
-  EmpaqueTipo,
-} from '../../core/models/compra.model';
+import { CompraDetalleItem, EmpaqueTipo } from '../../core/models/compra.model';
 import {
   Producto,
   productoImagenUrl,
   productoPrecioKg,
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
+import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
 import { AuthService } from '../../core/services/auth.service';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { CompraFacturaPrintService } from '../../core/services/compra-factura-print.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
+import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { CompraProveedorModalComponent } from './compra-proveedor-modal/compra-proveedor-modal.component';
 
 @Component({
@@ -33,18 +31,19 @@ import { CompraProveedorModalComponent } from './compra-proveedor-modal/compra-p
 export class ComprasComponent implements OnInit {
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
+  private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly comprasService = inject(ComprasService);
   private readonly auth = inject(AuthService);
   private readonly facturaPrintService = inject(CompraFacturaPrintService);
 
   readonly compraProveedorEtiqueta = compraProveedorEtiqueta;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
-  readonly empaqueOpciones = EMPAQUE_OPCIONES;
   readonly productoPrecioKg = productoPrecioKg;
   readonly productoImagenUrl = productoImagenUrl;
 
   readonly productos = signal<Producto[]>([]);
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
+  readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
   readonly items = signal<CompraDetalleItem[]>([]);
   readonly proveedorSeleccionado = signal<CompraProveedorSeleccion | null>(null);
   readonly busqueda = signal('');
@@ -106,6 +105,11 @@ export class ComprasComponent implements OnInit {
       next: (data) => this.codigosCiiu.set(data),
       error: () => this.codigosCiiu.set([]),
     });
+
+    this.tiposEmpaqueService.getAll().subscribe({
+      next: (data) => this.tiposEmpaque.set(data),
+      error: () => this.tiposEmpaque.set([]),
+    });
   }
 
   onBusqueda(value: string): void {
@@ -117,6 +121,13 @@ export class ComprasComponent implements OnInit {
   }
 
   agregarProducto(producto: Producto): void {
+    if (this.tiposEmpaque().length === 0) {
+      this.error.set(
+        'No hay tipos de empaque parametrizados. Configure al menos uno en Parametrización.'
+      );
+      return;
+    }
+
     const existente = this.items().find((i) => i.productoId === producto.id);
     if (existente) {
       this.ajustarPeso(producto.id, 0.5);
@@ -127,10 +138,11 @@ export class ComprasComponent implements OnInit {
       productoId: producto.id,
       producto,
       pesoKg: 1,
-      empaque: 'Globo Grande',
+      empaque: this.empaquePorDefecto(),
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);
+    this.error.set(null);
   }
 
   ajustarPeso(productoId: number, delta: number): void {
@@ -207,7 +219,15 @@ export class ComprasComponent implements OnInit {
   }
 
   empaqueLabel(empaque: EmpaqueTipo): string {
-    return this.empaqueOpciones.find((o) => o.value === empaque)?.label ?? empaque;
+    const tipo = this.tiposEmpaque().find((t) => t.nombre === empaque);
+    if (!tipo) {
+      return empaque || '—';
+    }
+    return `${tipo.nombre} (${this.formatPeso(tipo.peso)} KG)`;
+  }
+
+  private empaquePorDefecto(): string {
+    return this.tiposEmpaque()[0]?.nombre ?? '';
   }
 
   productoIcono(): string {
