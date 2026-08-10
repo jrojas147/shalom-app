@@ -19,6 +19,7 @@ import { CompraFacturaPrintService } from '../../core/services/compra-factura-pr
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
+import { pesoEmpaqueKg, pesoNetoKg } from '../../core/utils/empaque-peso.util';
 import { CompraProveedorModalComponent } from './compra-proveedor-modal/compra-proveedor-modal.component';
 
 @Component({
@@ -80,8 +81,12 @@ export class ComprasComponent implements OnInit {
     this.items().reduce((sum, item) => sum + this.itemTotal(item), 0)
   );
 
-  readonly pesoTotal = computed(() =>
+  readonly pesoBrutoTotal = computed(() =>
     this.items().reduce((sum, item) => sum + item.pesoKg, 0)
+  );
+
+  readonly pesoNetoTotal = computed(() =>
+    this.items().reduce((sum, item) => sum + this.pesoNetoItem(item), 0)
   );
 
   readonly puedeRegistrarPreCompra = computed(
@@ -134,11 +139,13 @@ export class ComprasComponent implements OnInit {
       return;
     }
 
+    const empaque = this.empaquePorDefecto();
+    const tara = pesoEmpaqueKg(this.tiposEmpaque(), empaque);
     const nuevo: CompraDetalleItem = {
       productoId: producto.id,
       producto,
-      pesoKg: 1,
-      empaque: this.empaquePorDefecto(),
+      pesoKg: Math.max(1, tara + 0.5),
+      empaque,
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);
@@ -149,7 +156,8 @@ export class ComprasComponent implements OnInit {
     this.items.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
-        const peso = Math.max(0.5, Math.round((item.pesoKg + delta) * 2) / 2);
+        const minimo = this.pesoBrutoMinimo(item.empaque);
+        const peso = Math.max(minimo, Math.round((item.pesoKg + delta) * 2) / 2);
         return { ...item, pesoKg: peso };
       })
     );
@@ -157,19 +165,27 @@ export class ComprasComponent implements OnInit {
 
   onPesoInput(productoId: number, value: string): void {
     const parsed = parseFloat(value.replace(',', '.'));
-    if (Number.isNaN(parsed) || parsed < 0.5) return;
+    if (Number.isNaN(parsed)) return;
     this.items.update((list) =>
-      list.map((item) =>
-        item.productoId === productoId ? { ...item, pesoKg: parsed } : item
-      )
+      list.map((item) => {
+        if (item.productoId !== productoId) return item;
+        const minimo = this.pesoBrutoMinimo(item.empaque);
+        return { ...item, pesoKg: Math.max(minimo, parsed) };
+      })
     );
   }
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
     this.items.update((list) =>
-      list.map((item) =>
-        item.productoId === productoId ? { ...item, empaque } : item
-      )
+      list.map((item) => {
+        if (item.productoId !== productoId) return item;
+        const minimo = this.pesoBrutoMinimo(empaque);
+        return {
+          ...item,
+          empaque,
+          pesoKg: Math.max(minimo, item.pesoKg),
+        };
+      })
     );
   }
 
@@ -191,8 +207,21 @@ export class ComprasComponent implements OnInit {
     this.error.set(null);
   }
 
+  pesoEmpaqueItem(item: CompraDetalleItem): number {
+    return pesoEmpaqueKg(this.tiposEmpaque(), item.empaque);
+  }
+
+  pesoNetoItem(item: CompraDetalleItem): number {
+    return pesoNetoKg(item.pesoKg, this.pesoEmpaqueItem(item));
+  }
+
   itemTotal(item: CompraDetalleItem): number {
-    return item.pesoKg * productoPrecioKg(item.producto);
+    return this.pesoNetoItem(item) * productoPrecioKg(item.producto);
+  }
+
+  private pesoBrutoMinimo(empaque: string): number {
+    const tara = pesoEmpaqueKg(this.tiposEmpaque(), empaque);
+    return Math.round((tara + 0.5) * 2) / 2;
   }
 
   formatPrecioKg(value: number): string {
@@ -255,7 +284,7 @@ export class ComprasComponent implements OnInit {
       producto: { ...item.producto },
     }));
     const totalSnapshot = this.subtotal();
-    const pesoSnapshot = this.pesoTotal();
+    const pesoSnapshot = this.pesoNetoTotal();
 
     this.comprasService
       .registrarPreCompra({
@@ -310,7 +339,7 @@ export class ComprasComponent implements OnInit {
       proveedor,
       items: items.map((item) => ({
         nombre: item.producto.nombreInterno,
-        pesoKg: item.pesoKg,
+        pesoKg: this.pesoNetoItem(item),
         precioKg: productoPrecioKg(item.producto),
         total: this.itemTotal(item),
         empaque: this.empaqueLabel(item.empaque),

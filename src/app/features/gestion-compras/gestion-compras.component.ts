@@ -16,6 +16,7 @@ import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
 import { ComprasService } from '../../core/services/compras.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
+import { pesoEmpaqueKg, pesoNetoKg } from '../../core/utils/empaque-peso.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal/compra-proveedor-modal.component';
@@ -60,8 +61,12 @@ export class GestionComprasComponent implements OnInit {
     this.itemsEdit().reduce((sum, item) => sum + this.itemTotal(item), 0)
   );
 
-  readonly pesoTotalEdit = computed(() =>
+  readonly pesoBrutoTotalEdit = computed(() =>
     this.itemsEdit().reduce((sum, item) => sum + item.pesoKg, 0)
+  );
+
+  readonly pesoNetoTotalEdit = computed(() =>
+    this.itemsEdit().reduce((sum, item) => sum + this.pesoNetoItem(item), 0)
   );
 
   ngOnInit(): void {
@@ -142,7 +147,8 @@ export class GestionComprasComponent implements OnInit {
     this.itemsEdit.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
-        const peso = Math.max(0.5, Math.round((item.pesoKg + delta) * 2) / 2);
+        const minimo = this.pesoBrutoMinimo(item.empaque);
+        const peso = Math.max(minimo, Math.round((item.pesoKg + delta) * 2) / 2);
         return { ...item, pesoKg: peso };
       })
     );
@@ -150,19 +156,27 @@ export class GestionComprasComponent implements OnInit {
 
   onPesoInput(productoId: number, value: string): void {
     const parsed = parseFloat(value.replace(',', '.'));
-    if (Number.isNaN(parsed) || parsed < 0.5) return;
+    if (Number.isNaN(parsed)) return;
     this.itemsEdit.update((list) =>
-      list.map((item) =>
-        item.productoId === productoId ? { ...item, pesoKg: parsed } : item
-      )
+      list.map((item) => {
+        if (item.productoId !== productoId) return item;
+        const minimo = this.pesoBrutoMinimo(item.empaque);
+        return { ...item, pesoKg: Math.max(minimo, parsed) };
+      })
     );
   }
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
     this.itemsEdit.update((list) =>
-      list.map((item) =>
-        item.productoId === productoId ? { ...item, empaque } : item
-      )
+      list.map((item) => {
+        if (item.productoId !== productoId) return item;
+        const minimo = this.pesoBrutoMinimo(empaque);
+        return {
+          ...item,
+          empaque,
+          pesoKg: Math.max(minimo, item.pesoKg),
+        };
+      })
     );
   }
 
@@ -303,8 +317,17 @@ export class GestionComprasComponent implements OnInit {
     });
   }
 
+  pesoNetoItem(item: CompraDetalleItem): number {
+    return pesoNetoKg(item.pesoKg, pesoEmpaqueKg(this.tiposEmpaque(), item.empaque));
+  }
+
   itemTotal(item: CompraDetalleItem): number {
-    return item.pesoKg * productoPrecioKg(item.producto);
+    return this.pesoNetoItem(item) * productoPrecioKg(item.producto);
+  }
+
+  private pesoBrutoMinimo(empaque: string): number {
+    const tara = pesoEmpaqueKg(this.tiposEmpaque(), empaque);
+    return Math.round((tara + 0.5) * 2) / 2;
   }
 
   empaqueLabel(empaque?: EmpaqueTipo | string | null): string {
@@ -349,11 +372,15 @@ export class GestionComprasComponent implements OnInit {
           precioVenta: null,
         } satisfies Producto);
 
+      const empaque = linea.empaque?.trim() || this.empaquePorDefecto();
+      const pesoNeto = Number(linea.pesoKg) || 0;
+      const pesoBruto = pesoNeto + pesoEmpaqueKg(this.tiposEmpaque(), empaque);
+
       return {
         productoId: linea.productoId,
         producto,
-        pesoKg: Number(linea.pesoKg),
-        empaque: linea.empaque?.trim() || this.empaquePorDefecto(),
+        pesoKg: pesoBruto,
+        empaque,
       };
     });
   }
@@ -363,7 +390,7 @@ export class GestionComprasComponent implements OnInit {
       proveedor,
       items: this.itemsEdit(),
       total: this.subtotalEdit(),
-      pesoTotal: this.pesoTotalEdit(),
+      pesoTotal: this.pesoNetoTotalEdit(),
     };
   }
 
