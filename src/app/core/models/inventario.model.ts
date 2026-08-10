@@ -18,7 +18,9 @@ export interface InventarioEntrada {
   precioVentaUnitario: number | null;
   proveedorTipo: TipoProveedor;
   proveedorId: number;
+  proveedorNombre?: string | null;
   sucursalId: number | null;
+  sucursalNombre?: string | null;
   fechaEntrada: string;
   fechaSalida: string | null;
   estado: InventarioEstado;

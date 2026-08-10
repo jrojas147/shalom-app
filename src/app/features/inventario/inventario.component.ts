@@ -135,17 +135,6 @@ export class InventarioComponent implements OnInit {
     this.entradaSeleccionada.set(null);
   }
 
-  formatCurrency(value: number | null | undefined): string {
-    if (value == null) {
-      return '—';
-    }
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      maximumFractionDigits: 0,
-    }).format(value);
-  }
-
   formatPeso(value: number | null | undefined): string {
     if (value == null) {
       return '—';
@@ -157,11 +146,33 @@ export class InventarioComponent implements OnInit {
   }
 
   proveedorResumen(entrada: InventarioEntrada): string {
+    const nombre = entrada.proveedorNombre?.trim();
+    if (nombre) {
+      if (entrada.sucursalNombre?.trim()) {
+        return `${nombre} · ${entrada.sucursalNombre.trim()}`;
+      }
+      return nombre;
+    }
     const tipo = compraProveedorTipoLabel(entrada.proveedorTipo);
     if (entrada.sucursalId) {
       return `${tipo} #${entrada.proveedorId} · Suc. ${entrada.sucursalId}`;
     }
     return `${tipo} #${entrada.proveedorId}`;
+  }
+
+  tipoMovimiento(entrada: InventarioEntrada): 'ENTRADA' | 'SALIDA' {
+    if (
+      entrada.fechaSalida ||
+      entrada.estado === 'AGOTADO' ||
+      entrada.estado === 'SALIDA'
+    ) {
+      return 'SALIDA';
+    }
+    return 'ENTRADA';
+  }
+
+  tipoMovimientoLabel(entrada: InventarioEntrada): string {
+    return this.tipoMovimiento(entrada) === 'SALIDA' ? 'Salida' : 'Entrada';
   }
 
   private matchesResumen(item: ExistenciaProducto, q: string): boolean {
@@ -178,8 +189,11 @@ export class InventarioComponent implements OnInit {
       movimiento.nombreProducto,
       movimiento.estado,
       inventarioEstadoLabel(movimiento.estado),
+      this.tipoMovimientoLabel(movimiento),
       movimiento.ubicacion,
       compraProveedorTipoLabel(movimiento.proveedorTipo),
+      movimiento.proveedorNombre,
+      movimiento.sucursalNombre,
       String(movimiento.proveedorId),
       movimiento.compraDetalleId ? String(movimiento.compraDetalleId) : null,
     ];

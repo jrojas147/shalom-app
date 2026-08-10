@@ -115,9 +115,7 @@
             <th>ID</th>
             <th>Producto</th>
             <th class="cell-num">Cantidad (KG)</th>
-            <th class="cell-num">P. compra</th>
-            <th class="cell-num">P. venta</th>
-            <th>Estado</th>
+            <th>Tipo movimiento</th>
             <th>Ubicación</th>
             <th>Fecha entrada</th>
             <th>Fecha salida</th>
@@ -134,17 +132,13 @@
                 <span class="cell-secondary cell-sub">#{{ movimiento.codigoProducto }}</span>
               </td>
               <td class="cell-num">{{ formatPeso(movimiento.cantidadDisponible) }}</td>
-              <td class="cell-num cell-secondary">{{ formatCurrency(movimiento.precioCompraUnitario) }}</td>
-              <td class="cell-num cell-secondary">{{ formatCurrency(movimiento.precioVentaUnitario) }}</td>
               <td>
                 <span
                   class="rp-badge"
-                  [class.rp-badge--success]="movimiento.estado === 'DISPONIBLE'"
-                  [class.rp-badge--danger]="movimiento.estado === 'AGOTADO'"
-                  [class.rp-badge--neutral]="movimiento.estado === 'SALIDA'"
-                  [class.rp-badge--warning]="movimiento.estado === 'BLOQUEADO'"
+                  [class.rp-badge--primary]="tipoMovimiento(movimiento) === 'ENTRADA'"
+                  [class.rp-badge--warning]="tipoMovimiento(movimiento) === 'SALIDA'"
                 >
-                  {{ inventarioEstadoLabel(movimiento.estado) }}
+                  {{ tipoMovimientoLabel(movimiento) }}
                 </span>
               </td>
               <td class="cell-secondary">{{ movimiento.ubicacion || '—' }}</td>
@@ -165,7 +159,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="11" class="cell-empty">No hay movimientos que coincidan con la búsqueda.</td>
+              <td colspan="9" class="cell-empty">No hay movimientos que coincidan con la búsqueda.</td>
             </tr>
           }
         </tbody>
@@ -191,16 +185,12 @@
           <dd>{{ formatPeso(entrada.cantidadDisponible) }} KG</dd>
         </div>
         <div>
+          <dt>Tipo movimiento</dt>
+          <dd>{{ tipoMovimientoLabel(entrada) }}</dd>
+        </div>
+        <div>
           <dt>Estado</dt>
           <dd>{{ inventarioEstadoLabel(entrada.estado) }}</dd>
-        </div>
-        <div>
-          <dt>Precio compra</dt>
-          <dd>{{ formatCurrency(entrada.precioCompraUnitario) }}</dd>
-        </div>
-        <div>
-          <dt>Precio venta</dt>
-          <dd>{{ formatCurrency(entrada.precioVentaUnitario) }}</dd>
         </div>
         <div>
           <dt>Ubicación</dt>
