@@ -143,7 +143,8 @@ export class VentaComponent implements OnInit {
   }
 
   precioVentaKg(producto: Producto): number {
-    return producto.precioVenta ?? 0;
+    const actual = this.productos().find((p) => p.id === producto.id) ?? producto;
+    return Number(actual.precioVenta) || 0;
   }
 
   agregarProducto(producto: Producto): void {
@@ -154,21 +155,27 @@ export class VentaComponent implements OnInit {
       return;
     }
 
-    const stock = this.stockProducto(producto.id);
+    const catalogo = this.productos().find((p) => p.id === producto.id) ?? producto;
+    const stock = this.stockProducto(catalogo.id);
     if (stock <= 0) {
-      this.error.set(`Sin stock disponible para ${producto.nombreInterno}.`);
+      this.error.set(`Sin stock disponible para ${catalogo.nombreInterno}.`);
       return;
     }
 
-    const existente = this.items().find((i) => i.productoId === producto.id);
+    const existente = this.items().find((i) => i.productoId === catalogo.id);
     if (existente) {
-      if (this.pesoNetoItem(existente) >= stock) {
+      this.items.update((list) =>
+        list.map((item) =>
+          item.productoId === catalogo.id ? { ...item, producto: catalogo } : item
+        )
+      );
+      if (this.pesoNetoItem({ ...existente, producto: catalogo }) >= stock) {
         this.error.set(
-          `No puede vender más de ${this.formatPeso(stock)} KG de ${producto.nombreInterno}.`
+          `No puede vender más de ${this.formatPeso(stock)} KG de ${catalogo.nombreInterno}.`
         );
         return;
       }
-      this.ajustarPeso(producto.id, 0.5);
+      this.ajustarPeso(catalogo.id, 0.5);
       return;
     }
 
@@ -178,14 +185,14 @@ export class VentaComponent implements OnInit {
     const netoInicial = pesoNetoKg(brutoInicial, tara);
     if (netoInicial > stock) {
       this.error.set(
-        `Stock insuficiente para ${producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
+        `Stock insuficiente para ${catalogo.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
       );
       return;
     }
 
     const nuevo: CompraDetalleItem = {
-      productoId: producto.id,
-      producto,
+      productoId: catalogo.id,
+      producto: catalogo,
       pesoKg: brutoInicial,
       empaque,
     };
@@ -346,40 +353,65 @@ export class VentaComponent implements OnInit {
       return;
     }
 
-    for (const item of this.items()) {
-      const stock = this.stockProducto(item.productoId);
-      if (this.pesoNetoItem(item) > stock) {
-        this.error.set(
-          `Stock insuficiente para ${item.producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
-        );
-        return;
-      }
-    }
-
     this.procesando.set(true);
     this.error.set(null);
 
-    this.ventasService
-      .registrar({
-        cliente,
-        items: this.items(),
-        total: this.subtotal(),
-        pesoTotal: this.pesoNetoTotal(),
-      })
-      .subscribe({
-        next: (res) => {
-          this.procesando.set(false);
-          this.factura.set(res.factura);
-          this.mensaje.set(res.mensaje);
-          this.items.set([]);
-          this.clienteSeleccionado.set(null);
-          this.recargarExistencias();
-        },
-        error: (err) => {
-          this.procesando.set(false);
-          this.error.set(this.extractErrorMessage(err));
-        },
-      });
+    // Recarga precios vigentes del catálogo antes de calcular/enviar el total.
+    this.productosService.getActivos().subscribe({
+      next: (productos) => {
+        this.productos.set(productos);
+        this.items.update((list) =>
+          list.map((item) => {
+            const actual = productos.find((p) => p.id === item.productoId);
+            return actual ? { ...item, producto: actual } : item;
+          })
+        );
+
+        for (const item of this.items()) {
+          if (this.precioVentaKg(item.producto) <= 0) {
+            this.procesando.set(false);
+            this.error.set(
+              `El producto '${item.producto.nombreInterno}' no tiene precio de venta configurado.`
+            );
+            return;
+          }
+          const stock = this.stockProducto(item.productoId);
+          if (this.pesoNetoItem(item) > stock) {
+            this.procesando.set(false);
+            this.error.set(
+              `Stock insuficiente para ${item.producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
+            );
+            return;
+          }
+        }
+
+        this.ventasService
+          .registrar({
+            cliente,
+            items: this.items(),
+            total: this.subtotal(),
+            pesoTotal: this.pesoNetoTotal(),
+          })
+          .subscribe({
+            next: (res) => {
+              this.procesando.set(false);
+              this.factura.set(res.factura);
+              this.mensaje.set(res.mensaje);
+              this.items.set([]);
+              this.clienteSeleccionado.set(null);
+              this.recargarExistencias();
+            },
+            error: (err) => {
+              this.procesando.set(false);
+              this.error.set(this.extractErrorMessage(err));
+            },
+          });
+      },
+      error: () => {
+        this.procesando.set(false);
+        this.error.set('No se pudieron actualizar los precios de los productos.');
+      },
+    });
   }
 
   private recargarExistencias(): void {
