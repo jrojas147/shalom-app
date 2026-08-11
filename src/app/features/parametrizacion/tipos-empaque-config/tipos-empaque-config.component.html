@@ -20,10 +20,10 @@
     <input
       type="number"
       formControlName="peso"
-      placeholder="Peso (g)"
-      step="1"
+      placeholder="Peso (kg)"
+      step="0.01"
       min="0"
-      [attr.aria-label]="'Peso en gramos'"
+      [attr.aria-label]="'Peso del empaque en kilogramos'"
     />
     <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
       {{ saving() ? 'Guardando...' : editingId() ? 'Guardar' : 'Agregar' }}

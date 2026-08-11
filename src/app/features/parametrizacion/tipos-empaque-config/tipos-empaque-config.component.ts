@@ -120,6 +120,6 @@ export class TiposEmpaqueConfigComponent implements OnInit {
   }
 
   formatPeso(peso: number): string {
-    return `${peso.toLocaleString('es-AR', { maximumFractionDigits: 2 })} g`;
+    return `${peso.toLocaleString('es-AR', { maximumFractionDigits: 3 })} kg`;
   }
 }

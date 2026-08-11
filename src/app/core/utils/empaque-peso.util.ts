@@ -1,5 +1,6 @@
 import { TipoEmpaque } from '../models/tipo-empaque.model';
 
+/** Peso del empaque en KG (valor parametrizado). */
 export function pesoEmpaqueKg(
   tipos: TipoEmpaque[],
   nombreEmpaque: string | null | undefined
@@ -14,4 +15,10 @@ export function pesoEmpaqueKg(
 export function pesoNetoKg(pesoBruto: number, pesoEmpaque: number): number {
   const neto = (Number(pesoBruto) || 0) - (Number(pesoEmpaque) || 0);
   return Math.max(0, Math.round(neto * 1000) / 1000);
+}
+
+/** Peso bruto = peso del producto (neto) + tara del empaque. */
+export function pesoBrutoFromNetoKg(pesoNeto: number, pesoEmpaque: number): number {
+  const bruto = (Number(pesoNeto) || 0) + (Number(pesoEmpaque) || 0);
+  return Math.max(0, Math.round(bruto * 1000) / 1000);
 }

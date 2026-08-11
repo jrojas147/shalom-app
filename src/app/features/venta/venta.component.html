@@ -133,7 +133,7 @@
                 type="text"
                 [value]="formatPeso(item.pesoKg)"
                 (change)="onPesoInput(item.productoId, $any($event.target).value)"
-                title="Peso bruto"
+                title="Peso del producto (neto)"
               />
               <button
                 type="button"
@@ -141,11 +141,11 @@
                 (click)="ajustarPeso(item.productoId, 0.5)"
                 aria-label="Más peso"
               >+</button>
-              <span class="weight-unit">KG bruto</span>
+              <span class="weight-unit">KG producto</span>
             </div>
             <div class="item-pricing">
               <span class="price-kg">
-                Neto {{ formatPeso(pesoNetoItem(item)) }} KG ·
+                Bruto {{ formatPeso(pesoBrutoItem(item)) }} KG ·
                 {{ formatPrecioKg(precioVentaKg(item.producto)) }} /kg
               </span>
               <strong class="price-total">{{ formatCurrency(itemTotal(item)) }}</strong>

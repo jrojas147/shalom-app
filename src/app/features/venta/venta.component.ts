@@ -18,7 +18,7 @@ import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { VentasService } from '../../core/services/ventas.service';
-import { pesoEmpaqueKg, pesoNetoKg } from '../../core/utils/empaque-peso.util';
+import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
 import { VentaClienteModalComponent } from './venta-cliente-modal/venta-cliente-modal.component';
 
 @Component({
@@ -86,7 +86,7 @@ export class VentaComponent implements OnInit {
   );
 
   readonly pesoBrutoTotal = computed(() =>
-    this.items().reduce((sum, item) => sum + item.pesoKg, 0)
+    this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
   );
 
   readonly pesoNetoTotal = computed(() =>
@@ -180,9 +180,7 @@ export class VentaComponent implements OnInit {
     }
 
     const empaque = this.tiposEmpaque()[0]?.nombre ?? '';
-    const tara = pesoEmpaqueKg(this.tiposEmpaque(), empaque);
-    const brutoInicial = Math.max(1, tara + 0.5);
-    const netoInicial = pesoNetoKg(brutoInicial, tara);
+    const netoInicial = 0.5;
     if (netoInicial > stock) {
       this.error.set(
         `Stock insuficiente para ${catalogo.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
@@ -193,7 +191,8 @@ export class VentaComponent implements OnInit {
     const nuevo: CompraDetalleItem = {
       productoId: catalogo.id,
       producto: catalogo,
-      pesoKg: brutoInicial,
+      // pesoKg en venta = peso del producto (neto), sin tara.
+      pesoKg: netoInicial,
       empaque,
     };
     this.items.update((list) => [...list, nuevo]);
@@ -206,9 +205,7 @@ export class VentaComponent implements OnInit {
     const actual = this.items().find((i) => i.productoId === productoId);
     if (!actual) return;
 
-    const minimo = this.pesoBrutoMinimo(actual.empaque);
-    const pesoDeseado = Math.max(minimo, Math.round((actual.pesoKg + delta) * 2) / 2);
-    const netoDeseado = pesoNetoKg(pesoDeseado, pesoEmpaqueKg(this.tiposEmpaque(), actual.empaque));
+    const netoDeseado = Math.max(0.5, Math.round((actual.pesoKg + delta) * 2) / 2);
     if (netoDeseado > stock) {
       this.error.set(
         `Stock insuficiente para ${actual.producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
@@ -219,7 +216,7 @@ export class VentaComponent implements OnInit {
     this.error.set(null);
     this.items.update((list) =>
       list.map((item) =>
-        item.productoId === productoId ? { ...item, pesoKg: pesoDeseado } : item
+        item.productoId === productoId ? { ...item, pesoKg: netoDeseado } : item
       )
     );
   }
@@ -232,9 +229,7 @@ export class VentaComponent implements OnInit {
     const actual = this.items().find((i) => i.productoId === productoId);
     if (!actual) return;
 
-    const minimo = this.pesoBrutoMinimo(actual.empaque);
-    const bruto = Math.max(minimo, parsed);
-    const neto = pesoNetoKg(bruto, pesoEmpaqueKg(this.tiposEmpaque(), actual.empaque));
+    const neto = Math.max(0.5, parsed);
     if (neto > stock) {
       this.error.set(
         `Stock insuficiente para ${actual.producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
@@ -246,39 +241,24 @@ export class VentaComponent implements OnInit {
     this.error.set(null);
     this.items.update((list) =>
       list.map((item) =>
-        item.productoId === productoId ? { ...item, pesoKg: bruto } : item
+        item.productoId === productoId ? { ...item, pesoKg: neto } : item
       )
     );
   }
 
   puedeAumentarPeso(productoId: number, pesoActual: number): boolean {
-    const item = this.items().find((i) => i.productoId === productoId);
-    if (!item) return false;
     const siguiente = Math.round((pesoActual + 0.5) * 2) / 2;
-    const neto = pesoNetoKg(siguiente, pesoEmpaqueKg(this.tiposEmpaque(), item.empaque));
-    return neto <= this.stockProducto(productoId);
+    return siguiente <= this.stockProducto(productoId);
   }
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
-    const stock = this.stockProducto(productoId);
     this.items.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
-        const minimo = this.pesoBrutoMinimo(empaque);
-        let bruto = Math.max(minimo, item.pesoKg);
-        let neto = pesoNetoKg(bruto, pesoEmpaqueKg(this.tiposEmpaque(), empaque));
-        if (neto > stock) {
-          bruto = stock + pesoEmpaqueKg(this.tiposEmpaque(), empaque);
-          neto = pesoNetoKg(bruto, pesoEmpaqueKg(this.tiposEmpaque(), empaque));
-          if (neto <= 0 || bruto < minimo) {
-            this.error.set(
-              `Stock insuficiente para ${item.producto.nombreInterno} con el empaque seleccionado.`
-            );
-            return item;
-          }
-        }
+        // Al cambiar empaque se conserva el peso del producto (neto);
+        // el bruto se recalcula solo con la tara del nuevo empaque.
         this.error.set(null);
-        return { ...item, empaque, pesoKg: bruto };
+        return { ...item, empaque };
       })
     );
   }
@@ -301,17 +281,21 @@ export class VentaComponent implements OnInit {
     this.error.set(null);
   }
 
+  /** Peso del producto (sin empaque). */
   pesoNetoItem(item: CompraDetalleItem): number {
-    return pesoNetoKg(item.pesoKg, pesoEmpaqueKg(this.tiposEmpaque(), item.empaque));
+    return Math.max(0, Number(item.pesoKg) || 0);
+  }
+
+  /** Peso bruto = producto + tara del empaque. */
+  pesoBrutoItem(item: CompraDetalleItem): number {
+    return pesoBrutoFromNetoKg(
+      this.pesoNetoItem(item),
+      pesoEmpaqueKg(this.tiposEmpaque(), item.empaque)
+    );
   }
 
   itemTotal(item: CompraDetalleItem): number {
     return this.pesoNetoItem(item) * this.precioVentaKg(item.producto);
-  }
-
-  private pesoBrutoMinimo(empaque: string): number {
-    const tara = pesoEmpaqueKg(this.tiposEmpaque(), empaque);
-    return Math.round((tara + 0.5) * 2) / 2;
   }
 
   formatPrecioKg(value: number): string {
