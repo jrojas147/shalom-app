@@ -24,7 +24,7 @@ export class TiposEmpaqueConfigComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
-    peso: [null as number | null, [Validators.required, Validators.min(1)]],
+    peso: [null as number | null, [Validators.required, Validators.min(0)]],
   });
 
   ngOnInit(): void {
