@@ -81,6 +81,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   readonly productos = signal<Producto[]>([]);
   readonly busqueda = signal('');
+  readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -96,10 +97,18 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
-    if (!q) {
-      return this.productos();
-    }
-    return this.productos().filter((p) => this.matchesSearch(p, q));
+    const ciiuId = this.codigoCiiuFiltro();
+
+    return this.productos().filter((p) => {
+      const matchCiiu = ciiuId == null || p.codigoCiiuId === ciiuId;
+      if (!matchCiiu) {
+        return false;
+      }
+      if (!q) {
+        return true;
+      }
+      return this.matchesSearch(p, q);
+    });
   });
 
   readonly form = this.fb.nonNullable.group({
@@ -122,6 +131,15 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   onBusquedaChange(value: string): void {
     this.busqueda.set(value);
+  }
+
+  onCodigoCiiuFiltro(value: string): void {
+    if (!value) {
+      this.codigoCiiuFiltro.set(null);
+      return;
+    }
+    const parsed = Number(value);
+    this.codigoCiiuFiltro.set(Number.isFinite(parsed) ? parsed : null);
   }
 
   openCreate(): void {

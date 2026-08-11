@@ -31,6 +31,20 @@
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
+      <div class="productos__ciiu-filter">
+        <label class="productos__ciiu-filter-label" for="productosCiiuFiltro">CIIU</label>
+        <select
+          id="productosCiiuFiltro"
+          class="productos__ciiu-filter-select"
+          [value]="codigoCiiuFiltro() ?? ''"
+          (change)="onCodigoCiiuFiltro($any($event.target).value)"
+        >
+          <option value="">Todos los códigos CIIU</option>
+          @for (ciiu of codigosCiiu(); track ciiu.id) {
+            <option [value]="ciiu.id">{{ ciiu.codigo }} — {{ ciiu.nombre }}</option>
+          }
+        </select>
+      </div>
     </div>
 
     @if (loading()) {
