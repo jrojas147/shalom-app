@@ -8,6 +8,7 @@ export type NavIconName =
   | 'liquidacion'
   | 'productos'
   | 'inventario'
+  | 'movimientos'
   | 'proveedores'
   | 'clientes'
   | 'aliados'
@@ -93,6 +94,22 @@ export type NavIconName =
             stroke-linejoin="round"
           />
           <path d="M12 8v13M4 7.5l8 3.5 8-3.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+        }
+        @case ('movimientos') {
+          <path
+            d="M7 7h10M17 7l-3-3M17 7l-3 3"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M17 17H7M7 17l3-3M7 17l3 3"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         }
         @case ('proveedores') {
           <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8" />

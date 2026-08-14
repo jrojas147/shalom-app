@@ -1,0 +1,150 @@
+<div class="movimientos">
+  <header class="rp-page-header">
+    <div>
+      <h1>Movimientos</h1>
+      <p>Reclasifique inventario moviendo kilos de un material a otro.</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  <section class="rp-panel">
+    <div class="panel-header">
+      <div>
+        <h2>Nuevo movimiento</h2>
+        <p class="movimientos__desc">
+          Ejemplo: mover 1 KG de chatarra a aluminio. Se descuenta del origen y se suma al destino.
+        </p>
+      </div>
+    </div>
+
+    <form class="rp-form-grid" [formGroup]="form" (ngSubmit)="registrar()">
+      <div class="rp-field">
+        <label for="productoOrigenId">Material origen</label>
+        <select id="productoOrigenId" formControlName="productoOrigenId">
+          <option [ngValue]="null">Seleccione el material a descontar</option>
+          @for (item of origenesConStock(); track item.codigoProducto) {
+            <option [ngValue]="item.codigoProducto">
+              {{ item.nombreProducto }} — {{ formatPeso(item.cantidadDisponible) }} KG
+            </option>
+          }
+        </select>
+        @if (existenciaOrigen(); as origen) {
+          <p class="rp-hint ok">Disponible: {{ formatPeso(origen.cantidadDisponible) }} KG</p>
+        }
+      </div>
+
+      <div class="rp-field">
+        <label for="productoDestinoId">Material destino</label>
+        <select id="productoDestinoId" formControlName="productoDestinoId">
+          <option [ngValue]="null">Seleccione el material a acreditar</option>
+          @for (producto of destinosDisponibles(); track producto.id) {
+            <option [ngValue]="producto.id">{{ producto.nombreInterno }}</option>
+          }
+        </select>
+        @if (formValue().productoDestinoId) {
+          <p class="rp-hint">
+            Stock actual:
+            {{ formatPeso(existenciaDestino()?.cantidadDisponible ?? 0) }} KG
+          </p>
+        }
+      </div>
+
+      <div class="rp-field">
+        <label for="cantidadKg">Cantidad (KG)</label>
+        <input
+          id="cantidadKg"
+          type="number"
+          min="0.001"
+          step="0.001"
+          formControlName="cantidadKg"
+          placeholder="0.000"
+        />
+      </div>
+
+      <div class="rp-field movimientos__observacion">
+        <label for="observacion">Observación</label>
+        <input
+          id="observacion"
+          type="text"
+          maxlength="500"
+          formControlName="observacion"
+          placeholder="Motivo del movimiento (opcional)"
+        />
+      </div>
+
+      <div class="rp-form-actions movimientos__actions">
+        <button
+          type="submit"
+          class="rp-btn rp-btn--primary"
+          [disabled]="saving() || form.invalid"
+        >
+          {{ saving() ? 'Moviendo...' : 'Registrar movimiento' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="rp-panel movimientos-panel">
+    <div class="panel-header movimientos__toolbar">
+      <div>
+        <h2>Historial</h2>
+        <p class="movimientos__desc">Movimientos registrados en el comercio.</p>
+      </div>
+      <button type="button" class="rp-btn rp-btn--secondary" (click)="loadData()">
+        Actualizar
+      </button>
+    </div>
+
+    <div class="movimientos__filters">
+      <input
+        type="search"
+        class="movimientos__search"
+        placeholder="Buscar por materiales, usuario u observación..."
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando movimientos...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th class="cell-num">Cantidad (KG)</th>
+            <th>Observación</th>
+            <th>Usuario</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (movimiento of movimientosFiltrados(); track movimiento.id) {
+            <tr>
+              <td class="cell-mono">{{ movimiento.id }}</td>
+              <td class="cell-primary">{{ movimiento.productoOrigenNombre }}</td>
+              <td class="cell-primary">{{ movimiento.productoDestinoNombre }}</td>
+              <td class="cell-num">{{ formatPeso(movimiento.cantidadKg) }}</td>
+              <td class="cell-secondary">{{ movimiento.observacion || '—' }}</td>
+              <td class="cell-secondary">{{ movimiento.usuarioRegistroNombre || '—' }}</td>
+              <td class="cell-secondary">{{ movimiento.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="cell-empty">No hay movimientos registrados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>

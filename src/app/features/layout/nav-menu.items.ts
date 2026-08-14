@@ -16,6 +16,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Retribución', route: '/app/liquidacion', icon: 'liquidacion' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },
   { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
+  { label: 'Movimientos', route: '/app/movimientos', icon: 'movimientos' },
   { label: 'Proveedores', route: '/app/proveedores', icon: 'proveedores' },
   { label: 'Sucursales', route: '/app/sucursales', icon: 'sucursales' },
   { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },

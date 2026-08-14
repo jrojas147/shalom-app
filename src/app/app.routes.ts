@@ -73,6 +73,14 @@ export const routes: Routes = [
           import('./features/inventario/inventario.component').then((m) => m.InventarioComponent),
       },
       {
+        path: 'movimientos',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/movimientos/movimientos.component').then(
+            (m) => m.MovimientosComponent
+          ),
+      },
+      {
         path: 'proveedores',
         canActivate: [operadorModules],
         loadComponent: () =>
