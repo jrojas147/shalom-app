@@ -31,6 +31,7 @@ export class UsuariosComponent implements OnInit {
   readonly showForm = signal(false);
   readonly editingId = signal<number | null>(null);
   readonly usernameAvailable = signal<boolean | null>(null);
+  readonly passwordVisible = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
@@ -80,6 +81,7 @@ export class UsuariosComponent implements OnInit {
   openCreate(): void {
     this.editingId.set(null);
     this.usernameAvailable.set(null);
+    this.passwordVisible.set(false);
     this.form.reset({
       username: '',
       email: '',
@@ -97,6 +99,7 @@ export class UsuariosComponent implements OnInit {
   openEdit(user: User): void {
     this.editingId.set(user.id);
     this.usernameAvailable.set(null);
+    this.passwordVisible.set(false);
     this.form.reset({
       username: user.username,
       email: user.email,
@@ -115,7 +118,12 @@ export class UsuariosComponent implements OnInit {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+    this.passwordVisible.set(false);
     this.error.set(null);
+  }
+
+  togglePasswordVisible(): void {
+    this.passwordVisible.update((visible) => !visible);
   }
 
   save(): void {
@@ -156,6 +164,7 @@ export class UsuariosComponent implements OnInit {
       next: () => {
         this.saving.set(false);
         this.showForm.set(false);
+        this.passwordVisible.set(false);
         this.loadPage(this.currentPage());
       },
       error: (err) => {

@@ -3,3 +3,39 @@
   gap: var(--spacing-xs);
   justify-content: flex-end;
 }
+
+.password-field {
+  position: relative;
+
+  input {
+    padding-right: 2.75rem;
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--rp-text-secondary);
+  cursor: pointer;
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  &:hover {
+    background: var(--rp-primary-light);
+    color: var(--rp-primary);
+  }
+}
