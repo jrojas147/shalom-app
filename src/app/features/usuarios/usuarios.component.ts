@@ -1,7 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
-import { AuthService } from '../../core/services/auth.service';
 import { RolesService } from '../../core/services/roles.service';
 import { UsuariosService } from '../../core/services/usuarios.service';
 import { Rol, User, UsuarioRequest } from '../../core/models/user.model';
@@ -19,7 +18,6 @@ export class UsuariosComponent implements OnInit {
   private readonly usuariosService = inject(UsuariosService);
   private readonly rolesService = inject(RolesService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
-  readonly auth = inject(AuthService);
 
   readonly users = signal<User[]>([]);
   readonly roles = signal<Rol[]>([]);
@@ -32,6 +30,7 @@ export class UsuariosComponent implements OnInit {
   readonly editingId = signal<number | null>(null);
   readonly usernameAvailable = signal<boolean | null>(null);
   readonly passwordVisible = signal(false);
+  private readonly defaultComercioId = 2;
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
@@ -40,7 +39,6 @@ export class UsuariosComponent implements OnInit {
     nombre: [''],
     apellido: [''],
     rolId: [0, Validators.required],
-    comercioId: [null as number | null],
     activo: [true],
   });
 
@@ -89,7 +87,6 @@ export class UsuariosComponent implements OnInit {
       nombre: '',
       apellido: '',
       rolId: 0,
-      comercioId: this.auth.currentUser()?.comercioId ?? null,
       activo: true,
     });
     this.form.controls.password.setValidators([Validators.required]);
@@ -107,7 +104,6 @@ export class UsuariosComponent implements OnInit {
       nombre: user.nombre ?? '',
       apellido: user.apellido ?? '',
       rolId: user.rolId,
-      comercioId: user.comercioId ?? null,
       activo: user.activo,
     });
     this.form.controls.password.clearValidators();
@@ -124,6 +120,10 @@ export class UsuariosComponent implements OnInit {
 
   togglePasswordVisible(): void {
     this.passwordVisible.update((visible) => !visible);
+  }
+
+  canDelete(user: User): boolean {
+    return user.rol !== 'DIRECCION';
   }
 
   save(): void {
@@ -143,8 +143,8 @@ export class UsuariosComponent implements OnInit {
       email: raw.email,
       nombre: raw.nombre || undefined,
       apellido: raw.apellido || undefined,
-      rolId: raw.rolId,
-      comercioId: raw.comercioId ?? undefined,
+      rolId: Number(raw.rolId),
+      comercioId: this.comercioIdForRol(Number(raw.rolId)),
       activo: raw.activo,
     };
 
@@ -175,6 +175,10 @@ export class UsuariosComponent implements OnInit {
   }
 
   deleteUser(user: User): void {
+    if (!this.canDelete(user)) {
+      return;
+    }
+
     this.confirmDialog
       .confirm({
         title: 'Eliminar usuario',
@@ -211,5 +215,10 @@ export class UsuariosComponent implements OnInit {
       next: (roles) => this.roles.set(roles),
       error: () => this.error.set('No se pudieron cargar los roles.'),
     });
+  }
+
+  private comercioIdForRol(rolId: number): number | undefined {
+    const rol = this.roles().find((item) => item.id === rolId);
+    return rol?.codigo === 'DIRECCION' ? undefined : this.defaultComercioId;
   }
 }

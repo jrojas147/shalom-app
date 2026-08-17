@@ -88,10 +88,6 @@
               }
             </select>
           </div>
-          <div class="rp-field">
-            <label>Comercio ID</label>
-            <input type="number" formControlName="comercioId" />
-          </div>
           <div class="rp-field checkbox">
             <label>
               <input type="checkbox" formControlName="activo" />
@@ -149,7 +145,15 @@
               </td>
               <td class="cell-actions">
                 <button type="button" class="rp-btn rp-btn--icon" (click)="openEdit(user)" title="Editar">✎</button>
-                <button type="button" class="rp-btn rp-btn--icon danger" (click)="deleteUser(user)" title="Eliminar">🗑</button>
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon danger"
+                  (click)="deleteUser(user)"
+                  [disabled]="!canDelete(user)"
+                  [title]="canDelete(user) ? 'Eliminar' : 'No se puede eliminar un usuario con rol Dirección'"
+                >
+                  🗑
+                </button>
               </td>
             </tr>
           } @empty {
