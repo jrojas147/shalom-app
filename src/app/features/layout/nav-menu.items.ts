@@ -25,6 +25,12 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   //{ label: 'Perfil', route: '/app/perfil', icon: 'perfil' },
 ];
 
+const DIRECCION_MENU: NavMenuItem[] = [
+  ADMIN_DIRECCION_MENU[0],
+  { label: 'Pre-compra', route: '/app/pre-compra', icon: 'compra' },
+  ...ADMIN_DIRECCION_MENU.slice(1),
+];
+
 const OPERADOR_MENU: NavMenuItem[] = [
   { label: 'Pre-compra', route: '/app/pre-compra', icon: 'compra' },
   { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
@@ -34,7 +40,7 @@ const OPERADOR_MENU: NavMenuItem[] = [
 
 const NAV_BY_ROLE: Record<UserRole, NavMenuItem[]> = {
   ADMIN: ADMIN_DIRECCION_MENU,
-  DIRECCION: ADMIN_DIRECCION_MENU,
+  DIRECCION: DIRECCION_MENU,
   OPERADOR: OPERADOR_MENU,
 };
 
