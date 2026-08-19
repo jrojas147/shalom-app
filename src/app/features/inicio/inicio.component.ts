@@ -1,12 +1,18 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { catchError, forkJoin, of } from 'rxjs';
 import { CajaService } from '../../core/services/caja.service';
 import { HealthService } from '../../core/services/health.service';
 import { InicioService } from '../../core/services/inicio.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { CompraResumen } from '../../core/models/compra-registro.model';
-import { RetribucionInterno } from '../../core/models/retribucion.model';
+import {
+  mapExternoPendiente,
+  mapInternoPendiente,
+  RetribucionExterno,
+  RetribucionInterno,
+  RetribucionProveedorPendiente,
+} from '../../core/models/retribucion.model';
 import { HealthResponse } from '../../core/models/user.model';
 
 @Component({
@@ -21,7 +27,6 @@ export class InicioComponent implements OnInit {
   private readonly inicioService = inject(InicioService);
   private readonly cajaService = inject(CajaService);
   private readonly retribucionService = inject(RetribucionService);
-  readonly auth = inject(AuthService);
 
   readonly health = signal<HealthResponse | null>(null);
   readonly healthError = signal<string | null>(null);
@@ -36,23 +41,31 @@ export class InicioComponent implements OnInit {
   readonly cajaError = signal<string | null>(null);
   readonly loadingCaja = signal(false);
 
-  readonly pagosPendientes = signal<RetribucionInterno[]>([]);
+  readonly pagosInternos = signal<RetribucionInterno[]>([]);
+  readonly pagosExternos = signal<RetribucionExterno[]>([]);
   readonly pagosError = signal<string | null>(null);
   readonly loadingPagos = signal(false);
 
-  readonly totalPagosPendientes = computed(() =>
-    this.pagosPendientes().reduce(
-      (sum, item) => sum + this.toNumber(item.totalPendiente),
-      0
-    )
+  readonly totalPagosInternos = computed(() =>
+    this.sumPendiente(this.pagosInternos())
   );
 
-  readonly cantidadComprasPendientes = computed(() =>
-    this.pagosPendientes().reduce(
-      (sum, item) => sum + this.toNumber(item.cantidadCompras),
-      0
-    )
+  readonly totalPagosExternos = computed(() =>
+    this.sumPendiente(this.pagosExternos())
   );
+
+  readonly cantidadComprasInternos = computed(() =>
+    this.sumCompras(this.pagosInternos())
+  );
+
+  readonly cantidadComprasExternos = computed(() =>
+    this.sumCompras(this.pagosExternos())
+  );
+
+  readonly pagosPendientes = computed<RetribucionProveedorPendiente[]>(() => [
+    ...this.pagosInternos().map(mapInternoPendiente),
+    ...this.pagosExternos().map(mapExternoPendiente),
+  ]);
 
   ngOnInit(): void {
     this.cargarResumenCompras();
@@ -117,18 +130,23 @@ export class InicioComponent implements OnInit {
     this.loadingPagos.set(true);
     this.pagosError.set(null);
 
-    this.retribucionService.listarInternosPendientesPago().subscribe({
-      next: (data) => {
-        this.pagosPendientes.set(data);
-        this.loadingPagos.set(false);
-      },
-      error: (err) => {
-        this.pagosPendientes.set([]);
-        this.pagosError.set(
-          typeof err?.error?.message === 'string'
-            ? err.error.message
-            : 'No se pudieron cargar los pagos pendientes.'
-        );
+    forkJoin({
+      internos: this.retribucionService.listarInternosPendientesPago().pipe(
+        catchError(() => of(null as RetribucionInterno[] | null))
+      ),
+      externos: this.retribucionService.listarExternosPendientesPago().pipe(
+        catchError(() => of(null as RetribucionExterno[] | null))
+      ),
+    }).subscribe({
+      next: ({ internos, externos }) => {
+        if (internos == null && externos == null) {
+          this.pagosInternos.set([]);
+          this.pagosExternos.set([]);
+          this.pagosError.set('No se pudieron cargar los pagos pendientes.');
+        } else {
+          this.pagosInternos.set(internos ?? []);
+          this.pagosExternos.set(externos ?? []);
+        }
         this.loadingPagos.set(false);
       },
     });
@@ -176,6 +194,18 @@ export class InicioComponent implements OnInit {
       pesoSemana: this.toNumber(raw.pesoSemana),
       cantidadSemana: this.toNumber(raw.cantidadSemana),
     };
+  }
+
+  private sumPendiente(
+    items: Array<{ totalPendiente: number | string | null | undefined }>
+  ): number {
+    return items.reduce((sum, item) => sum + this.toNumber(item.totalPendiente), 0);
+  }
+
+  private sumCompras(
+    items: Array<{ cantidadCompras: number | string | null | undefined }>
+  ): number {
+    return items.reduce((sum, item) => sum + this.toNumber(item.cantidadCompras), 0);
   }
 
   private toNumber(value: number | string | null | undefined): number {

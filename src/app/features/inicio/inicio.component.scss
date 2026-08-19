@@ -2,3 +2,42 @@
   align-self: flex-start;
   margin-top: auto;
 }
+
+.pagos-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.pagos-split__col {
+  min-width: 0;
+
+  &:first-child {
+    padding-right: var(--spacing-sm);
+    border-right: 1px solid var(--rp-border);
+  }
+
+  &:last-child {
+    padding-left: var(--spacing-sm);
+  }
+}
+
+.pagos-split__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rp-text-secondary);
+}
+
+.pagos-split__value {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--rp-metric-value);
+  line-height: 1.2;
+}
