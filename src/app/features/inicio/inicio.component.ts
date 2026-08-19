@@ -170,8 +170,10 @@ export class InicioComponent implements OnInit {
   private normalizeResumen(raw: CompraResumen): CompraResumen {
     return {
       totalHoy: this.toNumber(raw.totalHoy),
+      pesoHoy: this.toNumber(raw.pesoHoy),
       cantidadHoy: this.toNumber(raw.cantidadHoy),
       totalSemana: this.toNumber(raw.totalSemana),
+      pesoSemana: this.toNumber(raw.pesoSemana),
       cantidadSemana: this.toNumber(raw.cantidadSemana),
     };
   }

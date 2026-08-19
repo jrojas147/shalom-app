@@ -18,7 +18,9 @@
         <span class="cell-secondary">{{ comprasError() }}</span>
       } @else {
         <strong class="metric-value">{{ formatCurrency(resumenCompras()?.totalHoy) }}</strong>
-        <span class="cell-secondary">{{ resumenCompras()?.cantidadHoy ?? 0 }} compra(s) confirmada(s)</span>
+        <span class="cell-secondary">
+          {{ formatPeso(resumenCompras()?.pesoHoy) }} KG · {{ resumenCompras()?.cantidadHoy ?? 0 }} compra(s)
+        </span>
       }
     </div>
 
@@ -33,7 +35,9 @@
         <span class="cell-secondary">{{ comprasError() }}</span>
       } @else {
         <strong class="metric-value">{{ formatCurrency(resumenCompras()?.totalSemana) }}</strong>
-        <span class="cell-secondary">{{ resumenCompras()?.cantidadSemana ?? 0 }} compra(s) confirmada(s)</span>
+        <span class="cell-secondary">
+          {{ formatPeso(resumenCompras()?.pesoSemana) }} KG · {{ resumenCompras()?.cantidadSemana ?? 0 }} compra(s)
+        </span>
       }
     </div>
 

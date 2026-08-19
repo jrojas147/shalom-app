@@ -9,7 +9,7 @@ export class InicioService {
   private readonly http = inject(HttpClient);
   private readonly resumenUrl = `${API_CORE_URL}/api/compras/resumen`;
 
-  /** Totales de compras confirmadas del comercio activo (hoy y semana en curso). */
+  /** Totales de compras confirmadas del comercio activo (hoy y semana en curso, en dinero y kilos). */
   getResumenCompras(): Observable<CompraResumen> {
     return this.http.get<CompraResumen>(this.resumenUrl);
   }

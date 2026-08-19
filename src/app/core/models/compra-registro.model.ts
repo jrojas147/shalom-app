@@ -15,8 +15,10 @@ export interface CompraDetalleLinea {
 
 export interface CompraResumen {
   totalHoy: number;
+  pesoHoy: number;
   cantidadHoy: number;
   totalSemana: number;
+  pesoSemana: number;
   cantidadSemana: number;
 }
 
