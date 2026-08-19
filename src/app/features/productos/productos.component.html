@@ -2,7 +2,6 @@
   <header class="rp-page-header">
     <div>
       <h1>Productos</h1>
-      <p>Catálogo de materiales y precios del comercio</p>
     </div>
   </header>
 
@@ -27,19 +26,19 @@
       <input
         type="search"
         class="productos__search"
-        placeholder="Buscar por ID, nombre, CIIU o descripción..."
+        placeholder="Buscar por ID, nombre, SUI o descripción..."
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
       <div class="productos__ciiu-filter">
-        <label class="productos__ciiu-filter-label" for="productosCiiuFiltro">CIIU</label>
+        <label class="productos__ciiu-filter-label" for="productosCiiuFiltro">SUI</label>
         <select
           id="productosCiiuFiltro"
           class="productos__ciiu-filter-select"
           [value]="codigoCiiuFiltro() ?? ''"
           (change)="onCodigoCiiuFiltro($any($event.target).value)"
         >
-          <option value="">Todos los códigos CIIU</option>
+          <option value="">Todos los códigos SUI</option>
           @for (ciiu of codigosCiiu(); track ciiu.id) {
             <option [value]="ciiu.id">{{ ciiu.codigo }} — {{ ciiu.nombre }}</option>
           }
@@ -55,7 +54,7 @@
           <tr>
             <th>ID</th>
             <th>Producto</th>
-            <th>CIIU</th>
+            <th>SUI</th>
             <th>Precio compra</th>
             <th>Precio venta</th>
             <th>Estado</th>
@@ -177,9 +176,9 @@
         </div>
 
         <div class="rp-field rp-field--full">
-          <label for="codigoCiiuId">Código CIIU</label>
+          <label for="codigoCiiuId">Código SUI</label>
           <select id="codigoCiiuId" formControlName="codigoCiiuId">
-            <option [ngValue]="null">Sin código CIIU</option>
+            <option [ngValue]="null">Sin código SUI</option>
             @for (ciiu of codigosCiiu(); track ciiu.id) {
               <option [ngValue]="ciiu.id">{{ ciiu.codigo }} — {{ ciiu.nombre }}</option>
             }
