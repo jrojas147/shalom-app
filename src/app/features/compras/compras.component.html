@@ -19,14 +19,14 @@
       </div>
 
       <div class="compras-ciiu-filter">
-        <label class="compras-ciiu-filter__label" for="comprasCiiuFiltro">CIIU</label>
+        <label class="compras-ciiu-filter__label" for="comprasCiiuFiltro">SUI</label>
         <select
           id="comprasCiiuFiltro"
           class="compras-ciiu-filter__select"
           [ngModel]="codigoCiiuFiltro()"
           (ngModelChange)="onCodigoCiiuFiltro($event)"
         >
-          <option [ngValue]="null">Todos los nombres CIIU</option>
+          <option [ngValue]="null">Todos los nombres SUI</option>
           @for (ciiu of codigosCiiu(); track ciiu.id) {
             <option [ngValue]="ciiu.id">{{ ciiu.nombre }}</option>
           }
