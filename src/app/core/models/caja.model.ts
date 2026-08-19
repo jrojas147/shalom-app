@@ -1,3 +1,5 @@
+import { MedioCajaTipo } from './medio-caja.model';
+
 export type CajaEstado = 'ABIERTA' | 'CERRADA';
 export type CajaMovimientoTipo = 'INGRESO' | 'EGRESO';
 export type CajaMovimientoConcepto =
@@ -19,8 +21,19 @@ export interface CajaMovimiento {
   referenciaId?: number | null;
   usuarioRegistroId: number;
   usuarioRegistroNombre?: string;
+  medioCajaId?: number | null;
+  medioCajaNombre?: string | null;
   observacion?: string | null;
   createdAt: string;
+}
+
+export interface CajaSaldo {
+  medioCajaId: number;
+  medioNombre: string;
+  medioTipo?: MedioCajaTipo | null;
+  detalle?: string | null;
+  saldoInicial: number;
+  saldoActual: number;
 }
 
 export interface Caja {
@@ -43,11 +56,18 @@ export interface Caja {
   openedAt: string;
   closedAt?: string | null;
   observacion?: string | null;
+  saldos?: CajaSaldo[];
   movimientos: CajaMovimiento[];
 }
 
-export interface AbrirCajaRequest {
+export interface CajaSaldoAperturaRequest {
+  medioCajaId: number;
   saldoInicial: number;
+}
+
+export interface AbrirCajaRequest {
+  saldoInicial?: number;
+  saldos?: CajaSaldoAperturaRequest[];
   observacion?: string;
 }
 
@@ -58,6 +78,7 @@ export interface CerrarCajaRequest {
 
 export interface AbonoCajaRequest {
   monto: number;
+  medioCajaId?: number;
   observacion?: string;
 }
 

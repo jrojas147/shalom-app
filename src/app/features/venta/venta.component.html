@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    @if (error() && !showClienteModal()) {
+    @if (error() && !showClienteModal() && !showPagoModal()) {
       <div class="compras-alert">{{ error() }}</div>
     }
 
@@ -199,4 +199,56 @@
     (closed)="cerrarModalCliente()"
     (seleccionado)="seleccionarCliente($event)"
   />
+}
+
+@if (showPagoModal()) {
+  <app-rp-modal title="Medio de pago" (closed)="cancelarPagoModal()">
+    @if (error()) {
+      <div class="compras-alert">{{ error() }}</div>
+    }
+
+    <p class="venta-pago__desc">
+      Total a cobrar: <strong>{{ formatCurrency(subtotal()) }}</strong>
+    </p>
+    <p class="venta-pago__desc">Seleccione el medio con el que se recibe el pago.</p>
+
+    @if (loadingMediosPago()) {
+      <p class="compras-loading">Cargando medios de pago...</p>
+    } @else {
+      <div class="venta-pago__list" role="radiogroup" aria-label="Medio de pago">
+        @for (opcion of mediosPago(); track opcion.id) {
+          <button
+            type="button"
+            class="venta-pago__opcion"
+            [class.venta-pago__opcion--activa]="medioPagoId() === opcion.id"
+            (click)="seleccionarMedioPago(opcion.id)"
+          >
+            <span class="venta-pago__radio" aria-hidden="true"></span>
+            <span>
+              <strong>{{ opcion.nombre }}</strong>
+              @if (opcion.detalle) {
+                <em>{{ opcion.detalle }}</em>
+              }
+            </span>
+          </button>
+        } @empty {
+          <p class="compras-empty">No hay medios de pago disponibles</p>
+        }
+      </div>
+
+      <div class="venta-pago__actions">
+        <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelarPagoModal()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="rp-btn rp-btn--primary"
+          [disabled]="procesando() || medioPagoId() == null"
+          (click)="confirmarPagoYRegistrar()"
+        >
+          {{ procesando() ? 'Registrando...' : 'Confirmar venta' }}
+        </button>
+      </div>
+    }
+  </app-rp-modal>
 }

@@ -1,0 +1,132 @@
+<section class="param-block">
+  <h2 class="param-block__title">Medios de pago de caja</h2>
+  <p class="param-block__desc">
+    El efectivo se crea automáticamente. Agregue Nequi, Daviplata o cuentas bancarias para usarlos
+    en la apertura de caja.
+  </p>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <form class="param-block__add-row" [formGroup]="form" (ngSubmit)="save()">
+    @if (!editingSistema()) {
+      <select
+        formControlName="tipo"
+        aria-label="Tipo de medio"
+        (change)="onTipoChange()"
+      >
+        <option [ngValue]="null" disabled>Tipo</option>
+        @for (tipo of tiposCreables; track tipo) {
+          <option [ngValue]="tipo">{{ tipoLabel[tipo] }}</option>
+        }
+      </select>
+    }
+
+    <input
+      type="text"
+      formControlName="nombre"
+      placeholder="Nombre"
+      maxlength="100"
+      aria-label="Nombre del medio de pago"
+    />
+
+    @if (muestraTelefono()) {
+      <input
+        type="tel"
+        formControlName="telefono"
+        placeholder="Número de teléfono"
+        maxlength="20"
+        aria-label="Número de teléfono de la billetera"
+      />
+    }
+
+    @if (muestraBanco()) {
+      <select formControlName="entidadBancariaId" aria-label="Banco">
+        <option [ngValue]="null">Banco</option>
+        @for (entidad of entidades(); track entidad.id) {
+          <option [ngValue]="entidad.id">{{ bancoLabel(entidad) }}</option>
+        }
+      </select>
+      <input
+        type="text"
+        formControlName="numeroCuenta"
+        placeholder="Número de cuenta"
+        maxlength="40"
+        aria-label="Número de cuenta"
+      />
+    }
+
+    @if (editingId() && !editingSistema()) {
+      <label class="param-block__activo">
+        <input type="checkbox" formControlName="activo" />
+        Activo
+      </label>
+    }
+
+    <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+      {{ saving() ? 'Guardando...' : editingId() ? 'Guardar' : 'Agregar' }}
+    </button>
+    @if (editingId()) {
+      <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelEdit()">Cancelar</button>
+    }
+  </form>
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando...</p>
+  } @else {
+    <ul class="param-block__list">
+      @for (medio of medios(); track medio.id) {
+        <li class="param-block__item">
+          <span class="param-block__item-text">
+            <strong>{{ medio.nombre }}</strong>
+            <span class="param-block__item-meta">{{ tipoLabel[medio.tipo] }}</span>
+            @if (detalle(medio)) {
+              <span class="param-block__item-meta">{{ detalle(medio) }}</span>
+            }
+            @if (!medio.activo) {
+              <span class="rp-badge rp-badge--warning">Inactivo</span>
+            }
+          </span>
+          <span class="param-block__item-actions">
+            <button
+              type="button"
+              class="param-block__icon-btn"
+              title="Editar"
+              (click)="startEdit(medio)"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M4 20h4l10.5-10.5a1.5 1.5 0 0 0-4-4L4 16v4z"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linejoin="round"
+                />
+                <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.75" />
+              </svg>
+            </button>
+            @if (!medio.sistema) {
+              <button
+                type="button"
+                class="param-block__icon-btn param-block__icon-btn--danger"
+                title="Eliminar"
+                (click)="deleteMedio(medio)"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            }
+          </span>
+        </li>
+      } @empty {
+        <li class="rp-empty">No hay medios de pago registrados</li>
+      }
+    </ul>
+  }
+</section>

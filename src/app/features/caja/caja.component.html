@@ -6,7 +6,7 @@
     </div>
   </header>
 
-  @if (error() && !showCierreModal()) {
+  @if (error() && !showCierreModal() && !showAperturaModal()) {
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
 
@@ -46,7 +46,7 @@
             <strong>{{ formatCurrency(actual.saldoInicial) }}</strong>
           </div>
           <div>
-            <span class="meta-label">Saldo Actual</span>
+            <span class="meta-label">Saldo actual</span>
             <strong>{{ formatCurrency(saldoTeorico()) }}</strong>
           </div>
           <div>
@@ -59,10 +59,37 @@
           </div>
         </div>
 
+        @if (saldosCaja().length) {
+          <ul class="caja__medios">
+            @for (saldo of saldosCaja(); track saldo.medioCajaId) {
+              <li class="caja__medio">
+                <div>
+                  <strong>{{ saldo.medioNombre }}</strong>
+                  @if (detalleSaldo(saldo)) {
+                    <span class="caja__medio-detalle">{{ detalleSaldo(saldo) }}</span>
+                  }
+                </div>
+                <div class="caja__medio-montos">
+                  <span>Inicial {{ formatCurrency(saldo.saldoInicial) }}</span>
+                  <strong>Actual {{ formatCurrency(saldo.saldoActual) }}</strong>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
         <div class="caja__abono">
           <h3 class="caja__abono-title">Abono a caja</h3>
-          <p class="caja__desc">Registre un ingreso de efectivo al turno actual.</p>
+          <p class="caja__desc">Registre un ingreso al turno actual en el medio que corresponda.</p>
           <div class="caja__form">
+            <label>
+              <span>Medio de pago</span>
+              <select [value]="medioAbonoId() ?? ''" (change)="onMedioAbonoChange($event)">
+                @for (saldo of saldosCaja(); track saldo.medioCajaId) {
+                  <option [value]="saldo.medioCajaId">{{ saldo.medioNombre }}</option>
+                }
+              </select>
+            </label>
             <label>
               <span>Monto</span>
               <input
@@ -102,33 +129,12 @@
           <div>
             <h2>Abrir caja</h2>
             <p class="caja__desc">
-              No hay caja abierta. Indique el saldo inicial para iniciar el turno.
+              No hay caja abierta. Indique el saldo inicial de cada medio de pago para iniciar el
+              turno.
             </p>
           </div>
-        </div>
-
-        <div class="caja__form">
-          <label>
-            <span>Saldo inicial</span>
-            <input
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              [value]="saldoInicialDisplay()"
-              (input)="onSaldoInicialInput($event)"
-            />
-          </label>
-          <label>
-            <span>Observación</span>
-            <input type="text" maxlength="500" [(ngModel)]="observacionApertura" />
-          </label>
-          <button
-            type="button"
-            class="rp-btn rp-btn--primary"
-            [disabled]="saving()"
-            (click)="abrirCaja()"
-          >
-            {{ saving() ? 'Abriendo...' : 'Abrir caja' }}
+          <button type="button" class="rp-btn rp-btn--primary" (click)="abrirAperturaModal()">
+            Abrir caja
           </button>
         </div>
       </section>
@@ -165,6 +171,7 @@
                 <th>Fecha</th>
                 <th>Tipo</th>
                 <th>Concepto</th>
+                <th>Medio</th>
                 <th>Monto</th>
                 <th>Usuario</th>
                 <th>Observación</th>
@@ -184,13 +191,14 @@
                     </span>
                   </td>
                   <td class="cell-secondary">{{ conceptoLabel(mov.concepto) }}</td>
+                  <td class="cell-secondary">{{ mov.medioCajaNombre || '—' }}</td>
                   <td class="cell-secondary">{{ formatCurrency(mov.monto) }}</td>
                   <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>
                   <td class="cell-secondary">{{ mov.observacion || '—' }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="rp-empty">Sin movimientos registrados</td>
+                  <td colspan="7" class="rp-empty">Sin movimientos registrados</td>
                 </tr>
               }
             </tbody>
@@ -258,6 +266,63 @@
     </section>
   }
 </div>
+
+@if (showAperturaModal()) {
+  <app-rp-modal title="Abrir caja" [wide]="true" (closed)="cancelarAperturaModal()">
+    @if (error()) {
+      <div class="rp-alert rp-alert--error">{{ error() }}</div>
+    }
+
+    <p class="caja__desc">
+      Indique el saldo inicial de cada medio de pago. Puede dejar en cero los que no usará en este
+      turno.
+    </p>
+
+    @if (loadingMediosApertura()) {
+      <p class="rp-loading">Cargando medios de pago...</p>
+    } @else if (!filasApertura().length) {
+      <p class="rp-empty">
+        No hay medios de pago activos. Configure Nequi, Daviplata o cuentas bancarias en
+        Parametrización.
+      </p>
+    } @else {
+      <div class="caja__form caja__form--modal caja__form--saldos">
+        @for (fila of filasApertura(); track fila.medio.id) {
+          <label>
+            <span>{{ fila.medio.nombre }}</span>
+            @if (detalleMedio(fila.medio)) {
+              <em>{{ detalleMedio(fila.medio) }}</em>
+            }
+            <input
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              [value]="fila.display"
+              (input)="onSaldoAperturaInput(fila.medio.id, $event)"
+            />
+          </label>
+        }
+        <label class="caja__form-full">
+          <span>Observación</span>
+          <input type="text" maxlength="500" [(ngModel)]="observacionApertura" />
+        </label>
+        <div class="caja__form-actions">
+          <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelarAperturaModal()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="rp-btn rp-btn--primary"
+            [disabled]="saving() || !filasApertura().length"
+            (click)="abrirCaja()"
+          >
+            {{ saving() ? 'Abriendo...' : 'Abrir caja' }}
+          </button>
+        </div>
+      </div>
+    }
+  </app-rp-modal>
+}
 
 @if (showCierreModal() && caja(); as actual) {
   <app-rp-modal title="Cerrar caja" (closed)="cancelarCierreModal()">

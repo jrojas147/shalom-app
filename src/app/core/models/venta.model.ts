@@ -13,6 +13,7 @@ export interface RegistrarVentaPayload {
   items: CompraDetalleItem[];
   total: number;
   pesoTotal: number;
+  medioCajaId: number;
 }
 
 export interface RegistrarVentaResponse {

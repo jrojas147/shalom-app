@@ -19,6 +19,7 @@ export class VentasService {
       })),
       total: payload.total,
       pesoTotal: payload.pesoTotal,
+      medioCajaId: payload.medioCajaId,
     });
   }
 }

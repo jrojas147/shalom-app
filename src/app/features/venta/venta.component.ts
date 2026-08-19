@@ -20,13 +20,24 @@ import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { VentasService } from '../../core/services/ventas.service';
 import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
 import { VentaClienteModalComponent } from './venta-cliente-modal/venta-cliente-modal.component';
+import { CajaSaldo } from '../../core/models/caja.model';
+import { MedioCaja, medioCajaDetalle } from '../../core/models/medio-caja.model';
+import { CajaService } from '../../core/services/caja.service';
+import { MediosCajaService } from '../../core/services/medios-caja.service';
+import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
+
+interface MedioPagoOpcion {
+  id: number;
+  nombre: string;
+  detalle: string;
+}
 
 @Component({
   selector: 'app-venta',
   standalone: true,
-  imports: [FormsModule, VentaClienteModalComponent],
+  imports: [FormsModule, VentaClienteModalComponent, RpModalComponent],
   templateUrl: './venta.component.html',
-  styleUrl: '../compras/compras.component.scss',
+  styleUrls: ['../compras/compras.component.scss', './venta.component.scss'],
 })
 export class VentaComponent implements OnInit {
   private readonly productosService = inject(ProductosService);
@@ -34,6 +45,8 @@ export class VentaComponent implements OnInit {
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly ventasService = inject(VentasService);
+  private readonly cajaService = inject(CajaService);
+  private readonly mediosCajaService = inject(MediosCajaService);
 
   readonly ventaClienteEtiqueta = ventaClienteEtiqueta;
   readonly tipoClienteLabel = tipoClienteLabel;
@@ -49,10 +62,14 @@ export class VentaComponent implements OnInit {
   readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly loading = signal(false);
   readonly showClienteModal = signal(false);
+  readonly showPagoModal = signal(false);
   readonly procesando = signal(false);
+  readonly loadingMediosPago = signal(false);
   readonly mensaje = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly factura = signal('—');
+  readonly mediosPago = signal<MedioPagoOpcion[]>([]);
+  readonly medioPagoId = signal<number | null>(null);
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
@@ -337,10 +354,106 @@ export class VentaComponent implements OnInit {
       return;
     }
 
+    this.error.set(null);
+    this.mensaje.set(null);
+    this.showPagoModal.set(true);
+    this.loadingMediosPago.set(true);
+
+    this.cajaService.obtenerActual().subscribe({
+      next: (caja) => {
+        if (!caja) {
+          this.loadingMediosPago.set(false);
+          this.error.set('Debe abrir la caja antes de registrar una venta.');
+          return;
+        }
+        const saldos = caja.saldos ?? [];
+        if (saldos.length) {
+          this.setMediosDesdeSaldos(saldos);
+          this.loadingMediosPago.set(false);
+          return;
+        }
+        this.cargarMediosActivos();
+      },
+      error: (err) => {
+        this.loadingMediosPago.set(false);
+        this.error.set(this.extractErrorMessage(err) || 'Debe abrir la caja antes de registrar una venta.');
+      },
+    });
+  }
+
+  cancelarPagoModal(): void {
+    this.showPagoModal.set(false);
+  }
+
+  seleccionarMedioPago(id: number): void {
+    this.medioPagoId.set(id);
+  }
+
+  confirmarPagoYRegistrar(): void {
+    const medioId = this.medioPagoId();
+    if (medioId == null) {
+      this.error.set('Seleccione el medio de pago.');
+      return;
+    }
+    this.ejecutarRegistroVenta(medioId);
+  }
+
+  private setMediosDesdeSaldos(saldos: CajaSaldo[]): void {
+    const opciones = saldos.map((saldo) => ({
+      id: saldo.medioCajaId,
+      nombre: saldo.medioNombre,
+      detalle: saldo.detalle?.trim() || '',
+    }));
+    this.mediosPago.set(opciones);
+    this.seleccionarMedioPorDefecto(opciones, saldos.find((s) => s.medioTipo === 'EFECTIVO')?.medioCajaId);
+  }
+
+  private cargarMediosActivos(): void {
+    this.mediosCajaService.getAll(true).subscribe({
+      next: (medios) => {
+        const opciones = (medios ?? []).map((medio) => this.toOpcion(medio));
+        this.mediosPago.set(opciones);
+        this.seleccionarMedioPorDefecto(
+          opciones,
+          medios?.find((medio) => medio.tipo === 'EFECTIVO')?.id
+        );
+        this.loadingMediosPago.set(false);
+        if (!opciones.length) {
+          this.error.set(
+            'No hay medios de pago activos. Configure Nequi, Daviplata o cuentas en Parametrización.'
+          );
+        }
+      },
+      error: (err) => {
+        this.loadingMediosPago.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  private toOpcion(medio: MedioCaja): MedioPagoOpcion {
+    return {
+      id: medio.id,
+      nombre: medio.nombre,
+      detalle: medioCajaDetalle(medio),
+    };
+  }
+
+  private seleccionarMedioPorDefecto(opciones: MedioPagoOpcion[], efectivoId?: number): void {
+    const actual = this.medioPagoId();
+    if (actual && opciones.some((opcion) => opcion.id === actual)) {
+      return;
+    }
+    this.medioPagoId.set(efectivoId ?? opciones[0]?.id ?? null);
+  }
+
+  private ejecutarRegistroVenta(medioCajaId: number): void {
+    const cliente = this.clienteSeleccionado();
+    if (!cliente) return;
+
     this.procesando.set(true);
     this.error.set(null);
 
-    // Recarga precios vigentes del catálogo antes de calcular/enviar el total.
     this.productosService.getActivos().subscribe({
       next: (productos) => {
         this.productos.set(productos);
@@ -375,14 +488,17 @@ export class VentaComponent implements OnInit {
             items: this.items(),
             total: this.subtotal(),
             pesoTotal: this.pesoNetoTotal(),
+            medioCajaId,
           })
           .subscribe({
             next: (res) => {
               this.procesando.set(false);
+              this.showPagoModal.set(false);
               this.factura.set(res.factura);
               this.mensaje.set(res.mensaje);
               this.items.set([]);
               this.clienteSeleccionado.set(null);
+              this.medioPagoId.set(null);
               this.recargarExistencias();
             },
             error: (err) => {

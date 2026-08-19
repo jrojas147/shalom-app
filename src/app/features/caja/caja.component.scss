@@ -103,6 +103,59 @@
   grid-template-columns: 1fr;
 }
 
+.caja__form--saldos {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+  .caja__form-full,
+  .caja__form-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+.caja__medios {
+  list-style: none;
+  margin: var(--spacing-md) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.caja__medio {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  align-items: baseline;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+
+  strong {
+    color: var(--rp-text);
+  }
+}
+
+.caja__medio-detalle {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--rp-text-secondary);
+}
+
+.caja__medio-montos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--rp-text-secondary);
+
+  strong {
+    font-size: 0.9375rem;
+  }
+}
+
 .caja__modal-diff {
   font-size: 0.875rem;
   font-weight: 600;
@@ -135,6 +188,12 @@
     }
   }
 
+  &.caja__form--saldos em {
+    color: var(--rp-text-muted);
+    font-size: 0.75rem;
+  }
+
+  select,
   input {
     padding: 0.5625rem 0.75rem;
     border: 1px solid var(--rp-border);

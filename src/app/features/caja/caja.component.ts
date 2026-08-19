@@ -5,10 +5,13 @@ import {
   CAJA_CONCEPTO_LABEL,
   Caja,
   CajaMovimientoConcepto,
+  CajaSaldo,
 } from '../../core/models/caja.model';
+import { MedioCaja, medioCajaDetalle } from '../../core/models/medio-caja.model';
 import { AuthService } from '../../core/services/auth.service';
 import { CajaCierrePrintService } from '../../core/services/caja-cierre-print.service';
 import { CajaService } from '../../core/services/caja.service';
+import { MediosCajaService } from '../../core/services/medios-caja.service';
 import {
   formatCurrencyCo,
   parseCurrencyCo,
@@ -16,6 +19,12 @@ import {
 } from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
+
+interface SaldoAperturaFila {
+  medio: MedioCaja;
+  valor: number;
+  display: string;
+}
 
 @Component({
   selector: 'app-caja',
@@ -26,6 +35,7 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 })
 export class CajaComponent implements OnInit {
   private readonly cajaService = inject(CajaService);
+  private readonly mediosCajaService = inject(MediosCajaService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
   private readonly auth = inject(AuthService);
   private readonly cierrePrintService = inject(CajaCierrePrintService);
@@ -44,9 +54,13 @@ export class CajaComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
   readonly showCierreModal = signal(false);
+  readonly showAperturaModal = signal(false);
+  readonly loadingMediosApertura = signal(false);
+  readonly filasApertura = signal<SaldoAperturaFila[]>([]);
 
   readonly esTabMovimientos = computed(() => this.tabActiva() === 'movimientos');
   readonly esTabHistorial = computed(() => this.tabActiva() === 'historial');
+  readonly saldosCaja = computed(() => this.caja()?.saldos ?? []);
 
   readonly saldoCierre = signal(0);
   readonly saldoCierreDisplay = signal(formatCurrencyCo(0));
@@ -55,9 +69,8 @@ export class CajaComponent implements OnInit {
   readonly montoAbono = signal(0);
   readonly montoAbonoDisplay = signal(formatCurrencyCo(0));
   readonly observacionAbono = signal('');
+  readonly medioAbonoId = signal<number | null>(null);
 
-  saldoInicial = 0;
-  readonly saldoInicialDisplay = signal(formatCurrencyCo(0));
   observacionApertura = '';
 
   readonly saldoTeorico = computed(() =>
@@ -84,6 +97,7 @@ export class CajaComponent implements OnInit {
         this.caja.set(data);
         if (data) {
           this.setSaldoCierre(Number(data.saldoActual ?? 0));
+          this.syncMedioAbono(data);
         }
         this.loading.set(false);
       },
@@ -113,9 +127,41 @@ export class CajaComponent implements OnInit {
     });
   }
 
+  abrirAperturaModal(): void {
+    this.error.set(null);
+    this.mensaje.set(null);
+    this.observacionApertura = '';
+    this.showAperturaModal.set(true);
+    this.loadingMediosApertura.set(true);
+
+    this.mediosCajaService.getAll(true).subscribe({
+      next: (medios) => {
+        this.filasApertura.set(
+          (medios ?? []).map((medio) => ({
+            medio,
+            valor: 0,
+            display: formatCurrencyCo(0),
+          }))
+        );
+        this.loadingMediosApertura.set(false);
+      },
+      error: (err) => {
+        this.loadingMediosApertura.set(false);
+        this.error.set(this.extractErrorMessage(err, 'No se pudieron cargar los medios de pago.'));
+      },
+    });
+  }
+
+  cancelarAperturaModal(): void {
+    this.showAperturaModal.set(false);
+    this.filasApertura.set([]);
+    this.observacionApertura = '';
+  }
+
   abrirCaja(): void {
-    if (this.saldoInicial < 0) {
-      this.error.set('El saldo inicial no puede ser negativo.');
+    const filas = this.filasApertura();
+    if (filas.some((fila) => fila.valor < 0)) {
+      this.error.set('Ningún saldo inicial puede ser negativo.');
       return;
     }
 
@@ -125,17 +171,22 @@ export class CajaComponent implements OnInit {
 
     this.cajaService
       .abrir({
-        saldoInicial: this.saldoInicial,
+        saldos: filas.map((fila) => ({
+          medioCajaId: fila.medio.id,
+          saldoInicial: fila.valor,
+        })),
         observacion: this.observacionApertura.trim() || undefined,
       })
       .subscribe({
         next: (data) => {
           this.saving.set(false);
+          this.showAperturaModal.set(false);
           this.caja.set(data);
           this.setSaldoCierre(Number(data.saldoActual ?? 0));
-          this.setSaldoInicial(0);
-          this.mensaje.set('Caja abierta correctamente.');
+          this.syncMedioAbono(data);
+          this.filasApertura.set([]);
           this.observacionApertura = '';
+          this.mensaje.set('Caja abierta correctamente.');
           this.cargarHistorial();
         },
         error: (err) => {
@@ -160,6 +211,7 @@ export class CajaComponent implements OnInit {
     this.cajaService
       .abono({
         monto: this.montoAbono(),
+        medioCajaId: this.medioAbonoId() ?? undefined,
         observacion: this.observacionAbono().trim() || undefined,
       })
       .subscribe({
@@ -167,6 +219,7 @@ export class CajaComponent implements OnInit {
           this.saving.set(false);
           this.caja.set(data);
           this.setSaldoCierre(Number(data.saldoActual ?? 0));
+          this.syncMedioAbono(data);
           this.setMontoAbono(0);
           this.observacionAbono.set('');
           this.mensaje.set('Abono registrado correctamente.');
@@ -243,9 +296,9 @@ export class CajaComponent implements OnInit {
               this.saving.set(false);
               this.showCierreModal.set(false);
               this.caja.set(null);
-              this.setSaldoInicial(0);
               this.setSaldoCierre(0);
               this.observacionCierre.set('');
+              this.medioAbonoId.set(null);
               this.mensaje.set('Caja cerrada correctamente. Se generó el comprobante de cierre.');
               this.cargarHistorial();
             },
@@ -257,8 +310,16 @@ export class CajaComponent implements OnInit {
       });
   }
 
-  onSaldoInicialInput(event: Event): void {
-    this.applyCurrencyInput(event, (value) => this.setSaldoInicial(value));
+  onSaldoAperturaInput(medioId: number, event: Event): void {
+    this.applyCurrencyInput(event, (value) => {
+      this.filasApertura.update((filas) =>
+        filas.map((fila) =>
+          fila.medio.id === medioId
+            ? { ...fila, valor: value, display: formatCurrencyCo(value) }
+            : fila
+        )
+      );
+    });
   }
 
   onSaldoCierreInput(event: Event): void {
@@ -277,12 +338,25 @@ export class CajaComponent implements OnInit {
     this.observacionAbono.set(value ?? '');
   }
 
+  onMedioAbonoChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.medioAbonoId.set(value ? Number(value) : null);
+  }
+
   conceptoLabel(concepto: CajaMovimientoConcepto): string {
     return CAJA_CONCEPTO_LABEL[concepto] ?? concepto;
   }
 
   formatCurrency(value: number | null | undefined): string {
     return formatCurrencyCo(value ?? 0);
+  }
+
+  detalleMedio(medio: MedioCaja): string {
+    return medioCajaDetalle(medio);
+  }
+
+  detalleSaldo(saldo: CajaSaldo): string {
+    return saldo.detalle?.trim() || '';
   }
 
   private applyCurrencyInput(event: Event, apply: (value: number) => void): void {
@@ -299,11 +373,6 @@ export class CajaComponent implements OnInit {
     requestAnimationFrame(() => input.setSelectionRange(cursor, cursor));
   }
 
-  private setSaldoInicial(value: number): void {
-    this.saldoInicial = value;
-    this.saldoInicialDisplay.set(formatCurrencyCo(value));
-  }
-
   private setSaldoCierre(value: number): void {
     this.saldoCierre.set(value);
     this.saldoCierreDisplay.set(formatCurrencyCo(value));
@@ -312,6 +381,16 @@ export class CajaComponent implements OnInit {
   private setMontoAbono(value: number): void {
     this.montoAbono.set(value);
     this.montoAbonoDisplay.set(formatCurrencyCo(value));
+  }
+
+  private syncMedioAbono(caja: Caja): void {
+    const saldos = caja.saldos ?? [];
+    const actual = this.medioAbonoId();
+    if (actual && saldos.some((saldo) => saldo.medioCajaId === actual)) {
+      return;
+    }
+    const efectivo = saldos.find((saldo) => saldo.medioTipo === 'EFECTIVO');
+    this.medioAbonoId.set(efectivo?.medioCajaId ?? saldos[0]?.medioCajaId ?? null);
   }
 
   diferenciaLabel(value: number | null | undefined): string {

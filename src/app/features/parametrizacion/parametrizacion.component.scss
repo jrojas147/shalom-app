@@ -8,6 +8,10 @@
     min-width: 0;
   }
 
+  app-medios-caja-config {
+    grid-column: 1 / -1;
+  }
+
   @media (max-width: 992px) {
     grid-template-columns: 1fr;
   }
