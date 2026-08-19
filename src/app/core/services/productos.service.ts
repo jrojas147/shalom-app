@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
-import { Producto, ProductoExcelImportResult, ProductoRequest } from '../models/producto.model';
+import { Producto, ProductoExcelImportResult, ProductoPrecioHistorial, ProductoRequest } from '../models/producto.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
@@ -42,6 +42,10 @@ export class ProductosService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<ProductoExcelImportResult>(`${this.baseUrl}/excel`, formData);
+  }
+
+  getHistorialPrecios(id: number): Observable<ProductoPrecioHistorial[]> {
+    return this.http.get<ProductoPrecioHistorial[]>(`${this.baseUrl}/${id}/historial-precios`);
   }
 
   private buildFormData(request: ProductoRequest, imagen?: File | null): FormData {

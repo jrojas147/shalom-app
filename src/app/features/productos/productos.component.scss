@@ -390,3 +390,31 @@
     margin-top: var(--spacing-sm);
   }
 }
+
+.productos-historial__hint {
+  margin: 0 0 var(--spacing-md);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--rp-text-secondary);
+}
+
+.productos-historial {
+  .productos-historial__cambio {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--rp-text-secondary);
+  }
+
+  .productos-historial__cambio--changed {
+    font-weight: 600;
+    color: var(--rp-text);
+  }
+
+  .productos-historial__arrow {
+    color: var(--rp-text-muted);
+    font-weight: 400;
+  }
+}

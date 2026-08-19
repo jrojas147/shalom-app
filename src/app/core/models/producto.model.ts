@@ -40,6 +40,18 @@ export interface ProductoExcelImportResult {
   detalleErrores: ProductoExcelFilaError[];
 }
 
+export interface ProductoPrecioHistorial {
+  id: number;
+  productoId: number;
+  precioCompraAnterior?: number | null;
+  precioVentaAnterior?: number | null;
+  precioCompraNuevo?: number | null;
+  precioVentaNuevo?: number | null;
+  usuarioId: number;
+  usuarioNombre: string;
+  createdAt: string;
+}
+
 export function productoImagenUrl(imagen?: string | null): string | null {
   if (!imagen) {
     return null;

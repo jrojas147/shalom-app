@@ -14,6 +14,7 @@ import {
   Producto,
   ProductoEstado,
   ProductoExcelImportResult,
+  ProductoPrecioHistorial,
   productoImagenUrl,
   ProductoRequest,
 } from '../../core/models/producto.model';
@@ -98,9 +99,22 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly excelResult = signal<ProductoExcelImportResult | null>(null);
   readonly excelError = signal<string | null>(null);
 
+  readonly showHistorial = signal(false);
+  readonly historialProducto = signal<Producto | null>(null);
+  readonly historial = signal<ProductoPrecioHistorial[]>([]);
+  readonly loadingHistorial = signal(false);
+  readonly historialError = signal<string | null>(null);
+
   readonly modalTitle = computed(() =>
     this.editingId() ? 'Editar producto' : 'Nuevo producto'
   );
+
+  readonly historialTitle = computed(() => {
+    const producto = this.historialProducto();
+    return producto
+      ? `Historial de precios — ${producto.nombreInterno}`
+      : 'Historial de precios';
+  });
 
   readonly precioCompraDisplay = signal('');
   readonly precioVentaDisplay = signal('');
@@ -371,6 +385,42 @@ export class ProductosComponent implements OnInit, OnDestroy {
         this.error.set(this.extractErrorMessage(err));
       },
     });
+  }
+
+  openHistorial(producto: Producto): void {
+    this.historialProducto.set(producto);
+    this.historial.set([]);
+    this.historialError.set(null);
+    this.showHistorial.set(true);
+    this.loadingHistorial.set(true);
+
+    this.productosService.getHistorialPrecios(producto.id).subscribe({
+      next: (data) => {
+        this.historial.set(data);
+        this.loadingHistorial.set(false);
+      },
+      error: (err) => {
+        this.loadingHistorial.set(false);
+        this.historialError.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  closeHistorial(): void {
+    this.showHistorial.set(false);
+    this.historialProducto.set(null);
+    this.historial.set([]);
+    this.historialError.set(null);
+  }
+
+  precioCambio(anterior?: number | null, nuevo?: number | null): boolean {
+    if (anterior == null && nuevo == null) {
+      return false;
+    }
+    if (anterior == null || nuevo == null) {
+      return true;
+    }
+    return Number(anterior) !== Number(nuevo);
   }
 
   deleteProducto(producto: Producto): void {

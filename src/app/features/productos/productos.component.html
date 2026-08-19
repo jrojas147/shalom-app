@@ -123,6 +123,14 @@
                 <button
                   type="button"
                   class="rp-btn rp-btn--icon"
+                  (click)="openHistorial(producto)"
+                  title="Historial de precios"
+                >
+                  ⏱
+                </button>
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--icon"
                   (click)="openEdit(producto)"
                   title="Editar"
                 >
@@ -424,6 +432,76 @@
         {{ importingExcel() ? 'Importando...' : 'Importar productos' }}
       </button>
     </div>
+    </div>
+  </app-rp-modal>
+}
+
+@if (showHistorial()) {
+  <app-rp-modal [title]="historialTitle()" [wide]="true" (closed)="closeHistorial()">
+    @if (historialError()) {
+      <div class="rp-alert rp-alert--error">{{ historialError() }}</div>
+    }
+
+    @if (loadingHistorial()) {
+      <p class="rp-loading">Cargando historial...</p>
+    } @else if (!historialError()) {
+      <p class="productos-historial__hint">
+        Cada cambio de precio de compra o venta queda registrado con fecha, hora y usuario.
+      </p>
+      <table class="rp-table productos-historial">
+        <thead>
+          <tr>
+            <th>Fecha y hora</th>
+            <th>Usuario</th>
+            <th>Precio compra</th>
+            <th>Precio venta</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of historial(); track item.id) {
+            <tr>
+              <td class="cell-secondary">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ item.usuarioNombre }}</td>
+              <td>
+                <span
+                  class="productos-historial__cambio"
+                  [class.productos-historial__cambio--changed]="
+                    precioCambio(item.precioCompraAnterior, item.precioCompraNuevo)
+                  "
+                >
+                  {{ formatPrecio(item.precioCompraAnterior) }}
+                  <span class="productos-historial__arrow">→</span>
+                  {{ formatPrecio(item.precioCompraNuevo) }}
+                </span>
+              </td>
+              <td>
+                <span
+                  class="productos-historial__cambio"
+                  [class.productos-historial__cambio--changed]="
+                    precioCambio(item.precioVentaAnterior, item.precioVentaNuevo)
+                  "
+                >
+                  {{ formatPrecio(item.precioVentaAnterior) }}
+                  <span class="productos-historial__arrow">→</span>
+                  {{ formatPrecio(item.precioVentaNuevo) }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="rp-empty">
+                Aún no hay cambios de precio registrados para este producto.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <div class="rp-form-actions productos-modal-actions">
+      <button type="button" class="rp-btn rp-btn--ghost" (click)="closeHistorial()">
+        Cerrar
+      </button>
     </div>
   </app-rp-modal>
 }
