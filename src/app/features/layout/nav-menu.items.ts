@@ -14,6 +14,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Caja', route: '/app/caja', icon: 'caja' },
   { label: 'Venta', route: '/app/venta', icon: 'venta' },
   { label: 'Retribución', route: '/app/liquidacion', icon: 'liquidacion' },
+  { label: 'Gastos', route: '/app/gastos', icon: 'gastos' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },
   { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
   { label: 'Movimientos', route: '/app/movimientos', icon: 'movimientos' },

@@ -61,6 +61,12 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'gastos',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/gastos/gastos.component').then((m) => m.GastosComponent),
+      },
+      {
         path: 'productos',
         canActivate: [adminDireccion],
         loadComponent: () =>

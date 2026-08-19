@@ -1,0 +1,157 @@
+<div class="gastos">
+  <header class="rp-page-header">
+    <div>
+      <h1>Gastos</h1>
+      <p>Registre gastos operativos y descuéntelos del medio de caja correspondiente.</p>
+    </div>
+    <div class="gastos__caja">
+      <span class="meta-label">Caja</span>
+      @if (cajaAbierta()) {
+        <strong>Abierta</strong>
+        @if (saldosCaja().length) {
+          <ul>
+            @for (saldo of saldosCaja(); track saldo.medioCajaId) {
+              <li>
+                <span>{{ saldo.medioNombre }}</span>
+                <strong>{{ formatCurrency(saldo.saldoActual) }}</strong>
+              </li>
+            }
+          </ul>
+        }
+      } @else {
+        <strong>Sin caja abierta</strong>
+        <span class="cell-secondary">Abra caja para registrar gastos</span>
+      }
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  <section class="rp-panel">
+    <div class="panel-header">
+      <div>
+        <h2>Nuevo gasto</h2>
+        <p class="gastos__desc">El monto se descuenta del medio de pago seleccionado.</p>
+      </div>
+    </div>
+
+    <form class="rp-form-grid" [formGroup]="form" (ngSubmit)="registrar()">
+      <div class="rp-field">
+        <label for="tipoGastoId">Tipo de gasto</label>
+        <select id="tipoGastoId" formControlName="tipoGastoId">
+          <option [ngValue]="null">Seleccione el tipo</option>
+          @for (tipo of tiposGasto(); track tipo.id) {
+            <option [ngValue]="tipo.id">{{ tipo.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="rp-field">
+        <label for="medioCajaId">Origen de caja</label>
+        <select id="medioCajaId" formControlName="medioCajaId">
+          <option [ngValue]="null">Seleccione el medio</option>
+          @for (saldo of saldosCaja(); track saldo.medioCajaId) {
+            <option [ngValue]="saldo.medioCajaId">
+              {{ saldo.medioNombre }} — {{ formatCurrency(saldo.saldoActual) }}
+            </option>
+          }
+        </select>
+        @if (medioSeleccionado(); as medio) {
+          <p class="rp-hint">Disponible: {{ formatCurrency(medio.saldoActual) }}</p>
+        }
+      </div>
+
+      <div class="rp-field">
+        <label for="monto">Monto</label>
+        <input
+          id="monto"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          [value]="montoDisplay()"
+          (input)="onMontoInput($event)"
+        />
+      </div>
+
+      <div class="rp-field gastos__observacion">
+        <label for="observacion">Observación</label>
+        <input
+          id="observacion"
+          type="text"
+          maxlength="500"
+          formControlName="observacion"
+          placeholder="Detalle del gasto (opcional)"
+        />
+      </div>
+
+      <div class="rp-form-actions gastos__actions">
+        <button
+          type="submit"
+          class="rp-btn rp-btn--primary"
+          [disabled]="saving() || form.invalid || !cajaAbierta()"
+        >
+          {{ saving() ? 'Registrando...' : 'Registrar gasto' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="rp-panel gastos-panel">
+    <div class="panel-header gastos__toolbar">
+      <div>
+        <h2>Historial</h2>
+        <p class="gastos__desc">Últimos gastos registrados en el comercio.</p>
+      </div>
+      <button type="button" class="rp-btn rp-btn--secondary" (click)="loadAll()">Actualizar</button>
+    </div>
+
+    <div class="gastos__filters">
+      <input
+        type="search"
+        class="gastos__search"
+        placeholder="Buscar por tipo, medio, usuario u observación..."
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando gastos...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Medio</th>
+            <th>Monto</th>
+            <th>Observación</th>
+            <th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (gasto of gastosFiltrados(); track gasto.id) {
+            <tr>
+              <td class="cell-secondary">{{ gasto.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="cell-primary">{{ gasto.tipoGastoNombre }}</td>
+              <td class="cell-secondary">{{ gasto.medioCajaNombre }}</td>
+              <td class="cell-secondary">{{ formatCurrency(gasto.monto) }}</td>
+              <td class="cell-secondary">{{ gasto.observacion || '—' }}</td>
+              <td class="cell-secondary">{{ gasto.usuarioRegistroNombre || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="rp-empty">No hay gastos registrados</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>

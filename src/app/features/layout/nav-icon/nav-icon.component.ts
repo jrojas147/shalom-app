@@ -6,6 +6,7 @@ export type NavIconName =
   | 'caja'
   | 'venta'
   | 'liquidacion'
+  | 'gastos'
   | 'productos'
   | 'inventario'
   | 'movimientos'
@@ -80,6 +81,10 @@ export type NavIconName =
             stroke-linejoin="round"
           />
           <path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        }
+        @case ('gastos') {
+          <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8" />
+          <path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
         }
         @case ('productos') {
           <path d="M12 5l4 7H8l4-7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />

@@ -9,7 +9,8 @@ export type CajaMovimientoConcepto =
   | 'PAGO_PROVEEDOR'
   | 'AJUSTE'
   | 'CIERRE'
-  | 'ABONO_CAJA';
+  | 'ABONO_CAJA'
+  | 'GASTO';
 
 export interface CajaMovimiento {
   id: number;
@@ -17,7 +18,7 @@ export interface CajaMovimiento {
   tipo: CajaMovimientoTipo;
   concepto: CajaMovimientoConcepto;
   monto: number;
-  referenciaTipo?: 'COMPRA' | 'VENTA' | null;
+  referenciaTipo?: 'COMPRA' | 'VENTA' | 'GASTO' | null;
   referenciaId?: number | null;
   usuarioRegistroId: number;
   usuarioRegistroNombre?: string;
@@ -90,4 +91,5 @@ export const CAJA_CONCEPTO_LABEL: Record<CajaMovimientoConcepto, string> = {
   AJUSTE: 'Ajuste',
   CIERRE: 'Cierre',
   ABONO_CAJA: 'Abono a caja',
+  GASTO: 'Gasto',
 };
