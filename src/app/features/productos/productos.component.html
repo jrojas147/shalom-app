@@ -17,9 +17,27 @@
           Registre los materiales que compra o vende. El nombre interno se guarda en mayúsculas.
         </p>
       </div>
-      <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
-        + Nuevo producto
-      </button>
+      <div class="productos__actions">
+        <button
+          type="button"
+          class="rp-btn rp-btn--secondary"
+          (click)="downloadExcel()"
+          [disabled]="downloadingExcel() || importingExcel()"
+        >
+          {{ downloadingExcel() ? 'Descargando...' : 'Descargar Excel' }}
+        </button>
+        <button
+          type="button"
+          class="rp-btn rp-btn--secondary"
+          (click)="openExcelModal()"
+          [disabled]="importingExcel()"
+        >
+          Cargar Excel
+        </button>
+        <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+          + Nuevo producto
+        </button>
+      </div>
     </div>
 
     <div class="productos__search-row">
@@ -307,5 +325,105 @@
         </button>
       </div>
     </form>
+  </app-rp-modal>
+}
+
+@if (showExcelModal()) {
+  <app-rp-modal title="Carga masiva de productos" [wide]="true" (closed)="closeExcelModal()">
+    <div class="productos-modal-form">
+    @if (excelError()) {
+      <div class="rp-alert rp-alert--error">{{ excelError() }}</div>
+    }
+    @if (excelResult(); as result) {
+      <div class="productos-excel-result">
+        <p>
+          Se procesó el archivo:
+          <strong>{{ result.creados }}</strong> creado(s),
+          <strong>{{ result.actualizados }}</strong> actualizado(s)
+          @if (result.errores) {
+            y <strong>{{ result.errores }}</strong> error(es).
+          } @else {
+            sin errores.
+          }
+        </p>
+        @if (result.detalleErrores.length) {
+          <table class="rp-table">
+            <thead>
+              <tr>
+                <th>Fila</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of result.detalleErrores; track item.fila + item.mensaje) {
+                <tr>
+                  <td class="cell-mono">{{ item.fila }}</td>
+                  <td class="cell-secondary">{{ item.mensaje }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+
+    <div class="productos-excel-help">
+      <p>
+        Descargue el Excel, complete o edite las filas y vuelva a cargarlo.
+        <strong>id vacío</strong> crea un producto; <strong>id existente</strong> lo actualiza.
+      </p>
+      <ul>
+        <li>Columnas: id, nombre_interno, codigo_sui, precio_compra, precio_venta, descripcion, activo</li>
+        <li>El nombre interno es obligatorio y se guarda en mayúsculas</li>
+        <li>codigo_sui debe coincidir con un código SUI activo, o dejarse vacío</li>
+        <li>activo: SI / NO. La imagen no se importa por Excel</li>
+      </ul>
+    </div>
+
+    <label
+      class="productos-imagen-upload"
+      for="excelArchivo"
+      [class.productos-imagen-upload--dragover]="excelDragOver()"
+      [class.productos-imagen-upload--disabled]="importingExcel()"
+      (dragover)="onExcelDragOver($event)"
+      (dragleave)="onExcelDragLeave($event)"
+      (drop)="onExcelDrop($event)"
+    >
+      <input
+        #excelArchivoInput
+        id="excelArchivo"
+        type="file"
+        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        (change)="onExcelSelected($event)"
+        [disabled]="importingExcel()"
+      />
+      <div class="productos-imagen-upload__empty">
+        <span>
+          @if (excelFile(); as file) {
+            <strong>{{ file.name }}</strong>
+            <br />
+            Haz clic o arrastra otro archivo .xlsx para reemplazarlo
+          } @else {
+            Arrastra el Excel aquí o
+            <strong>selecciona un archivo .xlsx</strong>
+          }
+        </span>
+      </div>
+    </label>
+
+    <div class="rp-form-actions productos-modal-actions">
+      <button type="button" class="rp-btn rp-btn--ghost" (click)="closeExcelModal()" [disabled]="importingExcel()">
+        Cerrar
+      </button>
+      <button
+        type="button"
+        class="rp-btn rp-btn--primary"
+        (click)="importExcel()"
+        [disabled]="importingExcel() || !excelFile()"
+      >
+        {{ importingExcel() ? 'Importando...' : 'Importar productos' }}
+      </button>
+    </div>
+    </div>
   </app-rp-modal>
 }

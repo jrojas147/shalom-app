@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
-import { Producto, ProductoRequest } from '../models/producto.model';
+import { Producto, ProductoExcelImportResult, ProductoRequest } from '../models/producto.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
@@ -32,6 +32,16 @@ export class ProductosService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  downloadExcel(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/excel`, { responseType: 'blob' });
+  }
+
+  importExcel(file: File): Observable<ProductoExcelImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ProductoExcelImportResult>(`${this.baseUrl}/excel`, formData);
   }
 
   private buildFormData(request: ProductoRequest, imagen?: File | null): FormData {

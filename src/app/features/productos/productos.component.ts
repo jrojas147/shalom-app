@@ -13,6 +13,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Producto,
   ProductoEstado,
+  ProductoExcelImportResult,
   productoImagenUrl,
   ProductoRequest,
 } from '../../core/models/producto.model';
@@ -40,6 +41,8 @@ const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image
 export class ProductosComponent implements OnInit, OnDestroy {
   @ViewChild('imagenArchivoInput')
   private imagenArchivoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('excelArchivoInput')
+  private excelArchivoInput?: ElementRef<HTMLInputElement>;
 
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
@@ -87,6 +90,13 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly editingId = signal<number | null>(null);
+  readonly showExcelModal = signal(false);
+  readonly excelFile = signal<File | null>(null);
+  readonly excelDragOver = signal(false);
+  readonly downloadingExcel = signal(false);
+  readonly importingExcel = signal(false);
+  readonly excelResult = signal<ProductoExcelImportResult | null>(null);
+  readonly excelError = signal<string | null>(null);
 
   readonly modalTitle = computed(() =>
     this.editingId() ? 'Editar producto' : 'Nuevo producto'
@@ -171,6 +181,103 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.editingId.set(null);
     this.error.set(null);
     this.resetForm();
+  }
+
+  openExcelModal(): void {
+    this.resetExcelState();
+    this.showExcelModal.set(true);
+  }
+
+  closeExcelModal(): void {
+    if (this.importingExcel()) {
+      return;
+    }
+    this.showExcelModal.set(false);
+    this.resetExcelState();
+  }
+
+  downloadExcel(): void {
+    this.downloadingExcel.set(true);
+    this.error.set(null);
+    this.productosService.downloadExcel().subscribe({
+      next: (blob) => {
+        this.downloadingExcel.set(false);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'productos.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.downloadingExcel.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  onExcelSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.processExcelFile(file, input);
+  }
+
+  onExcelDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (this.importingExcel()) {
+      return;
+    }
+    this.excelDragOver.set(true);
+  }
+
+  onExcelDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    const currentTarget = event.currentTarget as HTMLElement;
+    const relatedTarget = event.relatedTarget as Node | null;
+    if (relatedTarget && currentTarget.contains(relatedTarget)) {
+      return;
+    }
+    this.excelDragOver.set(false);
+  }
+
+  onExcelDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.excelDragOver.set(false);
+    if (this.importingExcel()) {
+      return;
+    }
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.processExcelFile(file, this.excelArchivoInput?.nativeElement);
+  }
+
+  importExcel(): void {
+    const file = this.excelFile();
+    if (!file) {
+      this.excelError.set('Seleccione un archivo Excel .xlsx');
+      return;
+    }
+
+    this.importingExcel.set(true);
+    this.excelError.set(null);
+    this.excelResult.set(null);
+
+    this.productosService.importExcel(file).subscribe({
+      next: (result) => {
+        this.importingExcel.set(false);
+        this.excelResult.set(result);
+        this.loadProductos();
+      },
+      error: (err) => {
+        this.importingExcel.set(false);
+        this.excelError.set(this.extractErrorMessage(err));
+      },
+    });
   }
 
   onImagenSelected(event: Event): void {
@@ -420,6 +527,40 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   private resetImagenInput(): void {
     const input = this.imagenArchivoInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  private processExcelFile(file: File, input?: HTMLInputElement): void {
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.xlsx')) {
+      this.excelError.set('El archivo debe ser .xlsx');
+      this.excelFile.set(null);
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+    if (file.size > MAX_IMAGEN_BYTES) {
+      this.excelError.set('El Excel no puede superar 5 MB.');
+      this.excelFile.set(null);
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+    this.excelFile.set(file);
+    this.excelResult.set(null);
+    this.excelError.set(null);
+  }
+
+  private resetExcelState(): void {
+    this.excelFile.set(null);
+    this.excelDragOver.set(false);
+    this.excelResult.set(null);
+    this.excelError.set(null);
+    const input = this.excelArchivoInput?.nativeElement;
     if (input) {
       input.value = '';
     }

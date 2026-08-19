@@ -28,6 +28,18 @@ export interface ProductoRequest {
   eliminarImagen?: boolean;
 }
 
+export interface ProductoExcelFilaError {
+  fila: number;
+  mensaje: string;
+}
+
+export interface ProductoExcelImportResult {
+  creados: number;
+  actualizados: number;
+  errores: number;
+  detalleErrores: ProductoExcelFilaError[];
+}
+
 export function productoImagenUrl(imagen?: string | null): string | null {
   if (!imagen) {
     return null;
