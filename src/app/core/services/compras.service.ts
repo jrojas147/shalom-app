@@ -66,8 +66,8 @@ export class ComprasService {
     return this.http.post<RegistrarCompraResponse>(`${this.baseUrl}/${id}/anular`, null);
   }
 
-  registrarPago(id: number): Observable<RegistrarCompraResponse> {
-    return this.http.post<RegistrarCompraResponse>(`${this.baseUrl}/${id}/pagar`, null);
+  registrarPago(id: number, medioCajaId: number): Observable<RegistrarCompraResponse> {
+    return this.http.post<RegistrarCompraResponse>(`${this.baseUrl}/${id}/pagar`, { medioCajaId });
   }
 
   private toRequest(payload: RegistrarPreCompraPayload): RegistrarCompraRequest {

@@ -34,6 +34,29 @@
     font-size: 0.8125rem;
     color: var(--rp-text-secondary);
   }
+
+  &__medios {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0.5rem 0 0;
+    border-top: 1px solid var(--rp-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--rp-text-secondary);
+    }
+
+    strong {
+      font-size: 0.75rem;
+      color: var(--rp-text);
+    }
+  }
 }
 
 .retribucion-tabs {
@@ -158,4 +181,88 @@
     justify-content: flex-end;
     gap: var(--spacing-sm);
   }
+
+  &__origen {
+    h3 {
+      margin: 0 0 var(--spacing-xs);
+      font-size: 1rem;
+      color: var(--rp-text);
+    }
+
+    p {
+      margin: 0 0 var(--spacing-sm);
+      font-size: 0.875rem;
+      color: var(--rp-text-secondary);
+    }
+  }
+}
+
+.retribucion-pago__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.retribucion-pago__opcion {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+  text-align: left;
+  cursor: pointer;
+  color: var(--rp-text);
+
+  strong {
+    display: block;
+  }
+
+  em {
+    display: block;
+    margin-top: 0.125rem;
+    font-style: normal;
+    font-size: 0.8125rem;
+    color: var(--rp-text-secondary);
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--rp-border-strong);
+  }
+
+  &--activa {
+    border-color: var(--rp-primary);
+    background: var(--rp-primary-light, #eef6f4);
+
+    .retribucion-pago__radio {
+      border-color: var(--rp-primary);
+      box-shadow: inset 0 0 0 4px var(--rp-primary);
+    }
+  }
+
+  &--insuficiente {
+    .retribucion-pago__saldo {
+      color: var(--rp-danger, #b91c1c);
+    }
+  }
+}
+
+.retribucion-pago__radio {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 0.2rem;
+  border: 2px solid var(--rp-border-strong);
+  border-radius: 50%;
+  background: var(--rp-surface);
+}
+
+.retribucion-pago__saldo {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rp-text-secondary);
+  white-space: nowrap;
 }

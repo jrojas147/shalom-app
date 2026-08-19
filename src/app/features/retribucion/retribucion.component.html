@@ -11,6 +11,16 @@
       } @else if (cajaAbierta()) {
         <strong>{{ formatCurrency(saldoCaja() ?? 0) }}</strong>
         <span class="cell-secondary">Caja abierta</span>
+        @if (cajaSaldos().length) {
+          <ul class="retribucion-saldo-caja__medios">
+            @for (saldo of cajaSaldos(); track saldo.medioCajaId) {
+              <li>
+                <span>{{ saldo.medioNombre }}</span>
+                <strong>{{ formatCurrency(saldo.saldoActual) }}</strong>
+              </li>
+            }
+          </ul>
+        }
       } @else if (saldoCaja() === null) {
         <strong>—</strong>
         <span class="cell-secondary">No disponible</span>
@@ -303,6 +313,40 @@
             <div><span>Total</span><strong>{{ formatCurrency(detalle.total) }}</strong></div>
           </div>
 
+          <div class="retribucion-detalle__origen">
+            <h3>Origen del pago</h3>
+            <p>Seleccione el medio de caja desde el que se descontará el pago.</p>
+            @if (!cajaAbierta()) {
+              <div class="rp-alert rp-alert--error">Debe abrir la caja para registrar el pago.</div>
+            } @else if (!cajaSaldos().length) {
+              <div class="rp-alert rp-alert--error">No hay medios de pago en la caja abierta.</div>
+            } @else {
+              <div class="retribucion-pago__list" role="radiogroup" aria-label="Origen de caja">
+                @for (saldo of cajaSaldos(); track saldo.medioCajaId) {
+                  <button
+                    type="button"
+                    class="retribucion-pago__opcion"
+                    [class.retribucion-pago__opcion--activa]="medioPagoId() === saldo.medioCajaId"
+                    [class.retribucion-pago__opcion--insuficiente]="saldoMedioInsuficiente(saldo, detalle.total)"
+                    [disabled]="savingPago()"
+                    (click)="seleccionarMedioPago(saldo.medioCajaId)"
+                  >
+                    <span class="retribucion-pago__radio" aria-hidden="true"></span>
+                    <span>
+                      <strong>{{ saldo.medioNombre }}</strong>
+                      @if (saldo.detalle) {
+                        <em>{{ saldo.detalle }}</em>
+                      }
+                    </span>
+                    <span class="retribucion-pago__saldo">
+                      Disponible {{ formatCurrency(saldo.saldoActual) }}
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
           <div class="retribucion-detalle__actions">
             <button
               type="button"
@@ -315,7 +359,7 @@
             <button
               type="button"
               class="rp-btn rp-btn--primary"
-              [disabled]="savingPago()"
+              [disabled]="savingPago() || !cajaAbierta() || medioPagoId() == null"
               (click)="aceptarPago()"
             >
               {{ savingPago() ? 'Registrando...' : 'Aceptar' }}

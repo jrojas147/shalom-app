@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Compra } from '../../core/models/compra-registro.model';
+import { CajaSaldo } from '../../core/models/caja.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import {
   mapExternoPendiente,
@@ -53,6 +54,8 @@ export class RetribucionComponent implements OnInit {
   readonly saldoCaja = signal<number | null>(null);
   readonly cajaAbierta = signal(false);
   readonly loadingCaja = signal(false);
+  readonly cajaSaldos = signal<CajaSaldo[]>([]);
+  readonly medioPagoId = signal<number | null>(null);
 
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
@@ -131,6 +134,7 @@ export class RetribucionComponent implements OnInit {
   abrirDetalle(compra: Compra): void {
     this.compraDetalleResumen.set(compra);
     this.errorDetalle.set(null);
+    this.syncMedioPagoPorDefecto();
 
     const lineas = compra.detalle ?? [];
     if (lineas.length > 0) {
@@ -165,6 +169,15 @@ export class RetribucionComponent implements OnInit {
     this.savingPago.set(false);
   }
 
+  seleccionarMedioPago(id: number): void {
+    this.medioPagoId.set(id);
+    this.errorDetalle.set(null);
+  }
+
+  saldoMedioInsuficiente(saldo: CajaSaldo, total: number): boolean {
+    return Number(saldo.saldoActual ?? 0) + 0.009 < total;
+  }
+
   aceptarPago(): void {
     const compra = this.compraDetalle();
     if (!compra || this.savingPago()) {
@@ -181,19 +194,31 @@ export class RetribucionComponent implements OnInit {
         if (!caja) {
           this.cajaAbierta.set(false);
           this.saldoCaja.set(0);
+          this.cajaSaldos.set([]);
           this.errorDetalle.set(
             'Debe abrir la caja antes de registrar el pago de la retribución.'
           );
           return;
         }
 
-        const saldoCaja = Number(caja.saldoActual ?? 0);
+        const saldos = caja.saldos ?? [];
         this.cajaAbierta.set(true);
-        this.saldoCaja.set(saldoCaja);
+        this.saldoCaja.set(Number(caja.saldoActual ?? 0));
+        this.cajaSaldos.set(saldos);
+        this.syncMedioPagoPorDefecto();
+
+        const medioId = this.medioPagoId();
+        if (medioId == null) {
+          this.errorDetalle.set('Seleccione el medio de caja desde el que se realizará el pago.');
+          return;
+        }
+
+        const medio = saldos.find((saldo) => saldo.medioCajaId === medioId);
+        const saldoMedio = Number(medio?.saldoActual ?? 0);
         const totalPago = Number(compra.total) || 0;
-        if (saldoCaja < totalPago) {
+        if (saldoMedio < totalPago) {
           this.errorDetalle.set(
-            `Saldo de caja insuficiente. Disponible: ${this.formatCurrency(saldoCaja)}. Requerido: ${this.formatCurrency(totalPago)}.`
+            `Saldo insuficiente en ${medio?.medioNombre ?? 'el medio seleccionado'}. Disponible: ${this.formatCurrency(saldoMedio)}. Requerido: ${this.formatCurrency(totalPago)}.`
           );
           return;
         }
@@ -201,7 +226,7 @@ export class RetribucionComponent implements OnInit {
         this.confirmDialog
           .confirm({
             title: 'Registrar pago',
-            message: `¿Registrar el pago de la compra ${compra.numeroFactura} por ${this.formatCurrency(totalPago)}? Saldo de caja disponible: ${this.formatCurrency(saldoCaja)}.`,
+            message: `¿Registrar el pago de la compra ${compra.numeroFactura} por ${this.formatCurrency(totalPago)} desde ${medio?.medioNombre ?? 'caja'}? Saldo disponible en ese medio: ${this.formatCurrency(saldoMedio)}.`,
             confirmLabel: 'Aceptar',
             cancelLabel: 'Cancelar',
           })
@@ -222,13 +247,19 @@ export class RetribucionComponent implements OnInit {
   }
 
   private ejecutarRegistroPago(compra: Compra): void {
+    const medioCajaId = this.medioPagoId();
+    if (medioCajaId == null) {
+      this.errorDetalle.set('Seleccione el medio de caja desde el que se realizará el pago.');
+      return;
+    }
+
     this.savingPago.set(true);
     this.errorDetalle.set(null);
 
     const detalle = this.compraDetalle() ?? compra;
     const proveedor = this.proveedorSeleccionado();
 
-    this.comprasService.registrarPago(compra.id).subscribe({
+    this.comprasService.registrarPago(compra.id, medioCajaId).subscribe({
       next: () => {
         this.imprimirComprobantePago(detalle, proveedor);
         this.savingPago.set(false);
@@ -251,15 +282,19 @@ export class RetribucionComponent implements OnInit {
         if (caja) {
           this.cajaAbierta.set(true);
           this.saldoCaja.set(Number(caja.saldoActual ?? 0));
+          this.cajaSaldos.set(caja.saldos ?? []);
+          this.syncMedioPagoPorDefecto();
         } else {
           this.cajaAbierta.set(false);
           this.saldoCaja.set(0);
+          this.cajaSaldos.set([]);
         }
         this.loadingCaja.set(false);
       },
       error: () => {
         this.cajaAbierta.set(false);
         this.saldoCaja.set(null);
+        this.cajaSaldos.set([]);
         this.loadingCaja.set(false);
       },
     });
@@ -323,6 +358,16 @@ export class RetribucionComponent implements OnInit {
         this.loadTab();
       },
     });
+  }
+
+  private syncMedioPagoPorDefecto(): void {
+    const saldos = this.cajaSaldos();
+    const actual = this.medioPagoId();
+    if (actual && saldos.some((saldo) => saldo.medioCajaId === actual)) {
+      return;
+    }
+    const efectivo = saldos.find((saldo) => saldo.medioTipo === 'EFECTIVO');
+    this.medioPagoId.set(efectivo?.medioCajaId ?? saldos[0]?.medioCajaId ?? null);
   }
 
   private cargarComprasPendientes(proveedor: RetribucionProveedorPendiente) {
