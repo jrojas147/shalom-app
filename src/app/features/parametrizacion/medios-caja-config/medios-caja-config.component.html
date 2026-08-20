@@ -57,13 +57,6 @@
       />
     }
 
-    @if (editingId() && !editingSistema()) {
-      <label class="param-block__activo">
-        <input type="checkbox" formControlName="activo" />
-        Activo
-      </label>
-    }
-
     <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
       {{ saving() ? 'Guardando...' : editingId() ? 'Guardar' : 'Agregar' }}
     </button>
@@ -83,9 +76,6 @@
             <span class="param-block__item-meta">{{ tipoLabel[medio.tipo] }}</span>
             @if (detalle(medio)) {
               <span class="param-block__item-meta">{{ detalle(medio) }}</span>
-            }
-            @if (!medio.activo) {
-              <span class="rp-badge rp-badge--warning">Inactivo</span>
             }
           </span>
           <span class="param-block__item-actions">

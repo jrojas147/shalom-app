@@ -46,7 +46,6 @@ export class MediosCajaConfigComponent implements OnInit {
     telefono: [''],
     numeroCuenta: [''],
     entidadBancariaId: [null as number | null],
-    activo: [true],
   });
 
   ngOnInit(): void {
@@ -61,9 +60,9 @@ export class MediosCajaConfigComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.mediosCajaService.getAll().subscribe({
+    this.mediosCajaService.getAll(true).subscribe({
       next: (data) => {
-        this.medios.set(data ?? []);
+        this.medios.set((data ?? []).filter((medio) => medio.activo));
         this.loading.set(false);
       },
       error: (err) => {
@@ -93,7 +92,6 @@ export class MediosCajaConfigComponent implements OnInit {
       telefono: medio.telefono ?? '',
       numeroCuenta: medio.numeroCuenta ?? '',
       entidadBancariaId: medio.entidadBancariaId ?? null,
-      activo: medio.activo,
     });
     if (medio.tipo !== 'EFECTIVO') {
       this.form.controls.tipo.disable({ emitEvent: false });
@@ -111,7 +109,6 @@ export class MediosCajaConfigComponent implements OnInit {
       telefono: '',
       numeroCuenta: '',
       entidadBancariaId: null,
-      activo: true,
     });
     this.error.set(null);
   }
@@ -155,7 +152,7 @@ export class MediosCajaConfigComponent implements OnInit {
       telefono: raw.telefono.trim() || null,
       numeroCuenta: raw.numeroCuenta.trim() || null,
       entidadBancariaId: raw.entidadBancariaId,
-      activo: raw.activo,
+      activo: true,
     };
 
     this.saving.set(true);
@@ -185,7 +182,7 @@ export class MediosCajaConfigComponent implements OnInit {
     this.confirmDialog
       .confirm({
         title: 'Eliminar medio de pago',
-        message: `¿Eliminar el medio "${medio.nombre}"?`,
+        message: `¿Eliminar el medio "${medio.nombre}"? Dejará de estar disponible para caja y ventas.`,
         confirmLabel: 'Eliminar',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',

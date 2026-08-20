@@ -1,18 +1,96 @@
-.parametrizacion__sections {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-lg);
-  align-items: start;
+.parametrizacion {
+  .rp-page-header p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--rp-text-secondary);
+  }
+}
 
-  > * {
-    min-width: 0;
+.param-catalog {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.param-catalog__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-md) 0;
+  border: none;
+  border-bottom: 1px solid var(--rp-border);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+
+  &:hover {
+    .param-catalog__action {
+      background: var(--rp-primary);
+      border-color: var(--rp-primary);
+      color: var(--rp-on-primary);
+    }
+  }
+}
+
+.param-catalog li:last-child .param-catalog__item {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.param-catalog li:first-child .param-catalog__item {
+  padding-top: 0;
+}
+
+.param-catalog__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+
+  strong {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--rp-text);
   }
 
-  app-medios-caja-config {
-    grid-column: 1 / -1;
+  span {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--rp-text-secondary);
+  }
+}
+
+.param-catalog__action {
+  flex-shrink: 0;
+  padding: 0.4375rem 0.875rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+  color: var(--rp-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+::ng-deep .param-modal-body {
+  .param-block {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
   }
 
-  @media (max-width: 992px) {
-    grid-template-columns: 1fr;
+  .param-block__title,
+  .param-block__desc {
+    display: none;
+  }
+
+  .param-block__list-scroll {
+    height: min(42vh, 360px);
+    min-height: 180px;
+    max-height: min(42vh, 360px);
   }
 }

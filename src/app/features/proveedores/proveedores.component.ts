@@ -257,7 +257,7 @@ export class ProveedoresComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.proveedoresInternosService.getAll().subscribe({
+    this.proveedoresInternosService.getAll(true).subscribe({
       next: (data) => {
         this.internos.set(data);
         this.loading.set(false);
@@ -273,7 +273,7 @@ export class ProveedoresComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.proveedoresExternosService.getAll().subscribe({
+    this.proveedoresExternosService.getAll(true).subscribe({
       next: (data) => {
         this.externos.set(data);
         this.loading.set(false);
@@ -289,7 +289,7 @@ export class ProveedoresComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.proveedoresEmpresasService.getAll().subscribe({
+    this.proveedoresEmpresasService.getAll(true).subscribe({
       next: (data) => {
         this.empresas.set(data);
         this.loading.set(false);
@@ -371,7 +371,7 @@ export class ProveedoresComponent implements OnInit {
     } else if (tab.id === 'EMPRESA') {
       this.loadEmpresas();
       if (this.internos().length === 0) {
-        this.proveedoresInternosService.getAll().subscribe({
+        this.proveedoresInternosService.getAll(true).subscribe({
           next: (data) => this.internos.set(data),
           error: () => this.internos.set([]),
         });
@@ -1112,7 +1112,7 @@ export class ProveedoresComponent implements OnInit {
       return;
     }
 
-    this.proveedoresInternosService.getAll().subscribe({
+    this.proveedoresInternosService.getAll(true).subscribe({
       next: (data) => {
         this.internos.set(data);
         onLoaded?.();

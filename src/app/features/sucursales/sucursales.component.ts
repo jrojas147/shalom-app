@@ -164,8 +164,8 @@ export class SucursalesComponent implements OnInit {
     this.error.set(null);
 
     forkJoin({
-      sucursales: this.sucursalesService.getAll(),
-      administradores: this.administradoresService.getAll(),
+      sucursales: this.sucursalesService.getAll(true),
+      administradores: this.administradoresService.getAll(true),
     }).subscribe({
       next: ({ sucursales, administradores }) => {
         this.sucursales.set(sucursales);

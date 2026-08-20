@@ -41,14 +41,6 @@
             <span class="param-block__item-text">
               <strong>{{ item.codigo }}</strong>
               <span class="param-block__item-meta">{{ item.nombre }}</span>
-              <span
-                class="rp-badge"
-                [class.rp-badge--success]="item.estado === 'ACTIVO'"
-                [class.rp-badge--neutral]="item.estado === 'INACTIVO'"
-                [class.rp-badge--danger]="item.estado === 'ELIMINADO'"
-              >
-                {{ estadoLabel(item.estado) }}
-              </span>
             </span>
             <span class="param-block__item-actions">
               <button

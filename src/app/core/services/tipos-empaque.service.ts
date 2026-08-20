@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
@@ -9,8 +9,9 @@ export class TiposEmpaqueService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${API_CORE_URL}/api/parametrizacion/tipos-empaque`;
 
-  getAll(): Observable<TipoEmpaque[]> {
-    return this.http.get<TipoEmpaque[]>(this.baseUrl);
+  getAll(soloActivos = true): Observable<TipoEmpaque[]> {
+    const params = new HttpParams().set('soloActivos', String(soloActivos));
+    return this.http.get<TipoEmpaque[]>(this.baseUrl, { params });
   }
 
   getById(id: number): Observable<TipoEmpaque> {

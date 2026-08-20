@@ -35,9 +35,9 @@ export class TiposEmpaqueConfigComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.tiposEmpaqueService.getAll().subscribe({
+    this.tiposEmpaqueService.getAll(true).subscribe({
       next: (data) => {
-        this.tiposEmpaque.set(data);
+        this.tiposEmpaque.set((data ?? []).filter((tipo) => tipo.activo !== false));
         this.loading.set(false);
       },
       error: (err) => {
@@ -93,10 +93,14 @@ export class TiposEmpaqueConfigComponent implements OnInit {
   }
 
   deleteTipo(tipo: TipoEmpaque): void {
+    if (tipo.activo === false) {
+      return;
+    }
+
     this.confirmDialog
       .confirm({
         title: 'Eliminar tipo de empaque',
-        message: `¿Eliminar el tipo de empaque "${tipo.nombre}"?`,
+        message: `¿Eliminar el tipo de empaque "${tipo.nombre}"? Dejará de estar disponible en compras y ventas.`,
         confirmLabel: 'Eliminar',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',

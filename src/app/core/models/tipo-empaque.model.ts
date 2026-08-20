@@ -3,6 +3,7 @@ export interface TipoEmpaque {
   comercioId: number;
   nombre: string;
   peso: number;
+  activo: boolean;
 }
 
 export interface TipoEmpaqueRequest {

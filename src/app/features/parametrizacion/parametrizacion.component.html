@@ -2,13 +2,44 @@
   <header class="rp-page-header">
     <div>
       <h1>Parametrización</h1>
+      <p>Seleccione un catálogo para consultar o ajustar su información.</p>
     </div>
   </header>
 
-  <div class="parametrizacion__sections">
-    <app-codigos-ciiu-config />
-    <app-tipos-empaque-config />
-    <app-tipos-gasto-config />
-    <app-medios-caja-config />
-  </div>
+  <section class="rp-panel">
+    <ul class="param-catalog">
+      @for (catalogo of catalogos; track catalogo.id) {
+        <li>
+          <button type="button" class="param-catalog__item" (click)="abrirCatalogo(catalogo)">
+            <span class="param-catalog__text">
+              <strong>{{ catalogo.titulo }}</strong>
+              <span>{{ catalogo.descripcion }}</span>
+            </span>
+            <span class="param-catalog__action">Configurar</span>
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
 </div>
+
+@if (catalogoActivo(); as catalogo) {
+  <app-rp-modal [title]="catalogo.titulo" [wide]="true" (closed)="cerrarCatalogo()">
+    <div class="param-modal-body">
+      @switch (catalogo.id) {
+        @case ('ciiu') {
+          <app-codigos-ciiu-config />
+        }
+        @case ('empaque') {
+          <app-tipos-empaque-config />
+        }
+        @case ('gasto') {
+          <app-tipos-gasto-config />
+        }
+        @case ('medios') {
+          <app-medios-caja-config />
+        }
+      }
+    </div>
+  </app-rp-modal>
+}

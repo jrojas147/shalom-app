@@ -118,7 +118,7 @@ export class ClientesComponent implements OnInit {
   loadClientes(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.clientesService.getAll().subscribe({
+    this.clientesService.getAll(true).subscribe({
       next: (data) => {
         this.clientes.set(data);
         this.loading.set(false);

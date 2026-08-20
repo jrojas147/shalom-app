@@ -2,7 +2,6 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   CodigoCiiu,
-  CodigoCiiuEstado,
   CodigoCiiuRequest,
 } from '../../../core/models/codigo-ciiu.model';
 import { CodigosCiiuService } from '../../../core/services/codigos-ciiu.service';
@@ -41,7 +40,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
 
     this.codigosCiiuService.getAll().subscribe({
       next: (data) => {
-        this.codigosCiiu.set(data);
+        this.codigosCiiu.set((data ?? []).filter((item) => item.estado === 'ACTIVO'));
         this.loading.set(false);
       },
       error: (err) => {
@@ -119,18 +118,5 @@ export class CodigosCiiuConfigComponent implements OnInit {
             this.error.set(err.error?.message ?? 'No se pudo eliminar el código CIIU.'),
         });
       });
-  }
-
-  estadoLabel(estado: CodigoCiiuEstado): string {
-    switch (estado) {
-      case 'ACTIVO':
-        return 'Activo';
-      case 'INACTIVO':
-        return 'Inactivo';
-      case 'ELIMINADO':
-        return 'Eliminado';
-      default:
-        return estado;
-    }
   }
 }
