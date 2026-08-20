@@ -75,63 +75,89 @@ export class CajaCierrePrintService {
           ? 'Sobrante'
           : 'Faltante';
 
-    return `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <title>Cierre de caja #${data.cajaId}</title>
-  <style>${this.styles()}</style>
-</head>
-<body>
-  <div class="ticket">
-    <div class="ticket__center ticket__title">CIERRE DE CAJA</div>
-    <div class="ticket__center ticket__subtitle">${this.escapeHtml(data.comercioNombre)}</div>
+    const observacionHtml = data.observacion
+      ? [
+          '<div class="ticket__divider"></div>',
+          '<div class="ticket__section-title">OBSERVACIÓN</div>',
+          `<div class="ticket__line">${this.escapeHtml(data.observacion)}</div>`,
+        ].join('\n    ')
+      : '';
 
-    <div class="ticket__divider"></div>
+    return [
+      '<!DOCTYPE html>',
+      '<html lang="es">',
+      '<head>',
+      '  <meta charset="utf-8" />',
+      `  <title>Cierre de caja #${data.cajaId}</title>`,
+      `  <style>${this.styles()}</style>`,
+      '</head>',
+      '<body>',
+      '  <div class="ticket">',
+      '    <div class="ticket__center ticket__title">CIERRE DE CAJA</div>',
+      `    <div class="ticket__center ticket__subtitle">${this.escapeHtml(data.comercioNombre)}</div>`,
+      '    <div class="ticket__divider"></div>',
+      `    <div class="ticket__row"><span>Caja N°</span><strong>${data.cajaId}</strong></div>`,
+      `    <div class="ticket__row"><span>Apertura</span><span>${this.formatFechaHora(data.openedAt)}</span></div>`,
+      `    <div class="ticket__row"><span>Cierre</span><span>${this.formatFechaHora(data.closedAt)}</span></div>`,
+      `    <div class="ticket__row"><span>Abrió</span><span>${this.escapeHtml(data.usuarioApertura)}</span></div>`,
+      `    <div class="ticket__row"><span>Cerró</span><span>${this.escapeHtml(data.usuarioCierre)}</span></div>`,
+      '    <div class="ticket__divider"></div>',
+      '    <div class="ticket__section-title">RESUMEN</div>',
+      `    <div class="ticket__row"><span>Saldo inicial</span><span>${this.formatMoney(data.saldoInicial)}</span></div>`,
+      `    <div class="ticket__row"><span>Ventas</span><span>${this.formatMoney(data.totalVentas)}</span></div>`,
+      `    <div class="ticket__row"><span>Pagos proveedor</span><span>${this.formatMoney(data.totalPagosProveedor)}</span></div>`,
+      `    <div class="ticket__row"><span>Total ingresos</span><span>${this.formatMoney(data.totalIngresos)}</span></div>`,
+      `    <div class="ticket__row"><span>Total egresos</span><span>${this.formatMoney(data.totalEgresos)}</span></div>`,
+      '    <div class="ticket__divider"></div>',
+      '    <div class="ticket__section-title">MEDIOS DE PAGO</div>',
+      `    ${this.buildMediosHtml(data)}`,
+      '    <div class="ticket__divider"></div>',
+      `    <div class="ticket__row"><span>Saldo teórico</span><strong>${this.formatMoney(data.saldoTeorico)}</strong></div>`,
+      `    <div class="ticket__row"><span>Saldo contado</span><strong>${this.formatMoney(data.saldoCierre)}</strong></div>`,
+      '    <div class="ticket__row ticket__total">',
+      `      <span>Diferencia (${diferenciaLabel})</span>`,
+      `      <strong>${this.formatMoney(Math.abs(data.diferencia))}</strong>`,
+      '    </div>',
+      observacionHtml ? `    ${observacionHtml}` : '',
+      '    <div class="ticket__divider"></div>',
+      '    <div class="ticket__center ticket__footer">Comprobante de cierre</div>',
+      '  </div>',
+      '  <script>',
+      "    window.addEventListener('load', function () {",
+      '      setTimeout(function () {',
+      '        window.focus();',
+      '        window.print();',
+      '      }, 150);',
+      '    });',
+      '  </script>',
+      '</body>',
+      '</html>',
+    ]
+      .filter((line) => line !== '')
+      .join('\n');
+  }
 
-    <div class="ticket__row"><span>Caja N°</span><strong>${data.cajaId}</strong></div>
-    <div class="ticket__row"><span>Apertura</span><span>${this.formatFechaHora(data.openedAt)}</span></div>
-    <div class="ticket__row"><span>Cierre</span><span>${this.formatFechaHora(data.closedAt)}</span></div>
-    <div class="ticket__row"><span>Abrió</span><span>${this.escapeHtml(data.usuarioApertura)}</span></div>
-    <div class="ticket__row"><span>Cerró</span><span>${this.escapeHtml(data.usuarioCierre)}</span></div>
-
-    <div class="ticket__divider"></div>
-    <div class="ticket__section-title">RESUMEN</div>
-    <div class="ticket__row"><span>Saldo inicial</span><span>${this.formatMoney(data.saldoInicial)}</span></div>
-    <div class="ticket__row"><span>Ventas</span><span>${this.formatMoney(data.totalVentas)}</span></div>
-    <div class="ticket__row"><span>Pagos proveedor</span><span>${this.formatMoney(data.totalPagosProveedor)}</span></div>
-    <div class="ticket__row"><span>Total ingresos</span><span>${this.formatMoney(data.totalIngresos)}</span></div>
-    <div class="ticket__row"><span>Total egresos</span><span>${this.formatMoney(data.totalEgresos)}</span></div>
-
-    <div class="ticket__divider"></div>
-    <div class="ticket__row"><span>Saldo teórico</span><strong>${this.formatMoney(data.saldoTeorico)}</strong></div>
-    <div class="ticket__row"><span>Efectivo contado</span><strong>${this.formatMoney(data.saldoCierre)}</strong></div>
-    <div class="ticket__row ticket__total">
-      <span>Diferencia (${diferenciaLabel})</span>
-      <strong>${this.formatMoney(Math.abs(data.diferencia))}</strong>
-    </div>
-
-    ${
-      data.observacion
-        ? `<div class="ticket__divider"></div>
-    <div class="ticket__section-title">OBSERVACIÓN</div>
-    <div class="ticket__line">${this.escapeHtml(data.observacion)}</div>`
-        : ''
+  private buildMediosHtml(data: CajaCierreComprobanteData): string {
+    if (!data.medios?.length) {
+      return '<div class="ticket__row"><span>Sin desglose</span><span>—</span></div>';
     }
-
-    <div class="ticket__divider"></div>
-    <div class="ticket__center ticket__footer">Comprobante de cierre</div>
-  </div>
-  <script>
-    window.addEventListener('load', function () {
-      setTimeout(function () {
-        window.focus();
-        window.print();
-      }, 150);
-    });
-  </script>
-</body>
-</html>`;
+    return data.medios
+      .map((medio) => {
+        const detalle = medio.detalle ? ` (${this.escapeHtml(medio.detalle)})` : '';
+        const diff =
+          Math.abs(medio.diferencia) < 0.009
+            ? 'Cuadra'
+            : medio.diferencia > 0
+              ? `Sobr. ${this.formatMoney(medio.diferencia)}`
+              : `Falt. ${this.formatMoney(Math.abs(medio.diferencia))}`;
+        return [
+          '<div class="ticket__medio">',
+          `    <div class="ticket__row"><span>${this.escapeHtml(medio.nombre)}${detalle}</span><strong>${this.formatMoney(medio.saldoCierre)}</strong></div>`,
+          `    <div class="ticket__row ticket__muted"><span>Teórico ${this.formatMoney(medio.saldoTeorico)}</span><span>${diff}</span></div>`,
+          '  </div>',
+        ].join('\n');
+      })
+      .join('\n');
   }
 
   private styles(): string {
@@ -154,6 +180,8 @@ export class CajaCierrePrintService {
       .ticket__total { margin-top: 4px; font-size: 12px; font-weight: 700; }
       .ticket__divider { border-top: 1px dashed #000; margin: 8px 0; }
       .ticket__footer { margin-top: 4px; font-weight: 700; }
+      .ticket__muted { font-size: 10px; color: #333; }
+      .ticket__medio { margin-bottom: 4px; }
     `;
   }
 

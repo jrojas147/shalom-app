@@ -1,3 +1,11 @@
+export interface CajaCierreMedioComprobante {
+  nombre: string;
+  detalle?: string | null;
+  saldoTeorico: number;
+  saldoCierre: number;
+  diferencia: number;
+}
+
 export interface CajaCierreComprobanteData {
   cajaId: number;
   comercioNombre: string;
@@ -14,4 +22,5 @@ export interface CajaCierreComprobanteData {
   saldoCierre: number;
   diferencia: number;
   observacion?: string | null;
+  medios: CajaCierreMedioComprobante[];
 }

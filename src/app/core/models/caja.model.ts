@@ -35,6 +35,9 @@ export interface CajaSaldo {
   detalle?: string | null;
   saldoInicial: number;
   saldoActual: number;
+  saldoCierre?: number | null;
+  saldoTeorico?: number | null;
+  diferencia?: number | null;
 }
 
 export interface Caja {
@@ -72,8 +75,13 @@ export interface AbrirCajaRequest {
   observacion?: string;
 }
 
-export interface CerrarCajaRequest {
+export interface CajaSaldoCierreRequest {
+  medioCajaId: number;
   saldoCierre: number;
+}
+
+export interface CerrarCajaRequest {
+  saldos: CajaSaldoCierreRequest[];
   observacion?: string;
 }
 
