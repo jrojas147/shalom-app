@@ -16,12 +16,6 @@
       maxlength="100"
       aria-label="Tipo de gasto"
     />
-    @if (editingId()) {
-      <label class="param-block__activo">
-        <input type="checkbox" formControlName="activo" />
-        Activo
-      </label>
-    }
     <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
       {{ saving() ? 'Guardando...' : editingId() ? 'Guardar' : 'Agregar' }}
     </button>
@@ -38,9 +32,6 @@
         <li class="param-block__item">
           <span class="param-block__item-text">
             <strong>{{ tipo.nombre }}</strong>
-            @if (!tipo.activo) {
-              <span class="rp-badge rp-badge--warning">Inactivo</span>
-            }
           </span>
           <span class="param-block__item-actions">
             <button
@@ -59,21 +50,23 @@
                 <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.75" />
               </svg>
             </button>
-            <button
-              type="button"
-              class="param-block__icon-btn param-block__icon-btn--danger"
-              title="Eliminar"
-              (click)="deleteTipo(tipo)"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M6 6l12 12M18 6L6 18"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                />
-              </svg>
-            </button>
+            @if (tipo.activo) {
+              <button
+                type="button"
+                class="param-block__icon-btn param-block__icon-btn--danger"
+                title="Eliminar"
+                (click)="deleteTipo(tipo)"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            }
           </span>
         </li>
       } @empty {

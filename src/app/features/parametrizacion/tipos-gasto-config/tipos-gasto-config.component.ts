@@ -35,9 +35,9 @@ export class TiposGastoConfigComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.tiposGastoService.getAll().subscribe({
+    this.tiposGastoService.getAll(true).subscribe({
       next: (data) => {
-        this.tiposGasto.set(data ?? []);
+        this.tiposGasto.set((data ?? []).filter((tipo) => tipo.activo));
         this.loading.set(false);
       },
       error: (err) => {
@@ -68,7 +68,7 @@ export class TiposGastoConfigComponent implements OnInit {
     const raw = this.form.getRawValue();
     const request: TipoGastoRequest = {
       nombre: raw.nombre.trim(),
-      activo: raw.activo,
+      activo: true,
     };
 
     this.saving.set(true);
@@ -93,10 +93,14 @@ export class TiposGastoConfigComponent implements OnInit {
   }
 
   deleteTipo(tipo: TipoGasto): void {
+    if (!tipo.activo) {
+      return;
+    }
+
     this.confirmDialog
       .confirm({
         title: 'Eliminar tipo de gasto',
-        message: `¿Eliminar el tipo de gasto "${tipo.nombre}"?`,
+        message: `¿Eliminar el tipo de gasto "${tipo.nombre}"? Dejará de estar disponible para nuevos gastos.`,
         confirmLabel: 'Eliminar',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',

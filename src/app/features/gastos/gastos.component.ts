@@ -82,7 +82,7 @@ export class GastosComponent implements OnInit {
     this.error.set(null);
 
     this.tiposGastoService.getAll(true).subscribe({
-      next: (data) => this.tiposGasto.set(data ?? []),
+      next: (data) => this.tiposGasto.set((data ?? []).filter((tipo) => tipo.activo)),
       error: (err) =>
         this.error.set(err.error?.message ?? 'No se pudieron cargar los tipos de gasto.'),
     });
