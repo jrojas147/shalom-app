@@ -5,6 +5,7 @@ import { HealthService } from '../../core/services/health.service';
 import { InicioService } from '../../core/services/inicio.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { CompraResumen } from '../../core/models/compra-registro.model';
+import { VentaResumen } from '../../core/models/venta.model';
 import { RetribucionExterno, RetribucionInterno } from '../../core/models/retribucion.model';
 import { HealthResponse } from '../../core/models/user.model';
 
@@ -27,6 +28,10 @@ export class InicioComponent implements OnInit {
   readonly resumenCompras = signal<CompraResumen | null>(null);
   readonly comprasError = signal<string | null>(null);
   readonly loadingCompras = signal(false);
+
+  readonly resumenVentas = signal<VentaResumen | null>(null);
+  readonly ventasError = signal<string | null>(null);
+  readonly loadingVentas = signal(false);
 
   readonly saldoCaja = signal<number | null>(null);
   readonly cajaAbierta = signal(false);
@@ -56,6 +61,7 @@ export class InicioComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarResumenCompras();
+    this.cargarResumenVentas();
     this.cargarSaldoCaja();
     this.cargarPagosPendientes();
   }
@@ -76,6 +82,26 @@ export class InicioComponent implements OnInit {
             : 'No se pudo cargar el resumen de compras.';
         this.comprasError.set(msg);
         this.loadingCompras.set(false);
+      },
+    });
+  }
+
+  cargarResumenVentas(): void {
+    this.loadingVentas.set(true);
+    this.ventasError.set(null);
+
+    this.inicioService.getResumenVentas().subscribe({
+      next: (resumen) => {
+        this.resumenVentas.set(this.normalizeResumenVentas(resumen));
+        this.loadingVentas.set(false);
+      },
+      error: (err) => {
+        const msg =
+          typeof err?.error?.message === 'string'
+            ? err.error.message
+            : 'No se pudo cargar el resumen de ventas.';
+        this.ventasError.set(msg);
+        this.loadingVentas.set(false);
       },
     });
   }
@@ -170,6 +196,20 @@ export class InicioComponent implements OnInit {
       minimumFractionDigits: amount % 1 === 0 ? 0 : 1,
       maximumFractionDigits: 1,
     });
+  }
+
+  private normalizeResumenVentas(raw: VentaResumen): VentaResumen {
+    return {
+      totalHoy: this.toNumber(raw.totalHoy),
+      pesoHoy: this.toNumber(raw.pesoHoy),
+      cantidadHoy: this.toNumber(raw.cantidadHoy),
+      totalSemana: this.toNumber(raw.totalSemana),
+      pesoSemana: this.toNumber(raw.pesoSemana),
+      cantidadSemana: this.toNumber(raw.cantidadSemana),
+      totalMes: this.toNumber(raw.totalMes),
+      pesoMes: this.toNumber(raw.pesoMes),
+      cantidadMes: this.toNumber(raw.cantidadMes),
+    };
   }
 
   private normalizeResumen(raw: CompraResumen): CompraResumen {

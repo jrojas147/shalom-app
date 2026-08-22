@@ -16,6 +16,18 @@ export interface RegistrarVentaPayload {
   medioCajaId: number;
 }
 
+export interface VentaResumen {
+  totalHoy: number;
+  pesoHoy: number;
+  cantidadHoy: number;
+  totalSemana: number;
+  pesoSemana: number;
+  cantidadSemana: number;
+  totalMes: number;
+  pesoMes: number;
+  cantidadMes: number;
+}
+
 export interface RegistrarVentaResponse {
   ventaId: number;
   factura: string;

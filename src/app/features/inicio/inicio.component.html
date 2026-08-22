@@ -57,7 +57,62 @@
         </span>
       }
     </div>
+  </div>
 
+  <div class="rp-metrics-grid">
+    <div class="rp-metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Ventas hoy</span>
+      </div>
+      @if (loadingVentas()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (ventasError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ ventasError() }}</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(resumenVentas()?.totalHoy) }}</strong>
+        <span class="cell-secondary">
+          {{ formatPeso(resumenVentas()?.pesoHoy) }} KG · {{ resumenVentas()?.cantidadHoy ?? 0 }} venta(s)
+        </span>
+      }
+    </div>
+
+    <div class="rp-metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Ventas semana</span>
+      </div>
+      @if (loadingVentas()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (ventasError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ ventasError() }}</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(resumenVentas()?.totalSemana) }}</strong>
+        <span class="cell-secondary">
+          {{ formatPeso(resumenVentas()?.pesoSemana) }} KG · {{ resumenVentas()?.cantidadSemana ?? 0 }} venta(s)
+        </span>
+      }
+    </div>
+
+    <div class="rp-metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Ventas mes</span>
+      </div>
+      @if (loadingVentas()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (ventasError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ ventasError() }}</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(resumenVentas()?.totalMes) }}</strong>
+        <span class="cell-secondary">
+          {{ formatPeso(resumenVentas()?.pesoMes) }} KG · {{ resumenVentas()?.cantidadMes ?? 0 }} venta(s)
+        </span>
+      }
+    </div>
+  </div>
+
+  <div class="rp-metrics-grid">
     <!--Se oculta caja
     <div class="rp-metric-card">
       <div class="metric-header">
