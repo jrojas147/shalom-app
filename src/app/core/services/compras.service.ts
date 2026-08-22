@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import { CompraDetalleItem } from '../models/compra.model';
+import { unidadesParaEnvio } from '../utils/tipo-medida.util';
 import { CompraProveedorSeleccion } from '../models/compra-proveedor.model';
 import {
   Compra,
@@ -81,6 +82,7 @@ export class ComprasService {
         productoId: item.productoId,
         pesoKg: item.pesoKg,
         empaque: item.empaque,
+        unidades: unidadesParaEnvio(item.producto, item.unidades),
       })),
       total: payload.total,
       pesoTotal: payload.pesoTotal,

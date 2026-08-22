@@ -8,6 +8,7 @@ import {
   productoImagenUrl,
 } from '../../core/models/producto.model';
 import { tipoClienteLabel } from '../../core/models/cliente.model';
+import { ExistenciaProducto } from '../../core/models/inventario.model';
 import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
 import {
   VentaClienteSeleccion,
@@ -26,6 +27,12 @@ import {
   TipoLecturaPeso,
 } from '../../core/models/configuracion-lectura-peso.model';
 import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
+import {
+  precioSufijo,
+  productoEsUnidad,
+  totalLineaMedida,
+  unidadesItem,
+} from '../../core/utils/tipo-medida.util';
 import { VentaClienteModalComponent } from './venta-cliente-modal/venta-cliente-modal.component';
 import { CajaSaldo } from '../../core/models/caja.model';
 import { MedioCaja, medioCajaDetalle } from '../../core/models/medio-caja.model';
@@ -60,9 +67,13 @@ export class VentaComponent implements OnInit {
   readonly ventaClienteEtiqueta = ventaClienteEtiqueta;
   readonly tipoClienteLabel = tipoClienteLabel;
   readonly productoImagenUrl = productoImagenUrl;
+  readonly productoEsUnidad = productoEsUnidad;
+  readonly precioSufijo = precioSufijo;
+  readonly unidadesItem = unidadesItem;
 
   readonly productos = signal<Producto[]>([]);
   readonly existencias = signal<Map<number, number>>(new Map());
+  readonly existenciasUnidades = signal<Map<number, number>>(new Map());
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
   readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
   readonly items = signal<CompraDetalleItem[]>([]);
@@ -95,6 +106,9 @@ export class VentaComponent implements OnInit {
     return this.productos().filter((p) => {
       const disponible = stock.get(p.id) ?? 0;
       if (disponible <= 0) {
+        return false;
+      }
+      if (productoEsUnidad(p) && (this.existenciasUnidades().get(p.id) ?? 0) <= 0) {
         return false;
       }
       const matchCiiu = ciiuId == null || p.codigoCiiuId === ciiuId;
@@ -138,11 +152,7 @@ export class VentaComponent implements OnInit {
       existencias: this.inventarioService.getResumen(),
     }).subscribe({
       next: ({ productos, existencias }) => {
-        const map = new Map<number, number>();
-        for (const item of existencias) {
-          map.set(item.codigoProducto, Number(item.cantidadDisponible) || 0);
-        }
-        this.existencias.set(map);
+        this.setExistencias(existencias);
         this.productos.set(productos);
         this.loading.set(false);
       },
@@ -180,6 +190,10 @@ export class VentaComponent implements OnInit {
     return this.existencias().get(productoId) ?? 0;
   }
 
+  stockUnidades(productoId: number): number {
+    return this.existenciasUnidades().get(productoId) ?? 0;
+  }
+
   precioVentaKg(producto: Producto): number {
     const actual = this.productos().find((p) => p.id === producto.id) ?? producto;
     return Number(actual.precioVenta) || 0;
@@ -199,6 +213,10 @@ export class VentaComponent implements OnInit {
       this.error.set(`Sin stock disponible para ${catalogo.nombreInterno}.`);
       return;
     }
+    if (productoEsUnidad(catalogo) && this.stockUnidades(catalogo.id) <= 0) {
+      this.error.set(`Sin unidades disponibles para ${catalogo.nombreInterno}.`);
+      return;
+    }
 
     const existente = this.items().find((i) => i.productoId === catalogo.id);
     if (existente) {
@@ -207,6 +225,10 @@ export class VentaComponent implements OnInit {
           item.productoId === catalogo.id ? { ...item, producto: catalogo } : item
         )
       );
+      if (productoEsUnidad(catalogo)) {
+        this.ajustarUnidades(catalogo.id, 1);
+        return;
+      }
       if (this.pesoNetoItem({ ...existente, producto: catalogo }) >= stock) {
         this.error.set(
           `No puede vender más de ${this.formatPeso(stock)} KG de ${catalogo.nombreInterno}.`
@@ -234,10 +256,64 @@ export class VentaComponent implements OnInit {
       // pesoKg en venta = peso del producto (neto), sin tara.
       pesoKg: netoInicial,
       empaque,
+      unidades: productoEsUnidad(catalogo) ? 1 : undefined,
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);
     this.error.set(null);
+  }
+
+  ajustarUnidades(productoId: number, delta: number): void {
+    const actual = this.items().find((i) => i.productoId === productoId);
+    if (!actual || !productoEsUnidad(actual.producto)) {
+      return;
+    }
+    const stockUnd = this.stockUnidades(productoId);
+    const deseado = Math.max(1, unidadesItem(actual.unidades) + delta);
+    if (deseado > stockUnd) {
+      this.error.set(
+        `No puede vender más de ${stockUnd} UND de ${actual.producto.nombreInterno}.`
+      );
+      return;
+    }
+    this.error.set(null);
+    this.items.update((list) =>
+      list.map((item) =>
+        item.productoId === productoId ? { ...item, unidades: deseado } : item
+      )
+    );
+  }
+
+  onUnidadesInput(productoId: number, value: string): void {
+    const parsed = parseInt(String(value ?? '').replace(/\D/g, ''), 10);
+    if (Number.isNaN(parsed)) return;
+    const actual = this.items().find((i) => i.productoId === productoId);
+    if (!actual || !productoEsUnidad(actual.producto)) {
+      return;
+    }
+    const stockUnd = this.stockUnidades(productoId);
+    const deseado = Math.max(1, parsed);
+    if (deseado > stockUnd) {
+      this.error.set(
+        `No puede vender más de ${stockUnd} UND de ${actual.producto.nombreInterno}.`
+      );
+      this.items.update((list) =>
+        list.map((item) =>
+          item.productoId === productoId ? { ...item, unidades: stockUnd || 1 } : item
+        )
+      );
+      return;
+    }
+    this.error.set(null);
+    this.items.update((list) =>
+      list.map((item) =>
+        item.productoId === productoId ? { ...item, unidades: deseado } : item
+      )
+    );
+  }
+
+  puedeAumentarUnidades(productoId: number, unidadesActuales: number | null | undefined): boolean {
+    return unidadesItem(unidadesActuales) + 1 <= this.stockUnidades(productoId);
   }
 
   ajustarPeso(productoId: number, delta: number): void {
@@ -376,7 +452,7 @@ export class VentaComponent implements OnInit {
   }
 
   itemTotal(item: CompraDetalleItem): number {
-    return this.pesoNetoItem(item) * this.precioVentaKg(item.producto);
+    return totalLineaMedida(item.producto, this.pesoNetoItem(item), item.unidades, 'venta');
   }
 
   formatPrecioKg(value: number): string {
@@ -544,6 +620,16 @@ export class VentaComponent implements OnInit {
             );
             return;
           }
+          if (productoEsUnidad(item.producto)) {
+            const stockUnd = this.stockUnidades(item.productoId);
+            if (unidadesItem(item.unidades) > stockUnd) {
+              this.procesando.set(false);
+              this.error.set(
+                `Unidades insuficientes para ${item.producto.nombreInterno}. Disponible: ${stockUnd} UND`
+              );
+              return;
+            }
+          }
         }
 
         this.ventasService
@@ -580,14 +666,19 @@ export class VentaComponent implements OnInit {
 
   private recargarExistencias(): void {
     this.inventarioService.getResumen().subscribe({
-      next: (existencias) => {
-        const map = new Map<number, number>();
-        for (const item of existencias) {
-          map.set(item.codigoProducto, Number(item.cantidadDisponible) || 0);
-        }
-        this.existencias.set(map);
-      },
+      next: (existencias) => this.setExistencias(existencias),
     });
+  }
+
+  private setExistencias(existencias: ExistenciaProducto[]): void {
+    const kg = new Map<number, number>();
+    const und = new Map<number, number>();
+    for (const item of existencias) {
+      kg.set(item.codigoProducto, Number(item.cantidadDisponible) || 0);
+      und.set(item.codigoProducto, Number(item.unidadesDisponibles) || 0);
+    }
+    this.existencias.set(kg);
+    this.existenciasUnidades.set(und);
   }
 
   private extractErrorMessage(

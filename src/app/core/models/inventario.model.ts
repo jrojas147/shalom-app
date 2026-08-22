@@ -6,6 +6,7 @@ export interface ExistenciaProducto {
   codigoProducto: number;
   nombreProducto: string;
   cantidadDisponible: number;
+  unidadesDisponibles?: number | null;
 }
 
 export interface InventarioResumenSui {
@@ -43,6 +44,7 @@ export interface InventarioEntrada {
   ubicacion: string | null;
   usuarioRegistro: number;
   compraDetalleId: number | null;
+  unidades?: number | null;
 }
 
 export const INVENTARIO_ESTADOS: InventarioEstado[] = [

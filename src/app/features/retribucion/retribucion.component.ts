@@ -323,13 +323,18 @@ export class RetribucionComponent implements OnInit {
       beneficiarioNombre: proveedor?.nombre ?? compra.proveedorNombre ?? fallbackNombre,
       beneficiarioDocumento: documento,
       sucursalNombre: compra.sucursalNombre,
-      items: (compra.detalle ?? []).map((linea) => ({
-        nombre: linea.productoNombre ?? `Producto ${linea.productoId}`,
-        pesoKg: Number(linea.pesoKg) || 0,
-        precioKg: Number(linea.precioUnitario) || 0,
-        total: Number(linea.subtotal) || 0,
-        empaque: this.empaqueLabel(linea.empaque),
-      })),
+      items: (compra.detalle ?? []).map((linea) => {
+        const unidades = linea.unidades && linea.unidades > 0 ? linea.unidades : undefined;
+        const subtotal = Number(linea.subtotal) || 0;
+        return {
+          nombre: linea.productoNombre ?? `Producto ${linea.productoId}`,
+          pesoKg: Number(linea.pesoKg) || 0,
+          precioKg: unidades ? subtotal / unidades : Number(linea.precioUnitario) || 0,
+          total: subtotal,
+          empaque: this.empaqueLabel(linea.empaque),
+          unidades,
+        };
+      }),
       total: Number(compra.total) || 0,
       pesoTotal: Number(compra.pesoTotal) || 0,
     });

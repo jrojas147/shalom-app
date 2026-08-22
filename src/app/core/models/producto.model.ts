@@ -1,6 +1,7 @@
 import { API_CORE_URL } from '../config/api.config';
 
 export type ProductoEstado = 'ACTIVO' | 'INACTIVO' | 'ELIMINADO';
+export type TipoMedida = 'PESO' | 'UNIDAD';
 
 export interface Producto {
   id: number;
@@ -14,6 +15,7 @@ export interface Producto {
   nombreCiiu?: string | null;
   precioCompra?: number | null;
   precioVenta?: number | null;
+  tipoMedida?: TipoMedida | null;
   descripcion?: string | null;
   imagen?: string | null;
 }
@@ -24,6 +26,7 @@ export interface ProductoRequest {
   codigoCiiuId?: number | null;
   precioCompra?: number | null;
   precioVenta?: number | null;
+  tipoMedida?: TipoMedida;
   descripcion?: string;
   eliminarImagen?: boolean;
 }

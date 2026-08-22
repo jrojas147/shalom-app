@@ -136,9 +136,10 @@
           <thead>
             <tr>
               <th>Producto</th>
-              <th>Peso (KG)</th>
+              <th>Unidades</th>
+              <th>Peso producto (KG)</th>
               <th>Empaque</th>
-              <th>Precio/kg</th>
+              <th>Precio</th>
               <th>Subtotal</th>
             </tr>
           </thead>
@@ -146,6 +147,26 @@
             @for (item of itemsEdit(); track item.productoId) {
               <tr>
                 <td class="cell-primary">{{ item.producto.nombreInterno }}</td>
+                <td class="gestion-compras-modal__unidades">
+                  @if (productoEsUnidad(item.producto)) {
+                    @if (editMode()) {
+                      <div class="weight-inline">
+                        <button type="button" (click)="ajustarUnidades(item.productoId, -1)">−</button>
+                        <input
+                          type="text"
+                          inputmode="numeric"
+                          [value]="unidadesItem(item.unidades)"
+                          (change)="onUnidadesInput(item.productoId, $any($event.target).value)"
+                        />
+                        <button type="button" (click)="ajustarUnidades(item.productoId, 1)">+</button>
+                      </div>
+                    } @else {
+                      {{ unidadesItem(item.unidades) }}
+                    }
+                  } @else {
+                    —
+                  }
+                </td>
                 <td class="gestion-compras-modal__peso">
                   @if (editMode()) {
                     <div class="weight-inline">
@@ -197,6 +218,7 @@
                 </td>
                 <td class="cell-secondary">
                   {{ formatCurrency(productoPrecioKg(item.producto)) }}
+                  {{ precioSufijo(item.producto) }}
                 </td>
                 <td class="cell-secondary">{{ formatCurrency(itemTotal(item)) }}</td>
               </tr>

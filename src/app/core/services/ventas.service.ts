@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import { RegistrarVentaPayload, RegistrarVentaResponse } from '../models/venta.model';
+import { unidadesParaEnvio } from '../utils/tipo-medida.util';
 
 @Injectable({ providedIn: 'root' })
 export class VentasService {
@@ -16,6 +17,7 @@ export class VentasService {
         productoId: item.productoId,
         pesoKg: item.pesoKg,
         empaque: item.empaque,
+        unidades: unidadesParaEnvio(item.producto, item.unidades),
       })),
       total: payload.total,
       pesoTotal: payload.pesoTotal,

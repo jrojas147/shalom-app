@@ -59,8 +59,12 @@
             </div>
             <div class="product-body">
               <h3>{{ producto.nombreInterno }}</h3>
-              <p class="product-price">{{ formatPrecioKg(precioVentaKg(producto)) }} /kg</p>
-              <p class="product-price">Stock: {{ formatPeso(stockProducto(producto.id)) }} KG</p>
+              <p class="product-price">{{ formatPrecioKg(precioVentaKg(producto)) }} {{ precioSufijo(producto) }}</p>
+              @if (productoEsUnidad(producto)) {
+                <p class="product-price">Stock: {{ stockUnidades(producto.id) }} UND · {{ formatPeso(stockProducto(producto.id)) }} KG</p>
+              } @else {
+                <p class="product-price">Stock: {{ formatPeso(stockProducto(producto.id)) }} KG</p>
+              }
             </div>
           </button>
         } @empty {
@@ -127,7 +131,28 @@
             </select>
           </div>
           <div class="item-bottom">
-            <div class="weight-control">
+            <div class="item-qty-stack">
+              @if (productoEsUnidad(item.producto)) {
+                <div class="weight-control">
+                  <button type="button" (click)="ajustarUnidades(item.productoId, -1)" aria-label="Menos unidades">−</button>
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    class="weight-input"
+                    [value]="unidadesItem(item.unidades)"
+                    (change)="onUnidadesInput(item.productoId, $any($event.target).value)"
+                    title="Unidades vendidas"
+                  />
+                  <button
+                    type="button"
+                    [disabled]="!puedeAumentarUnidades(item.productoId, item.unidades)"
+                    (click)="ajustarUnidades(item.productoId, 1)"
+                    aria-label="Más unidades"
+                  >+</button>
+                  <span class="weight-unit">UND</span>
+                </div>
+              }
+              <div class="weight-control">
               @if (permiteManual()) {
                 <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
               }
@@ -163,10 +188,16 @@
                 </button>
               }
             </div>
+            </div>
             <div class="item-pricing">
               <span class="price-kg">
-                Bruto {{ formatPeso(pesoBrutoItem(item)) }} KG ·
-                {{ formatPrecioKg(precioVentaKg(item.producto)) }} /kg
+                Bruto {{ formatPeso(pesoBrutoItem(item)) }} KG
+                @if (productoEsUnidad(item.producto)) {
+                  · {{ unidadesItem(item.unidades) }} und ·
+                  {{ formatPrecioKg(precioVentaKg(item.producto)) }} /und
+                } @else {
+                  · {{ formatPrecioKg(precioVentaKg(item.producto)) }} /kg
+                }
               </span>
               <strong class="price-total">{{ formatCurrency(itemTotal(item)) }}</strong>
             </div>

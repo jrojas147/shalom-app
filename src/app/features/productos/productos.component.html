@@ -96,6 +96,9 @@
                   <span class="row-icon" aria-hidden="true">📦</span>
                 }
                 <span class="cell-primary">{{ producto.nombreInterno }}</span>
+                @if (producto.tipoMedida === 'UNIDAD') {
+                  <span class="rp-badge rp-badge--neutral">Unidad</span>
+                }
               </td>
               <td class="cell-secondary">
                 @if (producto.codigoCiiu || producto.nombreCiiu) {
@@ -107,8 +110,18 @@
                   —
                 }
               </td>
-              <td class="cell-secondary">{{ formatPrecio(producto.precioCompra) }}</td>
-              <td class="cell-secondary">{{ formatPrecio(producto.precioVenta) }}</td>
+              <td class="cell-secondary">
+                {{ formatPrecio(producto.precioCompra) }}
+                @if (producto.tipoMedida === 'UNIDAD') {
+                  <span class="cell-secondary">/und</span>
+                }
+              </td>
+              <td class="cell-secondary">
+                {{ formatPrecio(producto.precioVenta) }}
+                @if (producto.tipoMedida === 'UNIDAD') {
+                  <span class="cell-secondary">/und</span>
+                }
+              </td>
               <td>
                 <span
                   class="rp-badge"
@@ -201,6 +214,14 @@
           </label>
         </div>
 
+        <div class="rp-field productos-estado-field">
+          <span class="productos-estado-field__label">Tipo de medida</span>
+          <label class="productos-estado-field__control" for="productoMedidaUnidad">
+            <input id="productoMedidaUnidad" type="checkbox" formControlName="medidaUnidad" />
+            Unidad
+          </label>
+        </div>
+
         <div class="rp-field rp-field--full">
           <label for="codigoCiiuId">Código SUI</label>
           <select id="codigoCiiuId" formControlName="codigoCiiuId">
@@ -212,7 +233,9 @@
         </div>
 
         <div class="rp-field">
-          <label for="precioCompra">Precio compra ($/kg)</label>
+          <label for="precioCompra">
+            {{ form.controls.medidaUnidad.value ? 'Precio compra ($/unidad)' : 'Precio compra ($/kg)' }}
+          </label>
           <input
             id="precioCompra"
             type="text"
@@ -226,7 +249,9 @@
         </div>
 
         <div class="rp-field">
-          <label for="precioVenta">Precio venta ($/kg)</label>
+          <label for="precioVenta">
+            {{ form.controls.medidaUnidad.value ? 'Precio venta ($/unidad)' : 'Precio venta ($/kg)' }}
+          </label>
           <input
             id="precioVenta"
             type="text"

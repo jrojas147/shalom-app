@@ -126,7 +126,13 @@ export class PagoComprobantePrintService {
             (item) => `<tr>
           <td>
             <div class="item-name">${this.escapeHtml(item.nombre)}</div>
-            <div class="item-precio">${this.formatMoney(item.precioKg)} /kg</div>
+            <div class="item-precio">${this.formatMoney(item.precioKg)} ${
+              item.unidades && item.unidades > 0 ? '/und' : '/kg'
+            }${
+              item.unidades && item.unidades > 0
+                ? ` · ${item.unidades} und`
+                : ''
+            }</div>
           </td>
           <td class="item-empaque">${this.escapeHtml(item.empaque)}</td>
           <td class="num">${this.formatPeso(item.pesoKg)}</td>

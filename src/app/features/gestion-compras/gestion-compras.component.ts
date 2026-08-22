@@ -23,7 +23,13 @@ import { ComprasService } from '../../core/services/compras.service';
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
-import { pesoEmpaqueKg, pesoNetoKg } from '../../core/utils/empaque-peso.util';
+import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
+import {
+  precioSufijo,
+  productoEsUnidad,
+  totalLineaMedida,
+  unidadesItem,
+} from '../../core/utils/tipo-medida.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal/compra-proveedor-modal.component';
@@ -51,6 +57,9 @@ export class GestionComprasComponent implements OnInit {
   readonly compraProveedorEtiqueta = compraProveedorEtiqueta;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
   readonly productoPrecioKg = productoPrecioKg;
+  readonly productoEsUnidad = productoEsUnidad;
+  readonly precioSufijo = precioSufijo;
+  readonly unidadesItem = unidadesItem;
 
   readonly compras = signal<Compra[]>([]);
   readonly productos = signal<Producto[]>([]);
@@ -78,7 +87,7 @@ export class GestionComprasComponent implements OnInit {
   );
 
   readonly pesoBrutoTotalEdit = computed(() =>
-    this.itemsEdit().reduce((sum, item) => sum + item.pesoKg, 0)
+    this.itemsEdit().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
   );
 
   readonly pesoNetoTotalEdit = computed(() =>
@@ -163,6 +172,30 @@ export class GestionComprasComponent implements OnInit {
     this.showProveedorModal.set(false);
   }
 
+  ajustarUnidades(productoId: number, delta: number): void {
+    this.itemsEdit.update((list) =>
+      list.map((item) => {
+        if (item.productoId !== productoId || !productoEsUnidad(item.producto)) {
+          return item;
+        }
+        return { ...item, unidades: Math.max(1, unidadesItem(item.unidades) + delta) };
+      })
+    );
+  }
+
+  onUnidadesInput(productoId: number, value: string): void {
+    const parsed = parseInt(value.replace(/\D/g, ''), 10);
+    if (Number.isNaN(parsed)) return;
+    this.itemsEdit.update((list) =>
+      list.map((item) => {
+        if (item.productoId !== productoId || !productoEsUnidad(item.producto)) {
+          return item;
+        }
+        return { ...item, unidades: Math.max(1, parsed) };
+      })
+    );
+  }
+
   ajustarPeso(productoId: number, delta: number): void {
     if (!this.permiteManual()) {
       return;
@@ -170,8 +203,7 @@ export class GestionComprasComponent implements OnInit {
     this.itemsEdit.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
-        const minimo = this.pesoBrutoMinimo(item.empaque);
-        const peso = Math.max(minimo, Math.round((item.pesoKg + delta) * 2) / 2);
+        const peso = Math.max(0.5, Math.round((item.pesoKg + delta) * 2) / 2);
         return { ...item, pesoKg: peso };
       })
     );
@@ -186,8 +218,7 @@ export class GestionComprasComponent implements OnInit {
     this.itemsEdit.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
-        const minimo = this.pesoBrutoMinimo(item.empaque);
-        return { ...item, pesoKg: Math.max(minimo, parsed) };
+        return { ...item, pesoKg: Math.max(0.001, parsed) };
       })
     );
   }
@@ -211,17 +242,10 @@ export class GestionComprasComponent implements OnInit {
         }
         const actual = this.itemsEdit().find((i) => i.productoId === productoId);
         if (!actual) return;
-        const tara = pesoEmpaqueKg(this.tiposEmpaque(), actual.empaque);
-        if (kg + 0.0005 < tara) {
-          this.error.set(
-            `El peso detectado (${this.formatPeso(kg)} KG) es menor que la tara del empaque.`
-          );
-          return;
-        }
-        const bruto = Math.max(tara, Math.round(kg * 1000) / 1000);
+        const neto = Math.max(0.001, Math.round(kg * 1000) / 1000);
         this.itemsEdit.update((list) =>
           list.map((item) =>
-            item.productoId === productoId ? { ...item, pesoKg: bruto } : item
+            item.productoId === productoId ? { ...item, pesoKg: neto } : item
           )
         );
         this.mensaje.set(
@@ -237,15 +261,7 @@ export class GestionComprasComponent implements OnInit {
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
     this.itemsEdit.update((list) =>
-      list.map((item) => {
-        if (item.productoId !== productoId) return item;
-        const minimo = this.pesoBrutoMinimo(empaque);
-        return {
-          ...item,
-          empaque,
-          pesoKg: Math.max(minimo, item.pesoKg),
-        };
-      })
+      list.map((item) => (item.productoId === productoId ? { ...item, empaque } : item))
     );
   }
 
@@ -387,16 +403,18 @@ export class GestionComprasComponent implements OnInit {
   }
 
   pesoNetoItem(item: CompraDetalleItem): number {
-    return pesoNetoKg(item.pesoKg, pesoEmpaqueKg(this.tiposEmpaque(), item.empaque));
+    return Math.max(0, Number(item.pesoKg) || 0);
+  }
+
+  pesoBrutoItem(item: CompraDetalleItem): number {
+    return pesoBrutoFromNetoKg(
+      this.pesoNetoItem(item),
+      pesoEmpaqueKg(this.tiposEmpaque(), item.empaque)
+    );
   }
 
   itemTotal(item: CompraDetalleItem): number {
-    return this.pesoNetoItem(item) * productoPrecioKg(item.producto);
-  }
-
-  private pesoBrutoMinimo(empaque: string): number {
-    const tara = pesoEmpaqueKg(this.tiposEmpaque(), empaque);
-    return Math.round((tara + 0.5) * 2) / 2;
+    return totalLineaMedida(item.producto, this.pesoNetoItem(item), item.unidades, 'compra');
   }
 
   empaqueLabel(empaque?: EmpaqueTipo | string | null): string {
@@ -437,19 +455,22 @@ export class GestionComprasComponent implements OnInit {
           activo: true,
           estado: 'ACTIVO',
           fechaEstado: new Date(0).toISOString(),
-          precioCompra: linea.precioUnitario ?? null,
+          precioCompra:
+            linea.unidades && linea.unidades > 0
+              ? (Number(linea.subtotal) || 0) / linea.unidades
+              : linea.precioUnitario ?? null,
           precioVenta: null,
+          tipoMedida: linea.unidades && linea.unidades > 0 ? 'UNIDAD' : 'PESO',
         } satisfies Producto);
 
       const empaque = linea.empaque?.trim() || this.empaquePorDefecto();
-      const pesoNeto = Number(linea.pesoKg) || 0;
-      const pesoBruto = pesoNeto + pesoEmpaqueKg(this.tiposEmpaque(), empaque);
 
       return {
         productoId: linea.productoId,
         producto,
-        pesoKg: pesoBruto,
+        pesoKg: Number(linea.pesoKg) || 0,
         empaque,
+        unidades: productoEsUnidad(producto) ? unidadesItem(linea.unidades) : undefined,
       };
     });
   }

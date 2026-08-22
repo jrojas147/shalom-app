@@ -4,6 +4,7 @@ export interface PagoComprobanteItem {
   precioKg: number;
   total: number;
   empaque: string;
+  unidades?: number;
 }
 
 export interface PagoComprobanteData {

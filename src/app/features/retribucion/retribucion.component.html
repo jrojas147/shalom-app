@@ -285,8 +285,9 @@
                 <tr>
                   <th>Producto</th>
                   <th>Peso (KG)</th>
+                  <th>Unidades</th>
                   <th>Empaque</th>
-                  <th>Precio/kg</th>
+                  <th>Precio</th>
                   <th>Subtotal</th>
                 </tr>
               </thead>
@@ -295,13 +296,23 @@
                   <tr>
                     <td class="cell-primary">{{ linea.productoNombre || ('Producto ' + linea.productoId) }}</td>
                     <td class="cell-secondary">{{ formatPeso(linea.pesoKg) }}</td>
+                    <td class="cell-secondary">{{ linea.unidades && linea.unidades > 0 ? linea.unidades : '—' }}</td>
                     <td class="cell-secondary">{{ empaqueLabel(linea.empaque) }}</td>
-                    <td class="cell-secondary">{{ formatCurrency(linea.precioUnitario || 0) }}</td>
+                    <td class="cell-secondary">
+                      {{
+                        formatCurrency(
+                          linea.unidades && linea.unidades > 0
+                            ? (linea.subtotal || 0) / linea.unidades
+                            : linea.precioUnitario || 0
+                        )
+                      }}
+                      {{ linea.unidades && linea.unidades > 0 ? '/und' : '/kg' }}
+                    </td>
                     <td class="cell-secondary">{{ formatCurrency(linea.subtotal || 0) }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5" class="rp-empty">Sin productos en esta compra</td>
+                    <td colspan="6" class="rp-empty">Sin productos en esta compra</td>
                   </tr>
                 }
               </tbody>

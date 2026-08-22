@@ -171,6 +171,10 @@
       font-weight: 400;
       color: var(--rp-text);
       cursor: pointer;
+
+      input[type='checkbox'] {
+        accent-color: var(--rp-primary);
+      }
     }
   }
 

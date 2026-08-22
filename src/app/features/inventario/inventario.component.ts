@@ -135,6 +135,11 @@ export class InventarioComponent implements OnInit {
     this.entradaSeleccionada.set(null);
   }
 
+  formatUnidades(value: number | null | undefined): string {
+    const unidades = Number(value);
+    return Number.isFinite(unidades) && unidades > 0 ? String(Math.trunc(unidades)) : '—';
+  }
+
   formatPeso(value: number | null | undefined): string {
     if (value == null) {
       return '—';

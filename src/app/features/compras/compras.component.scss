@@ -486,6 +486,13 @@
   gap: var(--spacing-sm);
 }
 
+.item-qty-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
 .weight-control {
   display: flex;
   align-items: center;

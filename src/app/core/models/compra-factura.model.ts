@@ -6,6 +6,7 @@ export interface CompraFacturaItem {
   precioKg: number;
   total: number;
   empaque: string;
+  unidades?: number;
 }
 
 export interface CompraFacturaData {
