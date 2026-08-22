@@ -169,4 +169,88 @@
       }
     </div>
   </div>
+
+  <div class="inicio-tables">
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>Inventario por código SUI</h2>
+      </div>
+
+      @if (inventarioSuiError()) {
+        <div class="rp-alert rp-alert--error">{{ inventarioSuiError() }}</div>
+      }
+
+      @if (loadingInventarioSui()) {
+        <p class="rp-loading">Cargando inventario...</p>
+      } @else {
+        <div class="inicio-table-wrap">
+          <table class="rp-table">
+            <thead>
+              <tr>
+                <th>Código SUI</th>
+                <th>Nombre SUI</th>
+                <th class="cell-num">Disponible (KG)</th>
+                <th class="cell-num">Productos</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of inventarioSui(); track item.codigoSui + '-' + item.nombreSui) {
+                <tr>
+                  <td class="cell-mono">{{ item.codigoSui }}</td>
+                  <td class="cell-primary">{{ item.nombreSui }}</td>
+                  <td class="cell-num cell-primary">{{ formatPeso(item.cantidadDisponible) }}</td>
+                  <td class="cell-num cell-secondary">{{ item.cantidadProductos }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="rp-empty">No hay existencias para mostrar</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="rp-panel">
+      <div class="panel-header">
+        <h2>Inventario vendido en la semana</h2>
+      </div>
+
+      @if (inventarioVendidosError()) {
+        <div class="rp-alert rp-alert--error">{{ inventarioVendidosError() }}</div>
+      }
+
+      @if (loadingInventarioVendidos()) {
+        <p class="rp-loading">Cargando inventario...</p>
+      } @else {
+        <div class="inicio-table-wrap">
+          <table class="rp-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Código SUI</th>
+                <th class="cell-num">Disponible (KG)</th>
+                <th class="cell-num">Vendido (KG)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of inventarioVendidos(); track item.codigoProducto) {
+                <tr>
+                  <td class="cell-primary">{{ item.nombreProducto }}</td>
+                  <td class="cell-mono">{{ item.codigoSui || '—' }}</td>
+                  <td class="cell-num cell-primary">{{ formatPeso(item.cantidadDisponible) }}</td>
+                  <td class="cell-num cell-secondary">{{ formatPeso(item.pesoVendido) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="rp-empty">No hay productos vendidos desde el lunes</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </div>
 </div>

@@ -3,8 +3,13 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { CajaService } from '../../core/services/caja.service';
 import { HealthService } from '../../core/services/health.service';
 import { InicioService } from '../../core/services/inicio.service';
+import { InventarioService } from '../../core/services/inventario.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { CompraResumen } from '../../core/models/compra-registro.model';
+import {
+  InventarioProductoVendido,
+  InventarioResumenSui,
+} from '../../core/models/inventario.model';
 import { VentaResumen } from '../../core/models/venta.model';
 import { RetribucionExterno, RetribucionInterno } from '../../core/models/retribucion.model';
 import { HealthResponse } from '../../core/models/user.model';
@@ -19,6 +24,7 @@ export class InicioComponent implements OnInit {
   private readonly healthService = inject(HealthService);
   private readonly inicioService = inject(InicioService);
   private readonly cajaService = inject(CajaService);
+  private readonly inventarioService = inject(InventarioService);
   private readonly retribucionService = inject(RetribucionService);
 
   readonly health = signal<HealthResponse | null>(null);
@@ -43,6 +49,14 @@ export class InicioComponent implements OnInit {
   readonly pagosError = signal<string | null>(null);
   readonly loadingPagos = signal(false);
 
+  readonly inventarioSui = signal<InventarioResumenSui[]>([]);
+  readonly inventarioSuiError = signal<string | null>(null);
+  readonly loadingInventarioSui = signal(false);
+
+  readonly inventarioVendidos = signal<InventarioProductoVendido[]>([]);
+  readonly inventarioVendidosError = signal<string | null>(null);
+  readonly loadingInventarioVendidos = signal(false);
+
   readonly totalPagosInternos = computed(() =>
     this.sumPendiente(this.pagosInternos())
   );
@@ -64,6 +78,8 @@ export class InicioComponent implements OnInit {
     this.cargarResumenVentas();
     this.cargarSaldoCaja();
     this.cargarPagosPendientes();
+    this.cargarInventarioSui();
+    this.cargarInventarioVendidosSemana();
   }
 
   cargarResumenCompras(): void {
@@ -161,6 +177,48 @@ export class InicioComponent implements OnInit {
           this.pagosExternos.set(externos ?? []);
         }
         this.loadingPagos.set(false);
+      },
+    });
+  }
+
+  cargarInventarioSui(): void {
+    this.loadingInventarioSui.set(true);
+    this.inventarioSuiError.set(null);
+
+    this.inventarioService.getResumenPorSui().subscribe({
+      next: (data) => {
+        this.inventarioSui.set(data ?? []);
+        this.loadingInventarioSui.set(false);
+      },
+      error: (err) => {
+        this.inventarioSuiError.set(
+          typeof err?.error?.message === 'string'
+            ? err.error.message
+            : 'No se pudo cargar el inventario por código SUI.'
+        );
+        this.inventarioSui.set([]);
+        this.loadingInventarioSui.set(false);
+      },
+    });
+  }
+
+  cargarInventarioVendidosSemana(): void {
+    this.loadingInventarioVendidos.set(true);
+    this.inventarioVendidosError.set(null);
+
+    this.inventarioService.getResumenVendidosSemana().subscribe({
+      next: (data) => {
+        this.inventarioVendidos.set(data ?? []);
+        this.loadingInventarioVendidos.set(false);
+      },
+      error: (err) => {
+        this.inventarioVendidosError.set(
+          typeof err?.error?.message === 'string'
+            ? err.error.message
+            : 'No se pudo cargar el inventario de productos vendidos en la semana.'
+        );
+        this.inventarioVendidos.set([]);
+        this.loadingInventarioVendidos.set(false);
       },
     });
   }

@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
-import { ExistenciaProducto, InventarioEntrada } from '../models/inventario.model';
+import {
+  ExistenciaProducto,
+  InventarioEntrada,
+  InventarioProductoVendido,
+  InventarioResumenSui,
+} from '../models/inventario.model';
 
 @Injectable({ providedIn: 'root' })
 export class InventarioService {
@@ -11,6 +16,14 @@ export class InventarioService {
 
   getResumen(): Observable<ExistenciaProducto[]> {
     return this.http.get<ExistenciaProducto[]>(`${this.baseUrl}/resumen`);
+  }
+
+  getResumenPorSui(): Observable<InventarioResumenSui[]> {
+    return this.http.get<InventarioResumenSui[]>(`${this.baseUrl}/resumen-sui`);
+  }
+
+  getResumenVendidosSemana(): Observable<InventarioProductoVendido[]> {
+    return this.http.get<InventarioProductoVendido[]>(`${this.baseUrl}/resumen-vendidos-semana`);
   }
 
   getAll(): Observable<InventarioEntrada[]> {

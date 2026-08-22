@@ -8,6 +8,22 @@ export interface ExistenciaProducto {
   cantidadDisponible: number;
 }
 
+export interface InventarioResumenSui {
+  codigoSui: string;
+  nombreSui: string;
+  cantidadDisponible: number;
+  cantidadProductos: number;
+}
+
+export interface InventarioProductoVendido {
+  codigoProducto: number;
+  nombreProducto: string;
+  codigoSui?: string | null;
+  nombreSui?: string | null;
+  cantidadDisponible: number;
+  pesoVendido: number;
+}
+
 export interface InventarioEntrada {
   idInventario: number;
   comercioId: number;
