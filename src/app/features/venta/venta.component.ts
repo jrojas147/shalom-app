@@ -19,6 +19,12 @@ import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { VentasService } from '../../core/services/ventas.service';
 import { BasculaService } from '../../core/services/bascula.service';
+import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
+import {
+  permiteIngresoManual,
+  permiteLecturaBascula,
+  TipoLecturaPeso,
+} from '../../core/models/configuracion-lectura-peso.model';
 import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
 import { VentaClienteModalComponent } from './venta-cliente-modal/venta-cliente-modal.component';
 import { CajaSaldo } from '../../core/models/caja.model';
@@ -47,6 +53,7 @@ export class VentaComponent implements OnInit {
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly ventasService = inject(VentasService);
   private readonly basculaService = inject(BasculaService);
+  private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
   private readonly cajaService = inject(CajaService);
   private readonly mediosCajaService = inject(MediosCajaService);
 
@@ -73,6 +80,12 @@ export class VentaComponent implements OnInit {
   readonly mediosPago = signal<MedioPagoOpcion[]>([]);
   readonly medioPagoId = signal<number | null>(null);
   readonly leyendoPesoId = signal<number | null>(null);
+  readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
+
+  readonly permiteManual = computed(() => permiteIngresoManual(this.lecturaPeso()));
+  readonly permiteBascula = computed(() =>
+    permiteLecturaBascula(this.lecturaPeso(), true)
+  );
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
@@ -148,6 +161,11 @@ export class VentaComponent implements OnInit {
       next: (data) => this.tiposEmpaque.set(data),
       error: () => this.tiposEmpaque.set([]),
     });
+
+    this.configuracionLecturaPesoService.get().subscribe({
+      next: (data) => this.lecturaPeso.set(data.venta),
+      error: () => this.lecturaPeso.set('AMBOS'),
+    });
   }
 
   onBusqueda(value: string): void {
@@ -195,7 +213,9 @@ export class VentaComponent implements OnInit {
         );
         return;
       }
-      this.ajustarPeso(catalogo.id, 0.5);
+      if (this.permiteManual()) {
+        this.ajustarPeso(catalogo.id, 0.5);
+      }
       return;
     }
 
@@ -221,6 +241,9 @@ export class VentaComponent implements OnInit {
   }
 
   ajustarPeso(productoId: number, delta: number): void {
+    if (!this.permiteManual()) {
+      return;
+    }
     const stock = this.stockProducto(productoId);
     const actual = this.items().find((i) => i.productoId === productoId);
     if (!actual) return;
@@ -242,13 +265,16 @@ export class VentaComponent implements OnInit {
   }
 
   onPesoInput(productoId: number, value: string): void {
+    if (!this.permiteManual()) {
+      return;
+    }
     const parsed = parseFloat(String(value ?? '').replace(',', '.'));
     if (Number.isNaN(parsed)) return;
     this.aplicarPesoKg(productoId, parsed, 0.001);
   }
 
   detectarPeso(productoId: number): void {
-    if (this.leyendoPesoId() != null) {
+    if (!this.permiteBascula() || this.leyendoPesoId() != null) {
       return;
     }
 

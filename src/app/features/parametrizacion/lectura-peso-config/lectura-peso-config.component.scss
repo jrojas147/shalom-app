@@ -1,0 +1,71 @@
+:host {
+  display: block;
+}
+
+.lectura-peso-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.lectura-peso-group {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  legend {
+    margin: 0 0 0.5rem;
+    padding: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--rp-text);
+  }
+}
+
+.lectura-peso-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+  cursor: pointer;
+  color: var(--rp-text);
+
+  input {
+    margin-top: 0.2rem;
+    accent-color: var(--rp-primary);
+  }
+
+  strong {
+    display: block;
+    font-size: 0.9375rem;
+  }
+
+  em {
+    display: block;
+    margin-top: 0.125rem;
+    font-style: normal;
+    font-size: 0.8125rem;
+    color: var(--rp-text-secondary);
+  }
+
+  &:hover {
+    border-color: var(--rp-border-strong);
+  }
+
+  &--activa {
+    border-color: var(--rp-primary);
+    background: var(--rp-primary-light, #eef6f4);
+  }
+}
+
+.lectura-peso-actions {
+  display: flex;
+  justify-content: flex-end;
+}

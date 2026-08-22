@@ -489,6 +489,7 @@
 .weight-control {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.25rem;
 
   button {
@@ -519,6 +520,11 @@
     font-weight: 700;
     color: var(--rp-text);
     background: var(--rp-surface);
+
+    &[readonly] {
+      background: var(--rp-surface-muted);
+      cursor: default;
+    }
   }
 
   .weight-unit {
@@ -527,6 +533,18 @@
     letter-spacing: 0.04em;
     color: var(--rp-text-muted);
     margin-left: 0.15rem;
+  }
+
+  .weight-detect {
+    width: auto;
+    min-width: auto;
+    padding: 0 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--rp-primary);
+    border-color: var(--rp-primary);
+    background: var(--rp-surface);
   }
 }
 

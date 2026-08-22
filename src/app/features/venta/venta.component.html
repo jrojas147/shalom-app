@@ -128,7 +128,9 @@
           </div>
           <div class="item-bottom">
             <div class="weight-control">
-              <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
+              @if (permiteManual()) {
+                <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
+              }
               <input
                 type="text"
                 inputmode="decimal"
@@ -137,24 +139,29 @@
                 [name]="'venta-peso-' + item.productoId"
                 [ngModel]="formatPeso(item.pesoKg)"
                 [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                [readonly]="!permiteManual()"
                 (ngModelChange)="onPesoInput(item.productoId, $event)"
-                title="Peso del producto (neto). Puede editarlo a mano."
+                [title]="permiteManual() ? 'Peso del producto (neto). Puede editarlo a mano.' : 'Peso del producto (neto) leído desde la báscula.'"
               />
-              <button
-                type="button"
-                [disabled]="!puedeAumentarPeso(item.productoId, item.pesoKg)"
-                (click)="ajustarPeso(item.productoId, 0.5)"
-                aria-label="Más peso"
-              >+</button>
+              @if (permiteManual()) {
+                <button
+                  type="button"
+                  [disabled]="!puedeAumentarPeso(item.productoId, item.pesoKg)"
+                  (click)="ajustarPeso(item.productoId, 0.5)"
+                  aria-label="Más peso"
+                >+</button>
+              }
               <span class="weight-unit">KG producto</span>
-              <button
-                type="button"
-                class="weight-detect"
-                [disabled]="leyendoPesoId() != null"
-                (click)="detectarPeso(item.productoId)"
-              >
-                {{ leyendoPesoId() === item.productoId ? 'Leyendo...' : 'Detectar peso' }}
-              </button>
+              @if (permiteBascula()) {
+                <button
+                  type="button"
+                  class="weight-detect"
+                  [disabled]="leyendoPesoId() != null"
+                  (click)="detectarPeso(item.productoId)"
+                >
+                  {{ leyendoPesoId() === item.productoId ? 'Leyendo...' : 'Detectar peso' }}
+                </button>
+              }
             </div>
             <div class="item-pricing">
               <span class="price-kg">

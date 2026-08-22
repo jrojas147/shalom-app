@@ -149,13 +149,28 @@
                 <td class="gestion-compras-modal__peso">
                   @if (editMode()) {
                     <div class="weight-inline">
-                      <button type="button" (click)="ajustarPeso(item.productoId, -0.5)">−</button>
+                      @if (permiteManual()) {
+                        <button type="button" (click)="ajustarPeso(item.productoId, -0.5)">−</button>
+                      }
                       <input
                         type="text"
                         [value]="formatPeso(item.pesoKg)"
+                        [readonly]="!permiteManual()"
                         (change)="onPesoInput(item.productoId, $any($event.target).value)"
                       />
-                      <button type="button" (click)="ajustarPeso(item.productoId, 0.5)">+</button>
+                      @if (permiteManual()) {
+                        <button type="button" (click)="ajustarPeso(item.productoId, 0.5)">+</button>
+                      }
+                      @if (permiteBascula()) {
+                        <button
+                          type="button"
+                          class="weight-detect"
+                          [disabled]="leyendoPesoId() != null"
+                          (click)="detectarPeso(item.productoId)"
+                        >
+                          {{ leyendoPesoId() === item.productoId ? 'Leyendo...' : 'Detectar' }}
+                        </button>
+                      }
                     </div>
                   } @else {
                     {{ formatPeso(item.pesoKg) }}

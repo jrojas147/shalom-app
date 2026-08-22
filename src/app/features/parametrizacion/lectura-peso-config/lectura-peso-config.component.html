@@ -1,0 +1,53 @@
+<section class="param-block">
+  <h2 class="param-block__title">Lectura de peso</h2>
+  <p class="param-block__desc">
+    Defina si el peso en pre-compra y venta se captura con báscula, de forma manual, o con ambas
+    opciones.
+  </p>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando...</p>
+  } @else {
+    <form class="lectura-peso-form" [formGroup]="form" (ngSubmit)="save()">
+      <fieldset class="lectura-peso-group">
+        <legend>Pre-compra</legend>
+        @for (opcion of opciones; track opcion.id) {
+          <label class="lectura-peso-option" [class.lectura-peso-option--activa]="form.controls.preCompra.value === opcion.id">
+            <input type="radio" formControlName="preCompra" [value]="opcion.id" />
+            <span>
+              <strong>{{ opcion.titulo }}</strong>
+              <em>{{ opcion.descripcion }}</em>
+            </span>
+          </label>
+        }
+      </fieldset>
+
+      <fieldset class="lectura-peso-group">
+        <legend>Venta</legend>
+        @for (opcion of opciones; track opcion.id) {
+          <label class="lectura-peso-option" [class.lectura-peso-option--activa]="form.controls.venta.value === opcion.id">
+            <input type="radio" formControlName="venta" [value]="opcion.id" />
+            <span>
+              <strong>{{ opcion.titulo }}</strong>
+              <em>{{ opcion.descripcion }}</em>
+            </span>
+          </label>
+        }
+      </fieldset>
+
+      <div class="lectura-peso-actions">
+        <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving() || form.pristine">
+          {{ saving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

@@ -13,10 +13,17 @@ import {
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
+import {
+  permiteIngresoManual,
+  permiteLecturaBascula,
+  TipoLecturaPeso,
+} from '../../core/models/configuracion-lectura-peso.model';
 import { AuthService } from '../../core/services/auth.service';
+import { BasculaService } from '../../core/services/bascula.service';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { CompraFacturaPrintService } from '../../core/services/compra-factura-print.service';
 import { ComprasService } from '../../core/services/compras.service';
+import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { pesoEmpaqueKg, pesoNetoKg } from '../../core/utils/empaque-peso.util';
@@ -34,6 +41,8 @@ export class ComprasComponent implements OnInit {
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly comprasService = inject(ComprasService);
+  private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
+  private readonly basculaService = inject(BasculaService);
   private readonly auth = inject(AuthService);
   private readonly facturaPrintService = inject(CompraFacturaPrintService);
 
@@ -55,6 +64,13 @@ export class ComprasComponent implements OnInit {
   readonly mensaje = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly factura = signal('—');
+  readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
+  readonly leyendoPesoId = signal<number | null>(null);
+
+  readonly permiteManual = computed(() => permiteIngresoManual(this.lecturaPeso()));
+  readonly permiteBascula = computed(() =>
+    permiteLecturaBascula(this.lecturaPeso(), false)
+  );
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
@@ -115,6 +131,11 @@ export class ComprasComponent implements OnInit {
       next: (data) => this.tiposEmpaque.set(data),
       error: () => this.tiposEmpaque.set([]),
     });
+
+    this.configuracionLecturaPesoService.get().subscribe({
+      next: (data) => this.lecturaPeso.set(data.preCompra),
+      error: () => this.lecturaPeso.set('MANUAL'),
+    });
   }
 
   onBusqueda(value: string): void {
@@ -135,7 +156,9 @@ export class ComprasComponent implements OnInit {
 
     const existente = this.items().find((i) => i.productoId === producto.id);
     if (existente) {
-      this.ajustarPeso(producto.id, 0.5);
+      if (this.permiteManual()) {
+        this.ajustarPeso(producto.id, 0.5);
+      }
       return;
     }
 
@@ -153,6 +176,9 @@ export class ComprasComponent implements OnInit {
   }
 
   ajustarPeso(productoId: number, delta: number): void {
+    if (!this.permiteManual()) {
+      return;
+    }
     this.items.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
@@ -164,6 +190,9 @@ export class ComprasComponent implements OnInit {
   }
 
   onPesoInput(productoId: number, value: string): void {
+    if (!this.permiteManual()) {
+      return;
+    }
     const parsed = parseFloat(value.replace(',', '.'));
     if (Number.isNaN(parsed)) return;
     this.items.update((list) =>
@@ -173,6 +202,59 @@ export class ComprasComponent implements OnInit {
         return { ...item, pesoKg: Math.max(minimo, parsed) };
       })
     );
+  }
+
+  detectarPeso(productoId: number): void {
+    if (!this.permiteBascula() || this.leyendoPesoId() != null) {
+      return;
+    }
+
+    this.leyendoPesoId.set(productoId);
+    this.error.set(null);
+    this.mensaje.set(null);
+
+    this.basculaService.leerPeso().subscribe({
+      next: (lectura) => {
+        const kg = Number(lectura.pesoKg ?? lectura.gramos / 1000);
+        this.leyendoPesoId.set(null);
+        if (!Number.isFinite(kg) || kg <= 0) {
+          this.error.set('La báscula devolvió un peso inválido.');
+          return;
+        }
+        if (this.aplicarPesoBrutoKg(productoId, kg)) {
+          this.mensaje.set(
+            `Peso detectado: ${this.formatPeso(kg)} KG (${lectura.gramos} g)`
+          );
+        }
+      },
+      error: (err) => {
+        this.leyendoPesoId.set(null);
+        this.error.set(this.extractErrorMessage(err, 'No se pudo leer la báscula.'));
+      },
+    });
+  }
+
+  private aplicarPesoBrutoKg(productoId: number, kg: number): boolean {
+    const actual = this.items().find((i) => i.productoId === productoId);
+    if (!actual) return false;
+
+    const tara = pesoEmpaqueKg(this.tiposEmpaque(), actual.empaque);
+    if (kg + 0.0005 < tara) {
+      this.error.set(
+        `El peso detectado (${this.formatPeso(kg)} KG) es menor que la tara del empaque.`
+      );
+      return false;
+    }
+
+    const bruto = Math.max(tara, Math.round(kg * 1000) / 1000);
+
+    this.error.set(null);
+    this.items.update((list) =>
+      list.map((item) =>
+        item.productoId === productoId ? { ...item, pesoKg: bruto } : item
+      )
+    );
+    return true;
   }
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
@@ -309,15 +391,16 @@ export class ComprasComponent implements OnInit {
       });
   }
 
-  private extractErrorMessage(err: {
-    error?: { message?: string; errors?: Record<string, string> };
-  }): string {
+  private extractErrorMessage(
+    err: { error?: { message?: string; errors?: Record<string, string> } },
+    fallback = 'No se pudo registrar la pre-compra.'
+  ): string {
     const body = err.error;
     if (body?.errors) {
       const first = Object.values(body.errors)[0];
       if (first) return first;
     }
-    return body?.message ?? 'No se pudo registrar la pre-compra.';
+    return body?.message ?? fallback;
   }
 
   private imprimirFactura(

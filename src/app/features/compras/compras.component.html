@@ -127,15 +127,32 @@
           </div>
           <div class="item-bottom">
             <div class="weight-control">
-              <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
+              @if (permiteManual()) {
+                <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
+              }
               <input
                 type="text"
+                inputmode="decimal"
+                class="weight-input"
                 [value]="formatPeso(item.pesoKg)"
+                [readonly]="!permiteManual()"
                 (change)="onPesoInput(item.productoId, $any($event.target).value)"
-                title="Peso bruto"
+                [title]="permiteManual() ? 'Peso bruto. Puede editarlo a mano.' : 'Peso bruto leído desde la báscula.'"
               />
-              <button type="button" (click)="ajustarPeso(item.productoId, 0.5)" aria-label="Más peso">+</button>
+              @if (permiteManual()) {
+                <button type="button" (click)="ajustarPeso(item.productoId, 0.5)" aria-label="Más peso">+</button>
+              }
               <span class="weight-unit">KG bruto</span>
+              @if (permiteBascula()) {
+                <button
+                  type="button"
+                  class="weight-detect"
+                  [disabled]="leyendoPesoId() != null"
+                  (click)="detectarPeso(item.productoId)"
+                >
+                  {{ leyendoPesoId() === item.productoId ? 'Leyendo...' : 'Detectar peso' }}
+                </button>
+              }
             </div>
             <div class="item-pricing">
               <span class="price-kg">

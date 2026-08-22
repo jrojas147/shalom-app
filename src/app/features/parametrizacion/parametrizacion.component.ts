@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { CodigosCiiuConfigComponent } from './codigos-ciiu-config/codigos-ciiu-config.component';
+import { LecturaPesoConfigComponent } from './lectura-peso-config/lectura-peso-config.component';
 import { MediosCajaConfigComponent } from './medios-caja-config/medios-caja-config.component';
 import { TiposEmpaqueConfigComponent } from './tipos-empaque-config/tipos-empaque-config.component';
 import { TiposGastoConfigComponent } from './tipos-gasto-config/tipos-gasto-config.component';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
-export type CatalogoParamId = 'ciiu' | 'empaque' | 'gasto' | 'medios';
+export type CatalogoParamId = 'ciiu' | 'empaque' | 'gasto' | 'medios' | 'lectura-peso';
 
 interface CatalogoParam {
   id: CatalogoParamId;
@@ -21,6 +22,7 @@ interface CatalogoParam {
     TiposEmpaqueConfigComponent,
     MediosCajaConfigComponent,
     TiposGastoConfigComponent,
+    LecturaPesoConfigComponent,
     RpModalComponent,
   ],
   templateUrl: './parametrizacion.component.html',
@@ -47,6 +49,11 @@ export class ParametrizacionComponent {
       id: 'medios',
       titulo: 'Medios de pago de caja',
       descripcion: 'Efectivo, Nequi, Daviplata y cuentas bancarias.',
+    },
+    {
+      id: 'lectura-peso',
+      titulo: 'Lectura de peso',
+      descripcion: 'Báscula o ingreso manual en pre-compra y venta.',
     },
   ];
 

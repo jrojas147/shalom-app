@@ -13,7 +13,14 @@ import {
 import { CompraDetalleItem, EmpaqueTipo } from '../../core/models/compra.model';
 import { Producto, productoPrecioKg } from '../../core/models/producto.model';
 import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
+import {
+  permiteIngresoManual,
+  permiteLecturaBascula,
+  TipoLecturaPeso,
+} from '../../core/models/configuracion-lectura-peso.model';
+import { BasculaService } from '../../core/services/bascula.service';
 import { ComprasService } from '../../core/services/compras.service';
+import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { pesoEmpaqueKg, pesoNetoKg } from '../../core/utils/empaque-peso.util';
@@ -37,6 +44,8 @@ export class GestionComprasComponent implements OnInit {
   private readonly comprasService = inject(ComprasService);
   private readonly productosService = inject(ProductosService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
+  private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
+  private readonly basculaService = inject(BasculaService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly compraProveedorEtiqueta = compraProveedorEtiqueta;
@@ -50,6 +59,13 @@ export class GestionComprasComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
+  readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
+  readonly leyendoPesoId = signal<number | null>(null);
+
+  readonly permiteManual = computed(() => permiteIngresoManual(this.lecturaPeso()));
+  readonly permiteBascula = computed(() =>
+    permiteLecturaBascula(this.lecturaPeso(), false)
+  );
 
   readonly compraSeleccionada = signal<Compra | null>(null);
   readonly editMode = signal(false);
@@ -78,6 +94,10 @@ export class GestionComprasComponent implements OnInit {
     this.tiposEmpaqueService.getAll().subscribe({
       next: (data) => this.tiposEmpaque.set(data),
       error: () => this.tiposEmpaque.set([]),
+    });
+    this.configuracionLecturaPesoService.get().subscribe({
+      next: (data) => this.lecturaPeso.set(data.preCompra),
+      error: () => this.lecturaPeso.set('MANUAL'),
     });
   }
 
@@ -144,6 +164,9 @@ export class GestionComprasComponent implements OnInit {
   }
 
   ajustarPeso(productoId: number, delta: number): void {
+    if (!this.permiteManual()) {
+      return;
+    }
     this.itemsEdit.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
@@ -155,6 +178,9 @@ export class GestionComprasComponent implements OnInit {
   }
 
   onPesoInput(productoId: number, value: string): void {
+    if (!this.permiteManual()) {
+      return;
+    }
     const parsed = parseFloat(value.replace(',', '.'));
     if (Number.isNaN(parsed)) return;
     this.itemsEdit.update((list) =>
@@ -164,6 +190,49 @@ export class GestionComprasComponent implements OnInit {
         return { ...item, pesoKg: Math.max(minimo, parsed) };
       })
     );
+  }
+
+  detectarPeso(productoId: number): void {
+    if (!this.permiteBascula() || this.leyendoPesoId() != null) {
+      return;
+    }
+
+    this.leyendoPesoId.set(productoId);
+    this.error.set(null);
+    this.mensaje.set(null);
+
+    this.basculaService.leerPeso().subscribe({
+      next: (lectura) => {
+        const kg = Number(lectura.pesoKg ?? lectura.gramos / 1000);
+        this.leyendoPesoId.set(null);
+        if (!Number.isFinite(kg) || kg <= 0) {
+          this.error.set('La báscula devolvió un peso inválido.');
+          return;
+        }
+        const actual = this.itemsEdit().find((i) => i.productoId === productoId);
+        if (!actual) return;
+        const tara = pesoEmpaqueKg(this.tiposEmpaque(), actual.empaque);
+        if (kg + 0.0005 < tara) {
+          this.error.set(
+            `El peso detectado (${this.formatPeso(kg)} KG) es menor que la tara del empaque.`
+          );
+          return;
+        }
+        const bruto = Math.max(tara, Math.round(kg * 1000) / 1000);
+        this.itemsEdit.update((list) =>
+          list.map((item) =>
+            item.productoId === productoId ? { ...item, pesoKg: bruto } : item
+          )
+        );
+        this.mensaje.set(
+          `Peso detectado: ${this.formatPeso(kg)} KG (${lectura.gramos} g)`
+        );
+      },
+      error: (err) => {
+        this.leyendoPesoId.set(null);
+        this.error.set(this.extractErrorMessage(err, 'No se pudo leer la báscula.'));
+      },
+    });
   }
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
@@ -394,14 +463,15 @@ export class GestionComprasComponent implements OnInit {
     };
   }
 
-  private extractErrorMessage(err: {
-    error?: { message?: string; errors?: Record<string, string> };
-  }): string {
+  private extractErrorMessage(
+    err: { error?: { message?: string; errors?: Record<string, string> } },
+    fallback = 'Ocurrió un error al procesar la solicitud.'
+  ): string {
     const body = err.error;
     if (body?.errors) {
       const first = Object.values(body.errors)[0];
       if (first) return first;
     }
-    return body?.message ?? 'Ocurrió un error al procesar la solicitud.';
+    return body?.message ?? fallback;
   }
 }
