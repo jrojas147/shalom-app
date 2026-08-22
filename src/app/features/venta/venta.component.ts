@@ -18,6 +18,7 @@ import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { VentasService } from '../../core/services/ventas.service';
+import { BasculaService } from '../../core/services/bascula.service';
 import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
 import { VentaClienteModalComponent } from './venta-cliente-modal/venta-cliente-modal.component';
 import { CajaSaldo } from '../../core/models/caja.model';
@@ -45,6 +46,7 @@ export class VentaComponent implements OnInit {
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly ventasService = inject(VentasService);
+  private readonly basculaService = inject(BasculaService);
   private readonly cajaService = inject(CajaService);
   private readonly mediosCajaService = inject(MediosCajaService);
 
@@ -70,6 +72,7 @@ export class VentaComponent implements OnInit {
   readonly factura = signal('—');
   readonly mediosPago = signal<MedioPagoOpcion[]>([]);
   readonly medioPagoId = signal<number | null>(null);
+  readonly leyendoPesoId = signal<number | null>(null);
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
@@ -239,20 +242,54 @@ export class VentaComponent implements OnInit {
   }
 
   onPesoInput(productoId: number, value: string): void {
-    const parsed = parseFloat(value.replace(',', '.'));
+    const parsed = parseFloat(String(value ?? '').replace(',', '.'));
     if (Number.isNaN(parsed)) return;
+    this.aplicarPesoKg(productoId, parsed, 0.001);
+  }
 
+  detectarPeso(productoId: number): void {
+    if (this.leyendoPesoId() != null) {
+      return;
+    }
+
+    this.leyendoPesoId.set(productoId);
+    this.error.set(null);
+    this.mensaje.set(null);
+
+    this.basculaService.leerPeso().subscribe({
+      next: (lectura) => {
+        const kg = Number(lectura.pesoKg ?? lectura.gramos / 1000);
+        this.leyendoPesoId.set(null);
+        if (!Number.isFinite(kg) || kg <= 0) {
+          this.error.set('La báscula devolvió un peso inválido.');
+          return;
+        }
+        const aplicado = this.aplicarPesoKg(productoId, kg, 0.001);
+        if (aplicado) {
+          this.mensaje.set(
+            `Peso detectado: ${this.formatPeso(kg)} KG (${lectura.gramos} g)`
+          );
+        }
+      },
+      error: (err) => {
+        this.leyendoPesoId.set(null);
+        this.error.set(this.extractErrorMessage(err, 'No se pudo leer la báscula.'));
+      },
+    });
+  }
+
+  private aplicarPesoKg(productoId: number, kg: number, minimo: number): boolean {
     const stock = this.stockProducto(productoId);
     const actual = this.items().find((i) => i.productoId === productoId);
-    if (!actual) return;
+    if (!actual) return false;
 
-    const neto = Math.max(0.5, parsed);
+    const neto = Math.max(minimo, Math.round(kg * 1000) / 1000);
     if (neto > stock) {
       this.error.set(
         `Stock insuficiente para ${actual.producto.nombreInterno}. Disponible: ${this.formatPeso(stock)} KG`
       );
       this.items.update((list) => [...list]);
-      return;
+      return false;
     }
 
     this.error.set(null);
@@ -261,6 +298,7 @@ export class VentaComponent implements OnInit {
         item.productoId === productoId ? { ...item, pesoKg: neto } : item
       )
     );
+    return true;
   }
 
   puedeAumentarPeso(productoId: number, pesoActual: number): boolean {
@@ -526,14 +564,15 @@ export class VentaComponent implements OnInit {
     });
   }
 
-  private extractErrorMessage(err: {
-    error?: { message?: string; errors?: Record<string, string> };
-  }): string {
+  private extractErrorMessage(
+    err: { error?: { message?: string; errors?: Record<string, string> } },
+    fallback = 'No se pudo registrar la venta.'
+  ): string {
     const body = err.error;
     if (body?.errors) {
       const first = Object.values(body.errors)[0];
       if (first) return first;
     }
-    return body?.message ?? 'No se pudo registrar la venta.';
+    return body?.message ?? fallback;
   }
 }

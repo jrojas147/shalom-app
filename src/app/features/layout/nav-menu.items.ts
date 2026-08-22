@@ -9,7 +9,7 @@ export interface NavMenuItem {
 }
 
 const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
-  { label: 'Inicio', route: '/app/inicio', icon: 'inicio' },
+  { label: 'Control', route: '/app/inicio', icon: 'inicio' },
   { label: 'Compras', route: '/app/compras', icon: 'compra' },
   { label: 'Caja', route: '/app/caja', icon: 'caja' },
   { label: 'Venta', route: '/app/venta', icon: 'venta' },
@@ -17,7 +17,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Gastos', route: '/app/gastos', icon: 'gastos' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },
   { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
-  { label: 'Movimientos', route: '/app/movimientos', icon: 'movimientos' },
+  { label: 'Translados', route: '/app/movimientos', icon: 'movimientos' },
   { label: 'Proveedores', route: '/app/proveedores', icon: 'proveedores' },
   { label: 'Sucursales', route: '/app/sucursales', icon: 'sucursales' },
   { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },

@@ -131,9 +131,14 @@
               <button type="button" (click)="ajustarPeso(item.productoId, -0.5)" aria-label="Menos peso">−</button>
               <input
                 type="text"
-                [value]="formatPeso(item.pesoKg)"
-                (change)="onPesoInput(item.productoId, $any($event.target).value)"
-                title="Peso del producto (neto)"
+                inputmode="decimal"
+                class="weight-input"
+                [id]="'venta-peso-' + item.productoId"
+                [name]="'venta-peso-' + item.productoId"
+                [ngModel]="formatPeso(item.pesoKg)"
+                [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                (ngModelChange)="onPesoInput(item.productoId, $event)"
+                title="Peso del producto (neto). Puede editarlo a mano."
               />
               <button
                 type="button"
@@ -142,6 +147,14 @@
                 aria-label="Más peso"
               >+</button>
               <span class="weight-unit">KG producto</span>
+              <button
+                type="button"
+                class="weight-detect"
+                [disabled]="leyendoPesoId() != null"
+                (click)="detectarPeso(item.productoId)"
+              >
+                {{ leyendoPesoId() === item.productoId ? 'Leyendo...' : 'Detectar peso' }}
+              </button>
             </div>
             <div class="item-pricing">
               <span class="price-kg">

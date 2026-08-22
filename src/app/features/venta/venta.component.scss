@@ -71,3 +71,26 @@
   flex-wrap: wrap;
   gap: var(--spacing-sm);
 }
+
+.weight-control {
+  flex-wrap: wrap;
+}
+
+.weight-control input.weight-input {
+  width: 4.75rem;
+  pointer-events: auto;
+  cursor: text;
+  background: var(--rp-surface);
+}
+
+.weight-detect {
+  width: auto !important;
+  min-width: auto;
+  padding: 0 0.6rem;
+  font-size: 0.75rem !important;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--rp-primary) !important;
+  border-color: var(--rp-primary) !important;
+  background: var(--rp-surface) !important;
+}
