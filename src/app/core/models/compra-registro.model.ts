@@ -20,6 +20,9 @@ export interface CompraResumen {
   totalSemana: number;
   pesoSemana: number;
   cantidadSemana: number;
+  totalMes: number;
+  pesoMes: number;
+  cantidadMes: number;
 }
 
 export interface Compra {

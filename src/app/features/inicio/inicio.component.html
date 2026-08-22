@@ -41,6 +41,23 @@
       }
     </div>
 
+    <div class="rp-metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Compras mes</span>
+      </div>
+      @if (loadingCompras()) {
+        <strong class="metric-value">Cargando…</strong>
+      } @else if (comprasError()) {
+        <strong class="metric-value">—</strong>
+        <span class="cell-secondary">{{ comprasError() }}</span>
+      } @else {
+        <strong class="metric-value">{{ formatCurrency(resumenCompras()?.totalMes) }}</strong>
+        <span class="cell-secondary">
+          {{ formatPeso(resumenCompras()?.pesoMes) }} KG · {{ resumenCompras()?.cantidadMes ?? 0 }} compra(s)
+        </span>
+      }
+    </div>
+
     <!--Se oculta caja
     <div class="rp-metric-card">
       <div class="metric-header">
@@ -67,10 +84,6 @@
       }
     </div>
     -->
-
-
-
-
 
     <div class="rp-metric-card">
       <div class="metric-header">
@@ -101,70 +114,4 @@
       }
     </div>
   </div>
-
-  <section class="rp-panel">
-    <div class="panel-header">
-      <h2>Pagos pendientes</h2>
-      <a routerLink="/app/liquidacion" class="link">Ir a Retribución</a>
-    </div>
-
-    @if (pagosError()) {
-      <div class="rp-alert rp-alert--error">{{ pagosError() }}</div>
-    }
-
-    @if (loadingPagos()) {
-      <p class="rp-loading">Cargando pagos pendientes...</p>
-    } @else {
-      <table class="rp-table">
-        <thead>
-          <tr>
-            <th>Tipo</th>
-            <th>Proveedor</th>
-            <th>Documento</th>
-            <th>Teléfono</th>
-            <th>Compras</th>
-            <th>Peso pendiente</th>
-            <th>Total pendiente</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of pagosPendientes(); track item.tipo + '-' + item.proveedorId) {
-            <tr>
-              <td>
-                <span
-                  class="rp-badge"
-                  [class.rp-badge--warning]="item.tipo === 'INTERNO'"
-                  [class.rp-badge--primary]="item.tipo === 'EXTERNO'"
-                >
-                  {{ item.tipo === 'INTERNO' ? 'Interno' : 'Externo' }}
-                </span>
-              </td>
-              <td class="cell-primary">{{ item.nombre }}</td>
-              <td class="cell-secondary">
-                @if (item.documento) {
-                  {{ item.tipoDocumento }} {{ item.documento }}
-                } @else {
-                  —
-                }
-              </td>
-              <td class="cell-secondary">{{ item.telefono || '—' }}</td>
-              <td class="cell-secondary">{{ item.cantidadCompras }}</td>
-              <td class="cell-secondary">{{ formatPeso(item.pesoTotalPendiente) }} KG</td>
-              <td>
-                <span class="rp-badge rp-badge--warning">
-                  {{ formatCurrency(item.totalPendiente) }}
-                </span>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="rp-empty">
-                No hay pagos pendientes de recicladores internos ni externos
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </section>
 </div>

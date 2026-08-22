@@ -1,24 +1,16 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { CajaService } from '../../core/services/caja.service';
 import { HealthService } from '../../core/services/health.service';
 import { InicioService } from '../../core/services/inicio.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { CompraResumen } from '../../core/models/compra-registro.model';
-import {
-  mapExternoPendiente,
-  mapInternoPendiente,
-  RetribucionExterno,
-  RetribucionInterno,
-  RetribucionProveedorPendiente,
-} from '../../core/models/retribucion.model';
+import { RetribucionExterno, RetribucionInterno } from '../../core/models/retribucion.model';
 import { HealthResponse } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [RouterLink],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.scss',
 })
@@ -61,11 +53,6 @@ export class InicioComponent implements OnInit {
   readonly cantidadComprasExternos = computed(() =>
     this.sumCompras(this.pagosExternos())
   );
-
-  readonly pagosPendientes = computed<RetribucionProveedorPendiente[]>(() => [
-    ...this.pagosInternos().map(mapInternoPendiente),
-    ...this.pagosExternos().map(mapExternoPendiente),
-  ]);
 
   ngOnInit(): void {
     this.cargarResumenCompras();
@@ -193,6 +180,9 @@ export class InicioComponent implements OnInit {
       totalSemana: this.toNumber(raw.totalSemana),
       pesoSemana: this.toNumber(raw.pesoSemana),
       cantidadSemana: this.toNumber(raw.cantidadSemana),
+      totalMes: this.toNumber(raw.totalMes),
+      pesoMes: this.toNumber(raw.pesoMes),
+      cantidadMes: this.toNumber(raw.cantidadMes),
     };
   }
 
