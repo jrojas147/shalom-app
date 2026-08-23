@@ -16,6 +16,7 @@ export interface PagoComprobanteData {
   beneficiarioNombre: string;
   beneficiarioDocumento?: string | null;
   sucursalNombre?: string | null;
+  anticipoInicial?: number;
   items: PagoComprobanteItem[];
   total: number;
   totalCompra?: number;

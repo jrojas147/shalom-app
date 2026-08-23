@@ -14,6 +14,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { CajaService } from '../../core/services/caja.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { PagoComprobantePrintService } from '../../core/services/pago-comprobante-print.service';
+import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
@@ -32,6 +33,7 @@ export class RetribucionComponent implements OnInit {
   private readonly confirmDialog = inject(RpConfirmDialogService);
   private readonly auth = inject(AuthService);
   private readonly pagoPrintService = inject(PagoComprobantePrintService);
+  private readonly proveedoresInternosService = inject(ProveedoresInternosService);
 
   readonly tabs = PROVEEDOR_TABS;
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
@@ -56,6 +58,7 @@ export class RetribucionComponent implements OnInit {
   readonly loadingCaja = signal(false);
   readonly cajaSaldos = signal<CajaSaldo[]>([]);
   readonly medioPagoId = signal<number | null>(null);
+  readonly anticipoInicial = signal(0);
 
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
@@ -110,6 +113,7 @@ export class RetribucionComponent implements OnInit {
     this.comprasPendientes.set([]);
     this.errorModal.set(null);
     this.loadingCompras.set(true);
+    this.cargarAnticipoInicial(item);
 
     this.cargarComprasPendientes(item).subscribe({
       next: (data) => {
@@ -126,6 +130,7 @@ export class RetribucionComponent implements OnInit {
   cerrarValidacion(): void {
     this.cerrarDetalle();
     this.proveedorSeleccionado.set(null);
+    this.anticipoInicial.set(0);
     this.comprasPendientes.set([]);
     this.errorModal.set(null);
     this.loadingCompras.set(false);
@@ -360,6 +365,7 @@ export class RetribucionComponent implements OnInit {
       beneficiarioNombre: proveedor?.nombre ?? compra.proveedorNombre ?? fallbackNombre,
       beneficiarioDocumento: documento,
       sucursalNombre: compra.sucursalNombre,
+      anticipoInicial: this.anticipoInicial(),
       items: (compra.detalle ?? []).map((linea) => {
         const unidades = linea.unidades && linea.unidades > 0 ? linea.unidades : undefined;
         const subtotal = Number(linea.subtotal) || 0;
@@ -412,6 +418,22 @@ export class RetribucionComponent implements OnInit {
     }
     const efectivo = saldos.find((saldo) => saldo.medioTipo === 'EFECTIVO');
     this.medioPagoId.set(efectivo?.medioCajaId ?? saldos[0]?.medioCajaId ?? null);
+  }
+
+  private cargarAnticipoInicial(proveedor: RetribucionProveedorPendiente): void {
+    if (proveedor.tipo !== 'INTERNO') {
+      this.anticipoInicial.set(0);
+      return;
+    }
+
+    this.proveedoresInternosService.listarAnticipos(proveedor.proveedorId).subscribe({
+      next: (anticipos) => {
+        this.anticipoInicial.set(
+          (anticipos ?? []).reduce((sum, item) => sum + (Number(item.monto) || 0), 0)
+        );
+      },
+      error: () => this.anticipoInicial.set(0),
+    });
   }
 
   private cargarComprasPendientes(proveedor: RetribucionProveedorPendiente) {

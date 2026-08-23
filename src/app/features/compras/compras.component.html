@@ -79,6 +79,11 @@
           <div class="detail-proveedor">
             <strong>{{ compraProveedorEtiqueta(proveedor) }}</strong>
             <span class="detail-proveedor__tipo">{{ compraProveedorTipoLabel(proveedor.tipo) }}</span>
+            @if (anticipoInicial() > 0) {
+              <span class="detail-proveedor__saldo">
+                Anticipo {{ formatCurrency(anticipoInicial()) }}
+              </span>
+            }
           </div>
         } @else {
           <strong class="muted">Sin proveedor</strong>
@@ -207,9 +212,15 @@
         <span>Peso neto total</span>
         <span>{{ formatPeso(pesoNetoTotal()) }} KG</span>
       </div>
+      @if (anticipoAplicable() > 0) {
+        <div class="summary-row">
+          <span>(-) Saldo a favor</span>
+          <span>{{ formatCurrency(anticipoAplicable()) }}</span>
+        </div>
+      }
       <div class="summary-total">
         <span>Total a Pagar</span>
-        <strong>{{ formatCurrency(subtotal()) }}</strong>
+        <strong>{{ formatCurrency(netoAPagar()) }}</strong>
       </div>
 
       <button

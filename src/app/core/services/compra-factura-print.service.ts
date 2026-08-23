@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  compraProveedorTipoLabel,
-  CompraProveedorSeleccion,
-} from '../models/compra-proveedor.model';
+import { compraProveedorTipoLabel } from '../models/compra-proveedor.model';
 import { CompraFacturaData } from '../models/compra-factura.model';
 
 @Injectable({ providedIn: 'root' })
@@ -101,8 +98,8 @@ export class CompraFacturaPrintService {
     <div class="ticket__muted">${this.escapeHtml(data.usuarioUsername)}</div>
 
     <div class="ticket__divider"></div>
-    <div class="ticket__section-title">PROVEEDOR</div>
-    ${this.buildProveedorHtml(data.proveedor)}
+    <div class="ticket__section-title">BENEFICIARIO</div>
+    ${this.buildProveedorHtml(data)}
 
     <div class="ticket__divider"></div>
     <div class="ticket__section-title">DETALLE</div>
@@ -140,7 +137,7 @@ export class CompraFacturaPrintService {
 
     <div class="ticket__divider"></div>
     <div class="ticket__row"><span>Peso bruto total</span><strong>${this.formatPeso(data.pesoTotal)} KG</strong></div>
-    <div class="ticket__row ticket__total"><span>TOTAL A PAGAR</span><strong>${this.formatMoney(data.total)}</strong></div>
+    ${this.buildTotalesHtml(data)}
 
     <div class="ticket__divider"></div>
     <div class="ticket__center ticket__footer">Gracias por su preferencia</div>
@@ -157,8 +154,30 @@ export class CompraFacturaPrintService {
 </html>`;
   }
 
-  private buildProveedorHtml(proveedor: CompraProveedorSeleccion): string {
+  private buildTotalesHtml(data: CompraFacturaData): string {
+    const saldo = Number(data.saldoAFavor) || 0;
+    const aplicado = Math.min(Number(data.total) || 0, Math.max(0, saldo));
+    const neto = Math.max(0, (Number(data.total) || 0) - aplicado);
+    const lines = [
+      `<div class="ticket__row"><span>Total</span><strong>${this.formatMoney(data.total)}</strong></div>`,
+    ];
+
+    if (aplicado > 0) {
+      lines.push(
+        `<div class="ticket__row"><span>(-) Saldo a favor</span><strong>${this.formatMoney(aplicado)}</strong></div>`
+      );
+    }
+
+    lines.push(
+      `<div class="ticket__row ticket__total"><span>TOTAL A PAGAR</span><strong>${this.formatMoney(neto)}</strong></div>`
+    );
+    return lines.join('');
+  }
+
+  private buildProveedorHtml(data: CompraFacturaData): string {
+    const proveedor = data.proveedor;
     const tipo = compraProveedorTipoLabel(proveedor.tipo);
+    const anticipoInicial = Number(data.anticipoInicial) || 0;
     const lines = [
       `<div class="ticket__row"><span>Tipo</span><span>${tipo}</span></div>`,
       `<div class="ticket__line">${this.escapeHtml(proveedor.nombre)}</div>`,
@@ -166,6 +185,12 @@ export class CompraFacturaPrintService {
 
     if (proveedor.documento) {
       lines.push(`<div class="ticket__muted">Doc: ${this.escapeHtml(proveedor.documento)}</div>`);
+    }
+
+    if (anticipoInicial > 0) {
+      lines.push(
+        `<div class="ticket__row"><span>Anticipo</span><strong>${this.formatMoney(anticipoInicial)}</strong></div>`
+      );
     }
 
     if (proveedor.tipo === 'INTERNO' && proveedor.sucursalNombre) {

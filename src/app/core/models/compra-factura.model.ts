@@ -18,5 +18,7 @@ export interface CompraFacturaData {
   proveedor: CompraProveedorSeleccion;
   items: CompraFacturaItem[];
   total: number;
+  saldoAFavor?: number;
+  anticipoInicial?: number;
   pesoTotal: number;
 }

@@ -108,6 +108,11 @@ export class PagoComprobantePrintService {
         ? `<div class="ticket__muted">Sucursal: ${this.escapeHtml(data.sucursalNombre)}</div>`
         : ''
     }
+    ${
+      data.anticipoInicial && data.anticipoInicial > 0
+        ? `<div class="ticket__row"><span>Anticipo</span><strong>${this.formatMoney(data.anticipoInicial)}</strong></div>`
+        : ''
+    }
 
     <div class="ticket__divider"></div>
     <div class="ticket__section-title">DETALLE</div>

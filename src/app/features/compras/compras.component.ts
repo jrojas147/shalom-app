@@ -23,6 +23,7 @@ import { BasculaService } from '../../core/services/bascula.service';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { CompraFacturaPrintService } from '../../core/services/compra-factura-print.service';
 import { ComprasService } from '../../core/services/compras.service';
+import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
@@ -47,6 +48,7 @@ export class ComprasComponent implements OnInit {
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly comprasService = inject(ComprasService);
+  private readonly proveedoresInternosService = inject(ProveedoresInternosService);
   private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
   private readonly basculaService = inject(BasculaService);
   private readonly auth = inject(AuthService);
@@ -65,6 +67,8 @@ export class ComprasComponent implements OnInit {
   readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
   readonly items = signal<CompraDetalleItem[]>([]);
   readonly proveedorSeleccionado = signal<CompraProveedorSeleccion | null>(null);
+  readonly saldoAFavor = signal(0);
+  readonly anticipoInicial = signal(0);
   readonly busqueda = signal('');
   readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly loading = signal(false);
@@ -105,6 +109,12 @@ export class ComprasComponent implements OnInit {
   readonly subtotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.itemTotal(item), 0)
   );
+
+  readonly anticipoAplicable = computed(() =>
+    Math.min(this.subtotal(), Math.max(0, this.saldoAFavor()))
+  );
+
+  readonly netoAPagar = computed(() => Math.max(0, this.subtotal() - this.anticipoAplicable()));
 
   readonly pesoBrutoTotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
@@ -308,6 +318,7 @@ export class ComprasComponent implements OnInit {
     this.proveedorSeleccionado.set(proveedor);
     this.showProveedorModal.set(false);
     this.error.set(null);
+    this.cargarSaldoAFavor(proveedor);
   }
 
   pesoEmpaqueItem(item: CompraDetalleItem): number {
@@ -402,9 +413,19 @@ export class ComprasComponent implements OnInit {
           this.procesando.set(false);
           this.factura.set(res.factura);
           this.mensaje.set(res.mensaje);
-          this.imprimirFactura(res.factura, proveedorSnapshot, itemsSnapshot, totalSnapshot, pesoSnapshot);
+          this.imprimirFactura(
+            res.factura,
+            proveedorSnapshot,
+            itemsSnapshot,
+            totalSnapshot,
+            pesoSnapshot,
+            this.saldoAFavor(),
+            this.anticipoInicial()
+          );
           this.items.set([]);
           this.proveedorSeleccionado.set(null);
+          this.saldoAFavor.set(0);
+          this.anticipoInicial.set(0);
         },
         error: (err) => {
           this.procesando.set(false);
@@ -430,7 +451,9 @@ export class ComprasComponent implements OnInit {
     proveedor: CompraProveedorSeleccion,
     items: CompraDetalleItem[],
     total: number,
-    pesoTotal: number
+    pesoTotal: number,
+    saldoAFavor = 0,
+    anticipoInicial = 0
   ): void {
     const user = this.auth.currentUser();
     const nombreUsuario = [user?.nombre, user?.apellido].filter(Boolean).join(' ').trim();
@@ -451,7 +474,31 @@ export class ComprasComponent implements OnInit {
         unidades: productoEsUnidad(item.producto) ? unidadesItem(item.unidades) : undefined,
       })),
       total,
+      saldoAFavor,
+      anticipoInicial,
       pesoTotal,
+    });
+  }
+
+  private cargarSaldoAFavor(proveedor: CompraProveedorSeleccion | null): void {
+    if (!proveedor || proveedor.tipo !== 'INTERNO') {
+      this.saldoAFavor.set(0);
+      this.anticipoInicial.set(0);
+      return;
+    }
+
+    this.proveedoresInternosService.listarAnticipos(proveedor.proveedorId).subscribe({
+      next: (anticipos) => {
+        const vigentes = anticipos ?? [];
+        this.anticipoInicial.set(vigentes.reduce((sum, item) => sum + (Number(item.monto) || 0), 0));
+        this.saldoAFavor.set(
+          vigentes.reduce((sum, item) => sum + (Number(item.saldoPendiente) || 0), 0)
+        );
+      },
+      error: () => {
+        this.saldoAFavor.set(0);
+        this.anticipoInicial.set(0);
+      },
     });
   }
 }

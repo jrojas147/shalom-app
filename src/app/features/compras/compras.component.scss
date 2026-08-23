@@ -304,6 +304,12 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
+
+  &__saldo {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--rp-text-secondary);
+  }
 }
 
 .detail-label {
