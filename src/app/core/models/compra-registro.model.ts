@@ -68,6 +68,9 @@ export interface RegistrarCompraResponse {
   mensaje: string;
   estado: CompraEstado;
   estadoPago: CompraEstadoPago;
+  totalCompra?: number;
+  anticipoAplicado?: number;
+  montoPagadoCaja?: number;
 }
 
 export function compraProveedorFromCompra(compra: Compra): CompraProveedorSeleccion {

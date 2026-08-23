@@ -78,6 +78,8 @@
             <th>Compras</th>
             <th>Peso pendiente</th>
             <th>Total pendiente</th>
+            <th>Anticipos</th>
+            <th>Neto a pagar</th>
             <th></th>
           </tr>
         </thead>
@@ -96,6 +98,8 @@
               <td class="cell-secondary">{{ item.cantidadCompras }}</td>
               <td class="cell-secondary">{{ formatPeso(item.pesoTotalPendiente) }} KG</td>
               <td class="cell-secondary">{{ formatCurrency(item.totalPendiente) }}</td>
+              <td class="cell-secondary">{{ formatCurrency(item.totalAnticiposPendientes || 0) }}</td>
+              <td class="cell-secondary">{{ formatCurrency(item.totalNetoPendiente) }}</td>
               <td class="cell-actions">
                 <button
                   type="button"
@@ -108,7 +112,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="rp-empty">
+              <td colspan="9" class="rp-empty">
                 No hay recicladores internos con pago pendiente
               </td>
             </tr>
@@ -197,6 +201,10 @@
             <th>Sucursal</th>
             <th>Peso</th>
             <th>Total</th>
+            @if (proveedor.tipo === 'INTERNO') {
+              <th>Anticipo</th>
+              <th>Neto</th>
+            }
             <th>Pago</th>
             <th></th>
           </tr>
@@ -211,6 +219,10 @@
               <td class="cell-secondary">{{ compra.sucursalNombre || '—' }}</td>
               <td class="cell-secondary">{{ formatPeso(compra.pesoTotal) }} KG</td>
               <td class="cell-secondary">{{ formatCurrency(compra.total) }}</td>
+              @if (proveedor.tipo === 'INTERNO') {
+                <td class="cell-secondary">{{ formatCurrency(anticipoAplicable(compra.total)) }}</td>
+                <td class="cell-secondary">{{ formatCurrency(netoAPagar(compra.total)) }}</td>
+              }
               <td>
                 <span class="rp-badge rp-badge--warning">Pendiente</span>
               </td>
@@ -226,7 +238,9 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="rp-empty">No hay compras pendientes de pago</td>
+              <td [attr.colspan]="proveedor.tipo === 'INTERNO' ? 9 : 7" class="rp-empty">
+                No hay compras pendientes de pago
+              </td>
             </tr>
           }
         </tbody>
@@ -322,16 +336,24 @@
           <div class="retribucion-detalle__totals">
             <div><span>Peso total</span><strong>{{ formatPeso(detalle.pesoTotal) }} KG</strong></div>
             <div><span>Total</span><strong>{{ formatCurrency(detalle.total) }}</strong></div>
+            @if (anticipoAplicable(detalle.total) > 0) {
+              <div><span>(-) Anticipos</span><strong>{{ formatCurrency(anticipoAplicable(detalle.total)) }}</strong></div>
+              <div><span>Neto a pagar</span><strong>{{ formatCurrency(netoAPagar(detalle.total)) }}</strong></div>
+            }
           </div>
 
           <div class="retribucion-detalle__origen">
             <h3>Origen del pago</h3>
-            <p>Seleccione el medio de caja desde el que se descontará el pago.</p>
-            @if (!cajaAbierta()) {
-              <div class="rp-alert rp-alert--error">Debe abrir la caja para registrar el pago.</div>
-            } @else if (!cajaSaldos().length) {
-              <div class="rp-alert rp-alert--error">No hay medios de pago en la caja abierta.</div>
+            @if (netoAPagar(detalle.total) === 0) {
+              <p>El anticipo cubre el total de esta compra. No se descuenta de caja.</p>
             } @else {
+              <p>Seleccione el medio de caja desde el que se descontará el neto a pagar.</p>
+            }
+            @if (netoAPagar(detalle.total) > 0 && !cajaAbierta()) {
+              <div class="rp-alert rp-alert--error">Debe abrir la caja para registrar el pago.</div>
+            } @else if (netoAPagar(detalle.total) > 0 && !cajaSaldos().length) {
+              <div class="rp-alert rp-alert--error">No hay medios de pago en la caja abierta.</div>
+            } @else if (netoAPagar(detalle.total) > 0) {
               <div class="retribucion-pago__list" role="radiogroup" aria-label="Origen de caja">
                 @for (saldo of cajaSaldos(); track saldo.medioCajaId) {
                   <button
@@ -370,7 +392,7 @@
             <button
               type="button"
               class="rp-btn rp-btn--primary"
-              [disabled]="savingPago() || !cajaAbierta() || medioPagoId() == null"
+              [disabled]="savingPago() || (netoAPagar(detalle.total) > 0 && (!cajaAbierta() || medioPagoId() == null))"
               (click)="aceptarPago()"
             >
               {{ savingPago() ? 'Registrando...' : 'Aceptar' }}

@@ -121,6 +121,14 @@
                   >
                     🏢
                   </button>
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon"
+                    (click)="openAnticipos(proveedor)"
+                    title="Anticipos"
+                  >
+                    💵
+                  </button>
                   @if (puedeGestionar()) {
                     <button
                       type="button"
@@ -1027,6 +1035,114 @@
 
     <div class="rp-form-actions proveedores-modal-actions">
       <button type="button" class="rp-btn rp-btn--primary" (click)="closeSucursalesVista()">
+        Cerrar
+      </button>
+    </div>
+  </app-rp-modal>
+}
+
+@if (anticiposProveedor(); as proveedor) {
+  <app-rp-modal
+    [title]="'Anticipos de ' + proveedor.nombre"
+    [wide]="true"
+    (closed)="closeAnticipos()"
+  >
+    @if (errorAnticipos()) {
+      <div class="rp-alert rp-alert--error">{{ errorAnticipos() }}</div>
+    }
+
+    <p class="proveedores-panel__desc">
+      Saldo pendiente de anticipos:
+      <strong>{{ formatCurrency(anticiposSaldo()) }}</strong>
+    </p>
+
+    @if (puedeGestionar()) {
+      <form class="rp-form-grid proveedores-anticipos-form" [formGroup]="anticipoForm" (ngSubmit)="registrarAnticipo()">
+        <div class="rp-field">
+          <label for="anticipoMedioCajaId">Origen de caja</label>
+          <select id="anticipoMedioCajaId" formControlName="medioCajaId">
+            <option [ngValue]="null">Seleccione el medio</option>
+            @for (saldo of anticiposSaldosCaja(); track saldo.medioCajaId) {
+              <option [ngValue]="saldo.medioCajaId">
+                {{ saldo.medioNombre }} — {{ formatCurrency(saldo.saldoActual) }}
+              </option>
+            }
+          </select>
+          @if (!anticiposCajaAbierta()) {
+            <p class="rp-hint">Abra la caja para registrar un anticipo.</p>
+          }
+        </div>
+
+        <div class="rp-field">
+          <label for="anticipoMonto">Monto</label>
+          <input
+            id="anticipoMonto"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            [value]="anticipoMontoDisplay()"
+            (input)="onAnticipoMontoInput($event)"
+          />
+        </div>
+
+        <div class="rp-field">
+          <label for="anticipoObservacion">Observación</label>
+          <input
+            id="anticipoObservacion"
+            type="text"
+            maxlength="500"
+            formControlName="observacion"
+            placeholder="Opcional"
+          />
+        </div>
+
+        <div class="rp-form-actions">
+          <button
+            type="submit"
+            class="rp-btn rp-btn--primary"
+            [disabled]="savingAnticipo() || anticipoForm.invalid || !anticiposCajaAbierta()"
+          >
+            {{ savingAnticipo() ? 'Registrando...' : 'Registrar anticipo' }}
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (loadingAnticipos()) {
+      <p class="rp-loading">Cargando anticipos...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Aplicado</th>
+            <th>Saldo</th>
+            <th>Medio</th>
+            <th>Observación</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (anticipo of anticipos(); track anticipo.id) {
+            <tr>
+              <td class="cell-secondary">{{ anticipo.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="cell-secondary">{{ formatCurrency(anticipo.monto) }}</td>
+              <td class="cell-secondary">{{ formatCurrency(anticipo.montoAplicado) }}</td>
+              <td class="cell-secondary">{{ formatCurrency(anticipo.saldoPendiente) }}</td>
+              <td class="cell-secondary">{{ anticipo.medioCajaNombre || '—' }}</td>
+              <td class="cell-secondary">{{ anticipo.observacion || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="rp-empty">Este proveedor no tiene anticipos registrados</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <div class="rp-form-actions proveedores-modal-actions">
+      <button type="button" class="rp-btn rp-btn--primary" (click)="closeAnticipos()">
         Cerrar
       </button>
     </div>

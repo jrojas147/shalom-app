@@ -3,6 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import {
+  AnticipoProveedorInterno,
+  AnticipoSaldo,
+  RegistrarAnticipoRequest,
+} from '../models/anticipo.model';
+import {
   ProveedorInterno,
   ProveedorInternoHijo,
   ProveedorInternoHijoRequest,
@@ -56,5 +61,23 @@ export class ProveedoresInternosService {
 
   deleteHijo(proveedorId: number, hijoId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${proveedorId}/hijos/${hijoId}`);
+  }
+
+  listarAnticipos(proveedorId: number): Observable<AnticipoProveedorInterno[]> {
+    return this.http.get<AnticipoProveedorInterno[]>(`${this.baseUrl}/${proveedorId}/anticipos`);
+  }
+
+  saldoAnticipos(proveedorId: number): Observable<AnticipoSaldo> {
+    return this.http.get<AnticipoSaldo>(`${this.baseUrl}/${proveedorId}/anticipos/saldo`);
+  }
+
+  registrarAnticipo(
+    proveedorId: number,
+    request: RegistrarAnticipoRequest
+  ): Observable<AnticipoProveedorInterno> {
+    return this.http.post<AnticipoProveedorInterno>(
+      `${this.baseUrl}/${proveedorId}/anticipos`,
+      request
+    );
   }
 }

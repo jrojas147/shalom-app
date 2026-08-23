@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { Compra } from '../../core/models/compra-registro.model';
+import { Compra, RegistrarCompraResponse } from '../../core/models/compra-registro.model';
 import { CajaSaldo } from '../../core/models/caja.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import {
@@ -175,7 +175,21 @@ export class RetribucionComponent implements OnInit {
   }
 
   saldoMedioInsuficiente(saldo: CajaSaldo, total: number): boolean {
-    return Number(saldo.saldoActual ?? 0) + 0.009 < total;
+    return Number(saldo.saldoActual ?? 0) + 0.009 < this.netoAPagar(total);
+  }
+
+  anticipoAplicable(total: number): number {
+    const proveedor = this.proveedorSeleccionado();
+    if (!proveedor || proveedor.tipo !== 'INTERNO') {
+      return 0;
+    }
+    const saldo = Number(proveedor.totalAnticiposPendientes) || 0;
+    const compra = Number(total) || 0;
+    return Math.min(compra, saldo);
+  }
+
+  netoAPagar(total: number): number {
+    return Math.max(0, (Number(total) || 0) - this.anticipoAplicable(total));
   }
 
   aceptarPago(): void {
@@ -191,42 +205,63 @@ export class RetribucionComponent implements OnInit {
       next: (caja) => {
         this.savingPago.set(false);
 
+        const totalCompra = Number(compra.total) || 0;
+        const anticipo = this.anticipoAplicable(totalCompra);
+        const netoPago = this.netoAPagar(totalCompra);
+
         if (!caja) {
           this.cajaAbierta.set(false);
           this.saldoCaja.set(0);
           this.cajaSaldos.set([]);
-          this.errorDetalle.set(
-            'Debe abrir la caja antes de registrar el pago de la retribución.'
-          );
-          return;
+          if (netoPago > 0) {
+            this.errorDetalle.set(
+              'Debe abrir la caja antes de registrar el pago de la retribución.'
+            );
+            return;
+          }
+        } else {
+          this.cajaAbierta.set(true);
+          this.saldoCaja.set(Number(caja.saldoActual ?? 0));
+          this.cajaSaldos.set(caja.saldos ?? []);
+          this.syncMedioPagoPorDefecto();
         }
 
-        const saldos = caja.saldos ?? [];
-        this.cajaAbierta.set(true);
-        this.saldoCaja.set(Number(caja.saldoActual ?? 0));
-        this.cajaSaldos.set(saldos);
-        this.syncMedioPagoPorDefecto();
+        const saldos = this.cajaSaldos();
 
-        const medioId = this.medioPagoId();
-        if (medioId == null) {
-          this.errorDetalle.set('Seleccione el medio de caja desde el que se realizará el pago.');
-          return;
+        if (netoPago > 0) {
+          const medioId = this.medioPagoId();
+          if (medioId == null) {
+            this.errorDetalle.set('Seleccione el medio de caja desde el que se realizará el pago.');
+            return;
+          }
+
+          const medio = saldos.find((saldo) => saldo.medioCajaId === medioId);
+          const saldoMedio = Number(medio?.saldoActual ?? 0);
+          if (saldoMedio < netoPago) {
+            this.errorDetalle.set(
+              `Saldo insuficiente en ${medio?.medioNombre ?? 'el medio seleccionado'}. Disponible: ${this.formatCurrency(saldoMedio)}. Requerido: ${this.formatCurrency(netoPago)}.`
+            );
+            return;
+          }
         }
 
-        const medio = saldos.find((saldo) => saldo.medioCajaId === medioId);
-        const saldoMedio = Number(medio?.saldoActual ?? 0);
-        const totalPago = Number(compra.total) || 0;
-        if (saldoMedio < totalPago) {
-          this.errorDetalle.set(
-            `Saldo insuficiente en ${medio?.medioNombre ?? 'el medio seleccionado'}. Disponible: ${this.formatCurrency(saldoMedio)}. Requerido: ${this.formatCurrency(totalPago)}.`
-          );
-          return;
-        }
+        const medioNombre =
+          netoPago > 0
+            ? (saldos.find((saldo) => saldo.medioCajaId === this.medioPagoId())?.medioNombre ?? 'caja')
+            : null;
+        const anticipoTexto =
+          anticipo > 0
+            ? ` Se descontará ${this.formatCurrency(anticipo)} de anticipos.`
+            : '';
+        const origenTexto =
+          netoPago > 0
+            ? ` Se pagará ${this.formatCurrency(netoPago)} desde ${medioNombre}.`
+            : ' El anticipo cubre el total; no se descuenta de caja.';
 
         this.confirmDialog
           .confirm({
             title: 'Registrar pago',
-            message: `¿Registrar el pago de la compra ${compra.numeroFactura} por ${this.formatCurrency(totalPago)} desde ${medio?.medioNombre ?? 'caja'}? Saldo disponible en ese medio: ${this.formatCurrency(saldoMedio)}.`,
+            message: `¿Registrar el pago de la compra ${compra.numeroFactura}? Total ${this.formatCurrency(totalCompra)}.${anticipoTexto}${origenTexto}`,
             confirmLabel: 'Aceptar',
             cancelLabel: 'Cancelar',
           })
@@ -247,8 +282,9 @@ export class RetribucionComponent implements OnInit {
   }
 
   private ejecutarRegistroPago(compra: Compra): void {
+    const netoPago = this.netoAPagar(Number(compra.total) || 0);
     const medioCajaId = this.medioPagoId();
-    if (medioCajaId == null) {
+    if (netoPago > 0 && medioCajaId == null) {
       this.errorDetalle.set('Seleccione el medio de caja desde el que se realizará el pago.');
       return;
     }
@@ -259,9 +295,9 @@ export class RetribucionComponent implements OnInit {
     const detalle = this.compraDetalle() ?? compra;
     const proveedor = this.proveedorSeleccionado();
 
-    this.comprasService.registrarPago(compra.id, medioCajaId).subscribe({
-      next: () => {
-        this.imprimirComprobantePago(detalle, proveedor);
+    this.comprasService.registrarPago(compra.id, netoPago > 0 ? medioCajaId : null).subscribe({
+      next: (respuesta) => {
+        this.imprimirComprobantePago(detalle, proveedor, respuesta);
         this.savingPago.set(false);
         this.cerrarDetalle();
         this.cargarSaldoCaja();
@@ -302,7 +338,8 @@ export class RetribucionComponent implements OnInit {
 
   private imprimirComprobantePago(
     compra: Compra,
-    proveedor: RetribucionProveedorPendiente | null
+    proveedor: RetribucionProveedorPendiente | null,
+    pago?: RegistrarCompraResponse
   ): void {
     const user = this.auth.currentUser();
     const nombreUsuario = [user?.nombre, user?.apellido].filter(Boolean).join(' ').trim();
@@ -335,7 +372,9 @@ export class RetribucionComponent implements OnInit {
           unidades,
         };
       }),
-      total: Number(compra.total) || 0,
+      total: Number(pago?.montoPagadoCaja ?? this.netoAPagar(Number(compra.total) || 0)),
+      totalCompra: Number(pago?.totalCompra ?? compra.total) || 0,
+      anticipoAplicado: Number(pago?.anticipoAplicado ?? this.anticipoAplicable(Number(compra.total) || 0)),
       pesoTotal: Number(compra.pesoTotal) || 0,
     });
   }
@@ -391,7 +430,24 @@ export class RetribucionComponent implements OnInit {
 
     this.retribucionService.listarInternosPendientesPago().subscribe({
       next: (data) => {
-        this.internos.set(data);
+        this.internos.set(
+          data.map((item) => {
+            const anticipos = Number(item.totalAnticiposPendientes) || 0;
+            const pendiente = Number(item.totalPendiente) || 0;
+            return {
+              ...item,
+              totalAnticiposPendientes: anticipos,
+              totalNetoPendiente: Number(item.totalNetoPendiente ?? Math.max(0, pendiente - anticipos)),
+            };
+          })
+        );
+        const selected = this.proveedorSeleccionado();
+        if (selected?.tipo === 'INTERNO') {
+          const actualizado = data.find((item) => item.recicladorId === selected.proveedorId);
+          if (actualizado) {
+            this.proveedorSeleccionado.set(mapInternoPendiente(actualizado));
+          }
+        }
         this.loading.set(false);
       },
       error: (err) => {

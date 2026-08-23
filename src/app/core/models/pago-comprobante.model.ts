@@ -18,5 +18,7 @@ export interface PagoComprobanteData {
   sucursalNombre?: string | null;
   items: PagoComprobanteItem[];
   total: number;
+  totalCompra?: number;
+  anticipoAplicado?: number;
   pesoTotal: number;
 }

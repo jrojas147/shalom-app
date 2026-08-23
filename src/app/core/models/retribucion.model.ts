@@ -7,6 +7,8 @@ export interface RetribucionInterno {
   activo: boolean;
   cantidadCompras: number;
   totalPendiente: number;
+  totalAnticiposPendientes: number;
+  totalNetoPendiente: number;
   pesoTotalPendiente: number;
 }
 
@@ -34,6 +36,8 @@ export interface RetribucionProveedorPendiente {
   activo: boolean;
   cantidadCompras: number;
   totalPendiente: number;
+  totalAnticiposPendientes: number;
+  totalNetoPendiente: number;
   pesoTotalPendiente: number;
   tipo: 'INTERNO' | 'EXTERNO';
 }
@@ -49,6 +53,8 @@ export function mapInternoPendiente(item: RetribucionInterno): RetribucionProvee
     activo: item.activo,
     cantidadCompras: item.cantidadCompras,
     totalPendiente: item.totalPendiente,
+    totalAnticiposPendientes: Number(item.totalAnticiposPendientes) || 0,
+    totalNetoPendiente: Number(item.totalNetoPendiente ?? item.totalPendiente),
     pesoTotalPendiente: item.pesoTotalPendiente,
     tipo: 'INTERNO',
   };
@@ -65,6 +71,8 @@ export function mapExternoPendiente(item: RetribucionExterno): RetribucionProvee
     activo: item.activo,
     cantidadCompras: item.cantidadCompras,
     totalPendiente: item.totalPendiente,
+    totalAnticiposPendientes: 0,
+    totalNetoPendiente: item.totalPendiente,
     pesoTotalPendiente: item.pesoTotalPendiente,
     tipo: 'EXTERNO',
   };

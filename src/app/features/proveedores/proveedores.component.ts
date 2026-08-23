@@ -40,8 +40,16 @@ import { ProveedoresExternosService } from '../../core/services/proveedores-exte
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
 import { SucursalesService } from '../../core/services/sucursales.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
+import { AnticipoProveedorInterno } from '../../core/models/anticipo.model';
+import { CajaSaldo } from '../../core/models/caja.model';
 import { EntidadBancaria } from '../../core/models/entidad-bancaria.model';
 import { Sucursal } from '../../core/models/sucursal.model';
+import { CajaService } from '../../core/services/caja.service';
+import {
+  formatCurrencyCo,
+  parseCurrencyCo,
+  resolveCurrencyCoCursor,
+} from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -61,6 +69,7 @@ export class ProveedoresComponent implements OnInit {
   private readonly ubicacionesService = inject(UbicacionesService);
   private readonly entidadesBancariasService = inject(EntidadesBancariasService);
   private readonly sucursalesService = inject(SucursalesService);
+  private readonly cajaService = inject(CajaService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tabs = PROVEEDOR_TABS;
@@ -88,6 +97,21 @@ export class ProveedoresComponent implements OnInit {
   readonly showRecicladoresModal = signal(false);
   readonly showSucursalesModal = signal(false);
   readonly sucursalesVista = signal<ProveedorInterno | null>(null);
+  readonly anticiposProveedor = signal<ProveedorInterno | null>(null);
+  readonly anticipos = signal<AnticipoProveedorInterno[]>([]);
+  readonly anticiposSaldo = signal(0);
+  readonly anticiposCajaAbierta = signal(false);
+  readonly anticiposSaldosCaja = signal<CajaSaldo[]>([]);
+  readonly loadingAnticipos = signal(false);
+  readonly savingAnticipo = signal(false);
+  readonly errorAnticipos = signal<string | null>(null);
+  readonly anticipoMontoDisplay = signal(formatCurrencyCo(0));
+
+  readonly anticipoForm = this.fb.nonNullable.group({
+    medioCajaId: [null as number | null, Validators.required],
+    monto: [0, [Validators.required, Validators.min(1)]],
+    observacion: ['', Validators.maxLength(500)],
+  });
   readonly editingId = signal<number | null>(null);
   readonly puedeGestionar = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
   readonly editingHijoIndex = signal<number | null>(null);
@@ -419,6 +443,147 @@ export class ProveedoresComponent implements OnInit {
 
   closeSucursalesVista(): void {
     this.sucursalesVista.set(null);
+  }
+
+  openAnticipos(proveedor: ProveedorInterno): void {
+    this.anticiposProveedor.set(proveedor);
+    this.errorAnticipos.set(null);
+    this.anticipoForm.reset({ medioCajaId: null, monto: 0, observacion: '' });
+    this.anticipoMontoDisplay.set(formatCurrencyCo(0));
+    this.cargarAnticipos(proveedor.id);
+    this.cargarCajaAnticipos();
+  }
+
+  closeAnticipos(): void {
+    this.anticiposProveedor.set(null);
+    this.anticipos.set([]);
+    this.savingAnticipo.set(false);
+    this.errorAnticipos.set(null);
+  }
+
+  onAnticipoMontoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const selectionStart = input.selectionStart ?? input.value.length;
+    const digitsBefore = input.value.slice(0, selectionStart).replace(/\D/g, '').length;
+    const parsed = parseCurrencyCo(input.value) ?? 0;
+    const formatted = formatCurrencyCo(parsed);
+    this.anticipoForm.controls.monto.setValue(parsed);
+    this.anticipoMontoDisplay.set(formatted);
+    input.value = formatted;
+    const cursor = resolveCurrencyCoCursor(formatted, digitsBefore);
+    requestAnimationFrame(() => input.setSelectionRange(cursor, cursor));
+  }
+
+  registrarAnticipo(): void {
+    const proveedor = this.anticiposProveedor();
+    if (!proveedor || !this.puedeGestionar()) {
+      return;
+    }
+    if (!this.anticiposCajaAbierta()) {
+      this.errorAnticipos.set('Debe abrir la caja antes de registrar un anticipo.');
+      return;
+    }
+    if (this.anticipoForm.invalid) {
+      this.anticipoForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.anticipoForm.getRawValue();
+    const medio = this.anticiposSaldosCaja().find((saldo) => saldo.medioCajaId === raw.medioCajaId);
+    if (medio && Number(medio.saldoActual ?? 0) < raw.monto) {
+      this.errorAnticipos.set(
+        `Saldo insuficiente en ${medio.medioNombre}. Disponible: ${this.formatCurrency(medio.saldoActual)}.`
+      );
+      return;
+    }
+
+    this.confirmDialog
+      .confirm({
+        title: 'Registrar anticipo',
+        message: `¿Registrar anticipo de ${this.formatCurrency(raw.monto)} a ${proveedor.nombre} desde ${medio?.medioNombre ?? 'caja'}?`,
+        confirmLabel: 'Registrar',
+        cancelLabel: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+        this.savingAnticipo.set(true);
+        this.errorAnticipos.set(null);
+        this.proveedoresInternosService
+          .registrarAnticipo(proveedor.id, {
+            medioCajaId: raw.medioCajaId!,
+            monto: raw.monto,
+            observacion: raw.observacion.trim() || undefined,
+          })
+          .subscribe({
+            next: () => {
+              this.savingAnticipo.set(false);
+              this.anticipoForm.patchValue({ monto: 0, observacion: '' });
+              this.anticipoMontoDisplay.set(formatCurrencyCo(0));
+              this.cargarAnticipos(proveedor.id);
+              this.cargarCajaAnticipos();
+            },
+            error: (err) => {
+              this.savingAnticipo.set(false);
+              this.errorAnticipos.set(
+                this.extractErrorMessage(err, 'No se pudo registrar el anticipo.')
+              );
+            },
+          });
+      });
+  }
+
+  formatCurrency(value: number | null | undefined): string {
+    return formatCurrencyCo(value ?? 0);
+  }
+
+  private cargarAnticipos(proveedorId: number): void {
+    this.loadingAnticipos.set(true);
+    this.proveedoresInternosService.listarAnticipos(proveedorId).subscribe({
+      next: (data) => {
+        this.anticipos.set(data ?? []);
+        this.anticiposSaldo.set(
+          (data ?? []).reduce((sum, item) => sum + (Number(item.saldoPendiente) || 0), 0)
+        );
+        this.loadingAnticipos.set(false);
+      },
+      error: (err) => {
+        this.loadingAnticipos.set(false);
+        this.errorAnticipos.set(
+          this.extractErrorMessage(err, 'No se pudieron cargar los anticipos.')
+        );
+      },
+    });
+  }
+
+  private cargarCajaAnticipos(): void {
+    this.cajaService.obtenerActual().subscribe({
+      next: (caja) => {
+        if (caja) {
+          this.anticiposCajaAbierta.set(true);
+          const saldos = caja.saldos ?? [];
+          this.anticiposSaldosCaja.set(saldos);
+          this.anticipoForm.controls.medioCajaId.enable({ emitEvent: false });
+          const actual = this.anticipoForm.controls.medioCajaId.value;
+          if (!actual || !saldos.some((saldo) => saldo.medioCajaId === actual)) {
+            const efectivo = saldos.find((saldo) => saldo.medioTipo === 'EFECTIVO');
+            this.anticipoForm.controls.medioCajaId.setValue(
+              efectivo?.medioCajaId ?? saldos[0]?.medioCajaId ?? null
+            );
+          }
+        } else {
+          this.anticiposCajaAbierta.set(false);
+          this.anticiposSaldosCaja.set([]);
+          this.anticipoForm.controls.medioCajaId.setValue(null);
+          this.anticipoForm.controls.medioCajaId.disable({ emitEvent: false });
+        }
+      },
+      error: () => {
+        this.anticiposCajaAbierta.set(false);
+        this.anticiposSaldosCaja.set([]);
+      },
+    });
   }
 
   isSucursalSelected(sucursalId: number): boolean {
@@ -1130,13 +1295,16 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
-  private extractErrorMessage(err: { error?: { message?: string; errors?: Record<string, string> } }): string {
+  private extractErrorMessage(
+    err: { error?: { message?: string; errors?: Record<string, string> } },
+    fallback = 'No se pudo completar la operación.'
+  ): string {
     if (err.error?.errors) {
       const first = Object.values(err.error.errors)[0];
       if (first) {
         return first;
       }
     }
-    return err.error?.message ?? 'No se pudo completar la operación.';
+    return err.error?.message ?? fallback;
   }
 }
