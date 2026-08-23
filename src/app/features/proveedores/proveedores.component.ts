@@ -87,6 +87,7 @@ export class ProveedoresComponent implements OnInit {
   readonly showHijoForm = signal(false);
   readonly showRecicladoresModal = signal(false);
   readonly showSucursalesModal = signal(false);
+  readonly sucursalesVista = signal<ProveedorInterno | null>(null);
   readonly editingId = signal<number | null>(null);
   readonly puedeGestionar = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
   readonly editingHijoIndex = signal<number | null>(null);
@@ -410,6 +411,14 @@ export class ProveedoresComponent implements OnInit {
 
   closeSucursalesModal(): void {
     this.showSucursalesModal.set(false);
+  }
+
+  openSucursalesVista(proveedor: ProveedorInterno): void {
+    this.sucursalesVista.set(proveedor);
+  }
+
+  closeSucursalesVista(): void {
+    this.sucursalesVista.set(null);
   }
 
   isSucursalSelected(sucursalId: number): boolean {

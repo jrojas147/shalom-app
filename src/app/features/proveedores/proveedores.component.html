@@ -113,6 +113,14 @@
                   </span>
                 </td>
                 <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="rp-btn rp-btn--icon"
+                    (click)="openSucursalesVista(proveedor)"
+                    title="Ver sucursales"
+                  >
+                    🏢
+                  </button>
                   @if (puedeGestionar()) {
                     <button
                       type="button"
@@ -980,6 +988,46 @@
     <div class="rp-form-actions proveedores-modal-actions">
       <button type="button" class="rp-btn rp-btn--primary" (click)="closeSucursalesModal()">
         Listo ({{ selectedSucursalIds().length }} seleccionadas)
+      </button>
+    </div>
+  </app-rp-modal>
+}
+
+@if (sucursalesVista(); as proveedor) {
+  <app-rp-modal
+    [title]="'Sucursales de ' + proveedor.nombre"
+    (closed)="closeSucursalesVista()"
+  >
+    @if (proveedor.sucursalesAsociadas.length === 0) {
+      <p class="proveedores-hijos__empty">Este proveedor no tiene sucursales asociadas.</p>
+    } @else {
+      <ul class="proveedores-hijos-list">
+        @for (sucursal of proveedor.sucursalesAsociadas; track sucursal.id) {
+          <li class="proveedores-hijos-list__item">
+            <div class="proveedores-hijos-list__info">
+              <span class="proveedores-hijos-list__nombre">{{ sucursal.nombre }}</span>
+              <span class="proveedores-hijos-list__meta">
+                NIT {{ sucursal.nit }}
+                @if (sucursal.municipio) {
+                  · {{ sucursal.municipio }}
+                }
+              </span>
+            </div>
+            <span
+              class="rp-badge"
+              [class.rp-badge--success]="sucursal.activo"
+              [class.rp-badge--neutral]="!sucursal.activo"
+            >
+              {{ sucursal.activo ? 'Activa' : 'Inactiva' }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="rp-form-actions proveedores-modal-actions">
+      <button type="button" class="rp-btn rp-btn--primary" (click)="closeSucursalesVista()">
+        Cerrar
       </button>
     </div>
   </app-rp-modal>
