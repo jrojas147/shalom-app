@@ -1,13 +1,16 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
+import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { compraProveedorTipoLabel } from '../../core/models/compra-proveedor.model';
 import {
   ExistenciaProducto,
   InventarioEntrada,
   inventarioEstadoLabel,
 } from '../../core/models/inventario.model';
+import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { InventarioService } from '../../core/services/inventario.service';
+import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 type VistaInventario = 'resumen' | 'detalle';
@@ -21,6 +24,8 @@ type VistaInventario = 'resumen' | 'detalle';
 })
 export class InventarioComponent implements OnInit {
   private readonly inventarioService = inject(InventarioService);
+  private readonly productosService = inject(ProductosService);
+  private readonly codigosCiiuService = inject(CodigosCiiuService);
 
   readonly inventarioEstadoLabel = inventarioEstadoLabel;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
@@ -29,6 +34,9 @@ export class InventarioComponent implements OnInit {
   readonly movimientos = signal<InventarioEntrada[]>([]);
   readonly busqueda = signal('');
   readonly productoFiltroId = signal<number | null>(null);
+  readonly codigoCiiuFiltro = signal<number | null>(null);
+  readonly codigosCiiu = signal<CodigoCiiu[]>([]);
+  readonly productoCiiuId = signal<Map<number, number | null>>(new Map());
   readonly vista = signal<VistaInventario>('resumen');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -47,18 +55,28 @@ export class InventarioComponent implements OnInit {
 
   readonly resumenFiltrado = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
-    if (!q) {
-      return this.resumen();
-    }
-    return this.resumen().filter((item) => this.matchesResumen(item, q));
+    const ciiuId = this.codigoCiiuFiltro();
+    return this.resumen().filter((item) => {
+      if (!this.matchesSui(item.codigoProducto, ciiuId)) {
+        return false;
+      }
+      if (!q) {
+        return true;
+      }
+      return this.matchesResumen(item, q);
+    });
   });
 
   readonly movimientosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
     const productoId = this.productoFiltroId();
+    const ciiuId = this.codigoCiiuFiltro();
 
     return this.movimientos().filter((movimiento) => {
       if (productoId !== null && movimiento.codigoProducto !== productoId) {
+        return false;
+      }
+      if (!this.matchesSui(movimiento.codigoProducto, ciiuId)) {
         return false;
       }
       if (!q) {
@@ -81,6 +99,7 @@ export class InventarioComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.loadFiltroSui();
     this.loadInventario();
   }
 
@@ -113,6 +132,15 @@ export class InventarioComponent implements OnInit {
 
   onBusquedaChange(value: string): void {
     this.busqueda.set(value);
+  }
+
+  onCodigoCiiuFiltro(value: string): void {
+    if (!value) {
+      this.codigoCiiuFiltro.set(null);
+      return;
+    }
+    const parsed = Number(value);
+    this.codigoCiiuFiltro.set(Number.isFinite(parsed) ? parsed : null);
   }
 
   verMovimientosProducto(item: ExistenciaProducto): void {
@@ -180,6 +208,13 @@ export class InventarioComponent implements OnInit {
     return this.tipoMovimiento(entrada) === 'SALIDA' ? 'Salida' : 'Entrada';
   }
 
+  private matchesSui(codigoProducto: number, ciiuId: number | null): boolean {
+    if (ciiuId == null) {
+      return true;
+    }
+    return this.productoCiiuId().get(codigoProducto) === ciiuId;
+  }
+
   private matchesResumen(item: ExistenciaProducto, q: string): boolean {
     return (
       String(item.codigoProducto).includes(q) ||
@@ -214,5 +249,22 @@ export class InventarioComponent implements OnInit {
       if (first) return first;
     }
     return body?.message ?? 'Ocurrió un error al cargar el inventario.';
+  }
+
+  private loadFiltroSui(): void {
+    this.codigosCiiuService.getAll().subscribe({
+      next: (data) => this.codigosCiiu.set(data ?? []),
+      error: () => this.codigosCiiu.set([]),
+    });
+    this.productosService.getAll().subscribe({
+      next: (data) => {
+        const mapa = new Map<number, number | null>();
+        for (const producto of data ?? []) {
+          mapa.set(producto.id, producto.codigoCiiuId ?? null);
+        }
+        this.productoCiiuId.set(mapa);
+      },
+      error: () => this.productoCiiuId.set(new Map()),
+    });
   }
 }

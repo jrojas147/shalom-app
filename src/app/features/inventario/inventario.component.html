@@ -62,6 +62,20 @@
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
+      <div class="inventario__sui-filter">
+        <label class="inventario__sui-filter-label" for="inventarioSuiFiltro">SUI</label>
+        <select
+          id="inventarioSuiFiltro"
+          class="inventario__sui-filter-select"
+          [value]="codigoCiiuFiltro() ?? ''"
+          (change)="onCodigoCiiuFiltro($any($event.target).value)"
+        >
+          <option value="">Todos los códigos SUI</option>
+          @for (ciiu of codigosCiiu(); track ciiu.id) {
+            <option [value]="ciiu.id">{{ ciiu.codigo }} — {{ ciiu.nombre }}</option>
+          }
+        </select>
+      </div>
     </div>
 
     @if (vista() === 'detalle' && productoFiltroId() !== null) {
@@ -105,7 +119,13 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="cell-empty">No hay existencias disponibles.</td>
+              <td colspan="5" class="cell-empty">
+                {{
+                  busqueda() || codigoCiiuFiltro() != null
+                    ? 'No hay existencias que coincidan con el filtro.'
+                    : 'No hay existencias disponibles.'
+                }}
+              </td>
             </tr>
           }
         </tbody>
@@ -163,7 +183,9 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="10" class="cell-empty">No hay movimientos que coincidan con la búsqueda.</td>
+              <td colspan="10" class="cell-empty">
+                No hay movimientos que coincidan con el filtro.
+              </td>
             </tr>
           }
         </tbody>
