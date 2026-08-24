@@ -45,6 +45,21 @@
   padding: 0;
 }
 
+.param-block__subtitle {
+  margin: var(--spacing-lg) 0 var(--spacing-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--rp-text-secondary);
+}
+
+.param-block__item--inactive {
+  opacity: 0.78;
+
+  strong {
+    color: var(--rp-text-secondary);
+  }
+}
+
 .param-block__item {
   display: grid;
   grid-template-columns: auto 1fr auto;

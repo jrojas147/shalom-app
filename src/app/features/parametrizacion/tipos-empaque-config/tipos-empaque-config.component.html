@@ -8,6 +8,9 @@
   @if (error()) {
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
 
   <form class="param-block__add-row" [formGroup]="form" (ngSubmit)="save()">
     <input
@@ -78,8 +81,31 @@
           </span>
         </li>
       } @empty {
-        <li class="rp-empty">No hay tipos de empaque registrados</li>
+        <li class="rp-empty">No hay tipos de empaque vigentes</li>
       }
     </ul>
+    @if (inactivos().length) {
+      <h3 class="param-block__subtitle">Inactivos</h3>
+      <ul class="param-block__list">
+        @for (tipo of inactivos(); track tipo.id) {
+          <li class="param-block__item param-block__item--inactive">
+            <span class="param-block__item-text">
+              <strong>{{ tipo.nombre }}</strong>
+              <span class="param-block__item-meta">{{ formatPeso(tipo.peso) }}</span>
+            </span>
+            <span class="param-block__item-actions">
+              <button
+                type="button"
+                class="rp-btn rp-btn--secondary"
+                title="Editar y reactivar"
+                (click)="startEdit(tipo)"
+              >
+                Reactivar
+              </button>
+            </span>
+          </li>
+        }
+      </ul>
+    }
   }
 </section>

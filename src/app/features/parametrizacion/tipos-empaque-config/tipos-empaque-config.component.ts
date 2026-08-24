@@ -17,9 +17,11 @@ export class TiposEmpaqueConfigComponent implements OnInit {
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
+  readonly inactivos = signal<TipoEmpaque[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly mensaje = signal<string | null>(null);
   readonly editingId = signal<number | null>(null);
 
   readonly form = this.fb.nonNullable.group({
@@ -35,9 +37,11 @@ export class TiposEmpaqueConfigComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.tiposEmpaqueService.getAll(true).subscribe({
+    this.tiposEmpaqueService.getAll(false).subscribe({
       next: (data) => {
-        this.tiposEmpaque.set((data ?? []).filter((tipo) => tipo.activo !== false));
+        const todos = data ?? [];
+        this.tiposEmpaque.set(todos.filter((tipo) => tipo.activo !== false));
+        this.inactivos.set(todos.filter((tipo) => tipo.activo === false));
         this.loading.set(false);
       },
       error: (err) => {
@@ -51,12 +55,18 @@ export class TiposEmpaqueConfigComponent implements OnInit {
     this.editingId.set(tipo.id);
     this.form.reset({ nombre: tipo.nombre, peso: tipo.peso });
     this.error.set(null);
+    this.mensaje.set(
+      tipo.activo === false
+        ? 'Este tipo de empaque está inactivo. Al guardar se reactivará con los datos del formulario.'
+        : null
+    );
   }
 
   cancelEdit(): void {
     this.editingId.set(null);
     this.form.reset({ nombre: '', peso: null });
     this.error.set(null);
+    this.mensaje.set(null);
   }
 
   save(): void {
@@ -70,26 +80,29 @@ export class TiposEmpaqueConfigComponent implements OnInit {
       nombre: raw.nombre.trim(),
       peso: raw.peso!,
     };
-
-    this.saving.set(true);
-    this.error.set(null);
-
     const id = this.editingId();
-    const op$ = id
-      ? this.tiposEmpaqueService.update(id, request)
-      : this.tiposEmpaqueService.create(request);
 
-    op$.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.cancelEdit();
-        this.loadTiposEmpaque();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.error.set(err.error?.message ?? 'No se pudo guardar el tipo de empaque.');
-      },
-    });
+    if (!id) {
+      const inactivo = this.buscarInactivoPorNombre(request.nombre);
+      if (inactivo) {
+        this.confirmDialog
+          .confirm({
+            title: 'Reactivar tipo de empaque',
+            message: `El tipo "${inactivo.nombre}" está inactivo. ¿Desea reactivarlo con el peso indicado?`,
+            confirmLabel: 'Reactivar',
+            cancelLabel: 'Cancelar',
+          })
+          .subscribe((ok) => {
+            if (!ok) {
+              return;
+            }
+            this.persist(inactivo.id, request);
+          });
+        return;
+      }
+    }
+
+    this.persist(id, request);
   }
 
   deleteTipo(tipo: TipoEmpaque): void {
@@ -125,5 +138,32 @@ export class TiposEmpaqueConfigComponent implements OnInit {
 
   formatPeso(peso: number): string {
     return `${peso.toLocaleString('es-AR', { maximumFractionDigits: 3 })} kg`;
+  }
+
+  private buscarInactivoPorNombre(nombre: string): TipoEmpaque | undefined {
+    const normalizado = nombre.trim().toLowerCase();
+    return this.inactivos().find((tipo) => tipo.nombre.trim().toLowerCase() === normalizado);
+  }
+
+  private persist(id: number | null, request: TipoEmpaqueRequest): void {
+    this.saving.set(true);
+    this.error.set(null);
+    this.mensaje.set(null);
+
+    const op$ = id
+      ? this.tiposEmpaqueService.update(id, request)
+      : this.tiposEmpaqueService.create(request);
+
+    op$.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.cancelEdit();
+        this.loadTiposEmpaque();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(err.error?.message ?? 'No se pudo guardar el tipo de empaque.');
+      },
+    });
   }
 }
