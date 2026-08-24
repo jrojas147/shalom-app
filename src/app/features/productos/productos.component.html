@@ -82,7 +82,7 @@
         <tbody>
           @for (producto of productosFiltrados(); track producto.id) {
             <tr>
-              <td class="cell-mono productos-id">{{ producto.id }}</td>
+              <td class="cell-mono productos-id">{{ producto.idInterno || '—' }}</td>
               <td>
                 @if (productoImagenUrl(producto.imagen); as imgUrl) {
                   <span class="productos-list-thumb">
@@ -184,12 +184,19 @@
 
     <form class="productos-modal-form" [formGroup]="form" (ngSubmit)="save()">
       <div class="rp-form-grid">
-        @if (editingId(); as id) {
-          <div class="rp-field productos-id-field">
-            <label for="productoId">ID</label>
-            <input id="productoId" type="text" [value]="id" readonly />
-          </div>
-        }
+        <div class="rp-field productos-id-field">
+          <label for="idInterno">ID</label>
+          <input
+            id="idInterno"
+            type="text"
+            formControlName="idInterno"
+            maxlength="50"
+            placeholder="Ej. 101"
+          />
+          @if (form.controls.idInterno.touched && form.controls.idInterno.invalid) {
+            <span class="rp-field-error">El ID interno es obligatorio.</span>
+          }
+        </div>
 
         <div class="rp-field rp-field--full">
           <label for="nombreInterno">Nombre interno</label>

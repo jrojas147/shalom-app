@@ -136,6 +136,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   });
 
   readonly form = this.fb.nonNullable.group({
+    idInterno: ['', [Validators.required, Validators.maxLength(50)]],
     nombreInterno: ['', [Validators.required, Validators.maxLength(100)]],
     activo: [true],
     codigoCiiuId: [null as number | null],
@@ -178,6 +179,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.editingId.set(producto.id);
     this.resetImagenState();
     this.form.patchValue({
+      idInterno: producto.idInterno ?? '',
       nombreInterno: producto.nombreInterno,
       activo: producto.activo,
       codigoCiiuId: producto.codigoCiiuId ?? null,
@@ -355,6 +357,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
     const raw = this.form.getRawValue();
     const request: ProductoRequest = {
+      idInterno: raw.idInterno.trim(),
       nombreInterno: raw.nombreInterno.trim(),
       activo: raw.activo,
       codigoCiiuId: raw.codigoCiiuId ?? undefined,
@@ -510,7 +513,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   private matchesSearch(producto: Producto, q: string): boolean {
     const fields = [
-      String(producto.id),
+      producto.idInterno,
       producto.nombreInterno,
       producto.codigoCiiu,
       producto.nombreCiiu,
@@ -522,6 +525,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private resetForm(): void {
     this.resetImagenState();
     this.form.reset({
+      idInterno: '',
       nombreInterno: '',
       activo: true,
       codigoCiiuId: null,

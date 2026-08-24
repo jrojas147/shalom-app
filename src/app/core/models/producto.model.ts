@@ -6,6 +6,7 @@ export type TipoMedida = 'PESO' | 'UNIDAD';
 export interface Producto {
   id: number;
   comercioId: number;
+  idInterno?: string | null;
   nombreInterno: string;
   activo: boolean;
   estado: ProductoEstado;
@@ -21,6 +22,7 @@ export interface Producto {
 }
 
 export interface ProductoRequest {
+  idInterno: string;
   nombreInterno: string;
   activo?: boolean;
   codigoCiiuId?: number | null;
