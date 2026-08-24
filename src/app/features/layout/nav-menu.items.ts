@@ -17,7 +17,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Gastos', route: '/app/gastos', icon: 'gastos' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },
   { label: 'Inventario', route: '/app/inventario', icon: 'inventario' },
-  { label: 'Empaques', route: '/app/empaques', icon: 'empaques' },
+  { label: 'Globos', route: '/app/empaques', icon: 'empaques' },
   { label: 'Translados', route: '/app/movimientos', icon: 'movimientos' },
   { label: 'Proveedores', route: '/app/proveedores', icon: 'proveedores' },
   { label: 'Sucursales', route: '/app/sucursales', icon: 'sucursales' },

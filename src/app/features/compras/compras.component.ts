@@ -166,13 +166,6 @@ export class ComprasComponent implements OnInit {
   }
 
   agregarProducto(producto: Producto): void {
-    if (this.tiposEmpaque().length === 0) {
-      this.error.set(
-        'No hay tipos de empaque parametrizados. Configure al menos uno en Parametrización.'
-      );
-      return;
-    }
-
     const existente = this.items().find((i) => i.productoId === producto.id);
     if (existente) {
       if (productoEsUnidad(producto)) {

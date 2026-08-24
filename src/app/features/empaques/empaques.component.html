@@ -1,10 +1,10 @@
 <div class="empaques">
   <header class="rp-page-header">
     <div>
-      <h1>Empaques</h1>
+      <h1>Globos</h1>
       <p>
-        Inventario en bodega y control de empaques en poder de proveedores o clientes. Los tipos se
-        parametrizan en <strong>Tipos de empaque</strong>.
+        Control de globos en bodega y registro de entregas y recepciones de globos a proveedores o clientes.<br>
+        Datos de los globos se parametrizan en <strong>Tipos de empaques</strong>.
       </p>
     </div>
   </header>
@@ -23,15 +23,15 @@
         <strong class="empaques-stat__value">{{ resumen.bodegaCantidad }}</strong>
       </article>
       <article class="empaques-stat">
-        <span class="empaques-stat__label">Proveedores me tienen</span>
+        <span class="empaques-stat__label">Prestamo a proveedor</span>
         <strong class="empaques-stat__value">{{ resumen.proveedoresEllosTienen }}</strong>
       </article>
       <article class="empaques-stat">
-        <span class="empaques-stat__label">Tengo de proveedores</span>
+        <span class="empaques-stat__label">Bodega de proveedor</span>
         <strong class="empaques-stat__value">{{ resumen.proveedoresYoTengo }}</strong>
       </article>
       <article class="empaques-stat">
-        <span class="empaques-stat__label">Clientes me tienen</span>
+        <span class="empaques-stat__label">Prestamo a cliente</span>
         <strong class="empaques-stat__value">{{ resumen.clientesEllosTienen }}</strong>
       </article>
     </section>
