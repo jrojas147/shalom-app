@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import {
   CierreMesCategoria,
@@ -15,7 +16,7 @@ import { RpModalComponent } from '../../../shared/components/rp-modal/rp-modal.c
 @Component({
   selector: 'app-inventario-cierre-mes',
   standalone: true,
-  imports: [DatePipe, RpModalComponent],
+  imports: [DatePipe, RouterLink, RpModalComponent],
   templateUrl: './inventario-cierre-mes.component.html',
   styleUrl: './inventario-cierre-mes.component.scss',
 })
@@ -74,6 +75,12 @@ export class InventarioCierreMesComponent {
     const total = this.totalProductos();
     return this.totalValidados() === total;
   });
+
+  readonly cajaAbierta = computed(() => this.preview()?.cajaAbierta === true);
+
+  readonly puedeEjecutar = computed(
+    () => !this.preview()?.yaCerrado && this.todosValidados() && !this.cajaAbierta() && !this.saving()
+  );
 
   constructor() {
     effect(
@@ -169,6 +176,10 @@ export class InventarioCierreMesComponent {
   ejecutar(): void {
     const preview = this.preview();
     if (!preview || preview.yaCerrado || this.saving()) {
+      return;
+    }
+    if (preview.cajaAbierta) {
+      this.error.set('Debe cerrar la caja antes de ejecutar el cierre de mes.');
       return;
     }
     if (!this.todosValidados()) {

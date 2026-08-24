@@ -52,6 +52,7 @@ export interface CierreMesResumen {
 
 export interface CierreMesPreview {
   yaCerrado: boolean;
+  cajaAbierta?: boolean;
   cierreId?: number | null;
   periodoAnio: number;
   periodoMes: number;

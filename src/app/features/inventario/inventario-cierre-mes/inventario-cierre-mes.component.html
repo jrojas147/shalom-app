@@ -44,6 +44,11 @@
           Observación: {{ data.observacion }}
         }
       </div>
+    } @else if (data.cajaAbierta) {
+      <div class="rp-alert rp-alert--error">
+        Debe cerrar la caja antes de ejecutar el cierre de mes.
+        <a class="cierre-mes__link" routerLink="/app/caja">Ir a Caja</a>
+      </div>
     } @else {
       <p class="cierre-mes__hint">
         Marque cada producto para confirmar stock, compras y ventas. El cierre se ejecuta cuando
@@ -180,7 +185,7 @@
         <button
           type="button"
           class="rp-btn rp-btn--primary"
-          [disabled]="saving() || !todosValidados()"
+          [disabled]="!puedeEjecutar()"
           (click)="ejecutar()"
         >
           {{ saving() ? 'Registrando...' : 'Ejecutar cierre' }}
