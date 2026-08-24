@@ -27,6 +27,10 @@ export class InventarioService {
     return this.http.get<InventarioConsolidadoSui>(`${this.baseUrl}/consolidado-sui`);
   }
 
+  exportarConsolidadoProductos(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/consolidado-sui/excel`, { responseType: 'blob' });
+  }
+
   getResumenVendidosSemana(): Observable<InventarioProductoVendido[]> {
     return this.http.get<InventarioProductoVendido[]>(`${this.baseUrl}/resumen-vendidos-semana`);
   }

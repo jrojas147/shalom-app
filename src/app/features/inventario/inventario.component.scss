@@ -39,6 +39,14 @@
     }
   }
 
+  .inventario__consolidado-table {
+    thead th,
+    tbody td,
+    tfoot td {
+      color: #000;
+    }
+  }
+
   .rp-btn {
     min-height: 34px;
     padding: 0.4375rem 0.875rem;
@@ -86,6 +94,22 @@
   justify-content: space-between;
 }
 
+.inventario__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.inventario__btn-exportar {
+  color: #000;
+
+  &:hover:not(:disabled),
+  &:disabled {
+    color: #000;
+  }
+}
+
 .inventario-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -129,7 +153,7 @@
 .inventario__consolidado-hint {
   margin: 0 0 var(--spacing-sm);
   font-size: 0.8125rem;
-  color: var(--rp-text-secondary);
+  color: #000;
 }
 
 .rp-table tfoot td {

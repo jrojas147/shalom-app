@@ -43,6 +43,7 @@ export class InventarioComponent implements OnInit {
   readonly vista = signal<VistaInventario>('resumen');
   readonly cierreRefresh = signal(0);
   readonly consolidado = signal<InventarioConsolidadoSui | null>(null);
+  readonly exportingProductos = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly showDetalle = signal(false);
@@ -191,6 +192,29 @@ export class InventarioComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  exportarProductos(): void {
+    if (this.exportingProductos()) {
+      return;
+    }
+    this.exportingProductos.set(true);
+    this.error.set(null);
+    this.inventarioService.exportarConsolidadoProductos().subscribe({
+      next: (blob) => {
+        this.exportingProductos.set(false);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'consolidado-productos.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.exportingProductos.set(false);
         this.error.set(this.extractErrorMessage(err));
       },
     });

@@ -63,9 +63,21 @@
           Consolidado SUI
         </button>
       </div>
-      <button type="button" class="rp-btn rp-btn--secondary" (click)="loadInventario()">
-        Actualizar
-      </button>
+      <div class="inventario__actions">
+        <button type="button" class="rp-btn rp-btn--secondary" (click)="loadInventario()">
+          Actualizar
+        </button>
+        @if (vista() === 'consolidado') {
+          <button
+            type="button"
+            class="rp-btn rp-btn--secondary inventario__btn-exportar"
+            [disabled]="exportingProductos()"
+            (click)="exportarProductos()"
+          >
+            {{ exportingProductos() ? 'Exportando...' : 'Exportar productos' }}
+          </button>
+        }
+      </div>
     </div>
 
     @if (vista() !== 'cierre') {
@@ -167,7 +179,7 @@
           }
         </p>
       }
-      <table class="rp-table">
+      <table class="rp-table inventario__consolidado-table">
         <thead>
           <tr>
             <th>Código</th>
