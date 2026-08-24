@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Inventario</h1>
-      <p>Consulta de existencias por producto, movimientos y cierre de mes.</p>
+      <p>Consulta de existencias por producto, consolidado SUI, movimientos y cierre de mes.</p>
     </div>
   </header>
 
@@ -10,7 +10,7 @@
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
 
-  @if (vista() !== 'cierre') {
+  @if (vista() !== 'cierre' && vista() !== 'consolidado') {
     <section class="inventario-stats">
     <article class="inventario-stat">
       <span class="inventario-stat__label">Productos con stock</span>
@@ -54,6 +54,14 @@
         >
           Cierre mes
         </button>
+        <button
+          type="button"
+          class="inventario-tab"
+          [class.active]="vista() === 'consolidado'"
+          (click)="setVista('consolidado')"
+        >
+          Consolidado SUI
+        </button>
       </div>
       <button type="button" class="rp-btn rp-btn--secondary" (click)="loadInventario()">
         Actualizar
@@ -68,7 +76,9 @@
         [placeholder]="
           vista() === 'resumen'
             ? 'Buscar por ID, código o nombre de producto...'
-            : 'Buscar por ID, producto, estado, ubicación o proveedor...'
+            : vista() === 'consolidado'
+              ? 'Buscar por código o material SUI...'
+              : 'Buscar por ID, producto, estado, ubicación o proveedor...'
         "
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
@@ -145,6 +155,62 @@
             </tr>
           }
         </tbody>
+      </table>
+    } @else if (vista() === 'consolidado') {
+      @if (consolidado(); as data) {
+        <p class="inventario__consolidado-hint">
+          @if (data.tieneCierre) {
+            Saldo del cierre {{ data.ultimoCierreLabel }}. Compra y venta desde
+            {{ data.periodoDesde | date: 'dd/MM/yyyy HH:mm' }} (sin nuevo cierre). Stock actual disponible.
+          } @else {
+            Aún no hay cierre de mes. Saldo en 0. Compra y venta del mes en curso. Stock actual disponible.
+          }
+        </p>
+      }
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Material</th>
+            <th class="cell-num">Saldo KG</th>
+            <th class="cell-num">Compra KG</th>
+            <th class="cell-num">Venta KG</th>
+            <th class="cell-num">Stock KG</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of consolidadoFiltrado(); track item.codigoSui + item.nombreSui) {
+            <tr>
+              <td class="cell-mono">{{ item.codigoSui }}</td>
+              <td class="cell-primary">{{ item.nombreSui }}</td>
+              <td class="cell-num">{{ formatPeso(item.saldoKg) }}</td>
+              <td class="cell-num">{{ formatPeso(item.compraKg) }}</td>
+              <td class="cell-num">{{ formatPeso(item.ventaKg) }}</td>
+              <td class="cell-num cell-primary">{{ formatPeso(item.stockKg) }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="cell-empty">
+                {{
+                  busqueda() || codigoCiiuFiltro() != null
+                    ? 'No hay materiales SUI que coincidan con el filtro.'
+                    : 'No hay códigos SUI para consolidar.'
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+        @if (consolidadoFiltrado().length > 0) {
+          <tfoot>
+            <tr>
+              <td colspan="2" class="cell-primary">Total</td>
+              <td class="cell-num">{{ formatPeso(consolidadoTotales().saldoKg) }}</td>
+              <td class="cell-num">{{ formatPeso(consolidadoTotales().compraKg) }}</td>
+              <td class="cell-num">{{ formatPeso(consolidadoTotales().ventaKg) }}</td>
+              <td class="cell-num cell-primary">{{ formatPeso(consolidadoTotales().stockKg) }}</td>
+            </tr>
+          </tfoot>
+        }
       </table>
     } @else {
       <table class="rp-table">

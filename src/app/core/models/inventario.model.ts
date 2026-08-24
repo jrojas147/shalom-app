@@ -9,6 +9,23 @@ export interface ExistenciaProducto {
   unidadesDisponibles?: number | null;
 }
 
+export interface InventarioConsolidadoSuiItem {
+  codigoSui: string;
+  nombreSui: string;
+  saldoKg: number;
+  compraKg: number;
+  ventaKg: number;
+  stockKg: number;
+}
+
+export interface InventarioConsolidadoSui {
+  tieneCierre: boolean;
+  ultimoCierreLabel?: string | null;
+  periodoDesde: string;
+  periodoHasta: string;
+  items: InventarioConsolidadoSuiItem[];
+}
+
 export interface InventarioResumenSui {
   codigoSui: string;
   nombreSui: string;

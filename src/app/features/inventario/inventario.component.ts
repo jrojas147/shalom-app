@@ -5,6 +5,7 @@ import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { compraProveedorTipoLabel } from '../../core/models/compra-proveedor.model';
 import {
   ExistenciaProducto,
+  InventarioConsolidadoSui,
   InventarioEntrada,
   inventarioEstadoLabel,
 } from '../../core/models/inventario.model';
@@ -15,7 +16,7 @@ import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 import { InventarioCierreMesComponent } from './inventario-cierre-mes/inventario-cierre-mes.component';
 
-type VistaInventario = 'resumen' | 'detalle' | 'cierre';
+type VistaInventario = 'resumen' | 'detalle' | 'cierre' | 'consolidado';
 
 @Component({
   selector: 'app-inventario',
@@ -41,6 +42,7 @@ export class InventarioComponent implements OnInit {
   readonly productosById = signal<Map<number, Producto>>(new Map());
   readonly vista = signal<VistaInventario>('resumen');
   readonly cierreRefresh = signal(0);
+  readonly consolidado = signal<InventarioConsolidadoSui | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly showDetalle = signal(false);
@@ -89,6 +91,40 @@ export class InventarioComponent implements OnInit {
     });
   });
 
+  readonly consolidadoFiltrado = computed(() => {
+    const data = this.consolidado();
+    if (!data) {
+      return [];
+    }
+    const q = this.busqueda().trim().toLowerCase();
+    const ciiuId = this.codigoCiiuFiltro();
+    const codigoFiltro =
+      ciiuId == null ? null : this.codigosCiiu().find((item) => item.id === ciiuId)?.codigo ?? null;
+    return data.items.filter((item) => {
+      if (ciiuId !== null && item.codigoSui !== codigoFiltro) {
+        return false;
+      }
+      if (!q) {
+        return true;
+      }
+      return (
+        item.codigoSui.toLowerCase().includes(q) || item.nombreSui.toLowerCase().includes(q)
+      );
+    });
+  });
+
+  readonly consolidadoTotales = computed(() =>
+    this.consolidadoFiltrado().reduce(
+      (acc, item) => ({
+        saldoKg: acc.saldoKg + Number(item.saldoKg || 0),
+        compraKg: acc.compraKg + Number(item.compraKg || 0),
+        ventaKg: acc.ventaKg + Number(item.ventaKg || 0),
+        stockKg: acc.stockKg + Number(item.stockKg || 0),
+      }),
+      { saldoKg: 0, compraKg: 0, ventaKg: 0, stockKg: 0 }
+    )
+  );
+
   readonly productoFiltroNombre = computed(() => {
     const id = this.productoFiltroId();
     if (id === null) {
@@ -109,6 +145,10 @@ export class InventarioComponent implements OnInit {
   loadInventario(): void {
     if (this.vista() === 'cierre') {
       this.cierreRefresh.update((value) => value + 1);
+      return;
+    }
+    if (this.vista() === 'consolidado') {
+      this.loadConsolidado();
       return;
     }
 
@@ -136,6 +176,24 @@ export class InventarioComponent implements OnInit {
     if (vista === 'resumen') {
       this.productoFiltroId.set(null);
     }
+    if (vista === 'consolidado' && !this.consolidado()) {
+      this.loadConsolidado();
+    }
+  }
+
+  loadConsolidado(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.inventarioService.getConsolidadoSui().subscribe({
+      next: (data) => {
+        this.consolidado.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
+    });
   }
 
   onBusquedaChange(value: string): void {

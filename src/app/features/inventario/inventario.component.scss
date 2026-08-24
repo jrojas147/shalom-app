@@ -126,6 +126,17 @@
   margin-bottom: var(--spacing-sm);
 }
 
+.inventario__consolidado-hint {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 0.8125rem;
+  color: var(--rp-text-secondary);
+}
+
+.rp-table tfoot td {
+  font-weight: 700;
+  border-top: 1px solid var(--rp-border-strong, var(--rp-border));
+}
+
 .inventario__search {
   flex: 1 1 280px;
   min-width: 0;

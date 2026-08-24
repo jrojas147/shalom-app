@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import {
   ExistenciaProducto,
+  InventarioConsolidadoSui,
   InventarioEntrada,
   InventarioProductoVendido,
   InventarioResumenSui,
@@ -20,6 +21,10 @@ export class InventarioService {
 
   getResumenPorSui(): Observable<InventarioResumenSui[]> {
     return this.http.get<InventarioResumenSui[]>(`${this.baseUrl}/resumen-sui`);
+  }
+
+  getConsolidadoSui(): Observable<InventarioConsolidadoSui> {
+    return this.http.get<InventarioConsolidadoSui>(`${this.baseUrl}/consolidado-sui`);
   }
 
   getResumenVendidosSemana(): Observable<InventarioProductoVendido[]> {
