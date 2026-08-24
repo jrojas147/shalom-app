@@ -8,6 +8,7 @@ import {
   InventarioEntrada,
   inventarioEstadoLabel,
 } from '../../core/models/inventario.model';
+import { Producto, productoIdVisible } from '../../core/models/producto.model';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
@@ -36,7 +37,7 @@ export class InventarioComponent implements OnInit {
   readonly productoFiltroId = signal<number | null>(null);
   readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
-  readonly productoCiiuId = signal<Map<number, number | null>>(new Map());
+  readonly productosById = signal<Map<number, Producto>>(new Map());
   readonly vista = signal<VistaInventario>('resumen');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -143,6 +144,24 @@ export class InventarioComponent implements OnInit {
     this.codigoCiiuFiltro.set(Number.isFinite(parsed) ? parsed : null);
   }
 
+  idProductoVisible(codigoProducto: number): string {
+    const producto = this.productosById().get(codigoProducto);
+    if (!producto) {
+      return String(codigoProducto);
+    }
+    return productoIdVisible(producto.codigoCiiu, producto.idInterno);
+  }
+
+  nombreSui(codigoProducto: number): string {
+    const producto = this.productosById().get(codigoProducto);
+    const nombre = producto?.nombreCiiu?.trim();
+    if (nombre) {
+      return nombre;
+    }
+    const codigo = producto?.codigoCiiu?.trim();
+    return codigo || '—';
+  }
+
   verMovimientosProducto(item: ExistenciaProducto): void {
     this.productoFiltroId.set(item.codigoProducto);
     this.busqueda.set('');
@@ -212,12 +231,13 @@ export class InventarioComponent implements OnInit {
     if (ciiuId == null) {
       return true;
     }
-    return this.productoCiiuId().get(codigoProducto) === ciiuId;
+    return this.productosById().get(codigoProducto)?.codigoCiiuId === ciiuId;
   }
 
   private matchesResumen(item: ExistenciaProducto, q: string): boolean {
     return (
-      String(item.codigoProducto).includes(q) ||
+      this.idProductoVisible(item.codigoProducto).toLowerCase().includes(q) ||
+      this.nombreSui(item.codigoProducto).toLowerCase().includes(q) ||
       item.nombreProducto.toLowerCase().includes(q)
     );
   }
@@ -225,7 +245,8 @@ export class InventarioComponent implements OnInit {
   private matchesMovimiento(movimiento: InventarioEntrada, q: string): boolean {
     const fields = [
       String(movimiento.idInventario),
-      String(movimiento.codigoProducto),
+      this.idProductoVisible(movimiento.codigoProducto),
+      this.nombreSui(movimiento.codigoProducto),
       movimiento.nombreProducto,
       movimiento.estado,
       inventarioEstadoLabel(movimiento.estado),
@@ -258,13 +279,13 @@ export class InventarioComponent implements OnInit {
     });
     this.productosService.getAll().subscribe({
       next: (data) => {
-        const mapa = new Map<number, number | null>();
+        const mapa = new Map<number, Producto>();
         for (const producto of data ?? []) {
-          mapa.set(producto.id, producto.codigoCiiuId ?? null);
+          mapa.set(producto.id, producto);
         }
-        this.productoCiiuId.set(mapa);
+        this.productosById.set(mapa);
       },
-      error: () => this.productoCiiuId.set(new Map()),
+      error: () => this.productosById.set(new Map()),
     });
   }
 }

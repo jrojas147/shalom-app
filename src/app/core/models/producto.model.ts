@@ -71,3 +71,15 @@ export function productoImagenUrl(imagen?: string | null): string | null {
 export function productoPrecioKg(producto: Producto): number {
   return producto.precioCompra ?? producto.precioVenta ?? 0;
 }
+
+export function productoIdVisible(
+  codigoSui?: string | number | null,
+  idInterno?: string | null
+): string {
+  const sui = String(codigoSui ?? '').trim();
+  const interno = (idInterno ?? '').trim();
+  if (sui && interno) {
+    return `${sui}.${interno}`;
+  }
+  return interno || sui || '—';
+}

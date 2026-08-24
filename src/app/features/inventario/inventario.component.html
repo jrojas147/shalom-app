@@ -56,7 +56,7 @@
         class="inventario__search"
         [placeholder]="
           vista() === 'resumen'
-            ? 'Buscar por código o nombre de producto...'
+            ? 'Buscar por ID, código o nombre de producto...'
             : 'Buscar por ID, producto, estado, ubicación o proveedor...'
         "
         [value]="busqueda()"
@@ -95,6 +95,7 @@
           <tr>
             <th>Código</th>
             <th>Producto</th>
+            <th>CATEGORIA SUI</th>
             <th class="cell-num">Disponible UND</th>
             <th class="cell-num">Disponible KG</th>
             <th></th>
@@ -103,8 +104,9 @@
         <tbody>
           @for (item of resumenFiltrado(); track item.codigoProducto) {
             <tr>
-              <td class="cell-mono">{{ item.codigoProducto }}</td>
+              <td class="cell-mono">{{ idProductoVisible(item.codigoProducto) }}</td>
               <td class="cell-primary">{{ item.nombreProducto }}</td>
+              <td class="cell-secondary">{{ nombreSui(item.codigoProducto) }}</td>
               <td class="cell-num">{{ formatUnidades(item.unidadesDisponibles) }}</td>
               <td class="cell-num cell-primary">{{ formatPeso(item.cantidadDisponible) }}</td>
               <td class="cell-actions">
@@ -119,7 +121,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="cell-empty">
+              <td colspan="6" class="cell-empty">
                 {{
                   busqueda() || codigoCiiuFiltro() != null
                     ? 'No hay existencias que coincidan con el filtro.'
@@ -136,6 +138,7 @@
           <tr>
             <th>ID</th>
             <th>Producto</th>
+            <th>CATEGORIA SUI</th>
             <th class="cell-num">Disponible UND</th>
             <th class="cell-num">Disponible KG</th>
             <th>Tipo movimiento</th>
@@ -152,8 +155,9 @@
               <td class="cell-mono">{{ movimiento.idInventario }}</td>
               <td>
                 <span class="cell-primary">{{ movimiento.nombreProducto }}</span>
-                <span class="cell-secondary cell-sub">#{{ movimiento.codigoProducto }}</span>
+                <span class="cell-secondary cell-sub">{{ idProductoVisible(movimiento.codigoProducto) }}</span>
               </td>
+              <td class="cell-secondary">{{ nombreSui(movimiento.codigoProducto) }}</td>
               <td class="cell-num">{{ formatUnidades(movimiento.unidades) }}</td>
               <td class="cell-num">{{ formatPeso(movimiento.cantidadDisponible) }}</td>
               <td>
@@ -183,7 +187,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="10" class="cell-empty">
+              <td colspan="11" class="cell-empty">
                 No hay movimientos que coincidan con el filtro.
               </td>
             </tr>
@@ -204,7 +208,11 @@
         </div>
         <div>
           <dt>Producto</dt>
-          <dd>{{ entrada.nombreProducto }} (#{{ entrada.codigoProducto }})</dd>
+          <dd>{{ entrada.nombreProducto }} ({{ idProductoVisible(entrada.codigoProducto) }})</dd>
+        </div>
+        <div>
+          <dt>CATEGORIA SUI</dt>
+          <dd>{{ nombreSui(entrada.codigoProducto) }}</dd>
         </div>
         <div>
           <dt>Cantidad disponible</dt>
