@@ -265,6 +265,16 @@ export class GestionComprasComponent implements OnInit {
     );
   }
 
+  setCantidadEmpaques(productoId: number, value: string | number): void {
+    const parsed = parseInt(String(value).replace(/\D/g, ''), 10);
+    if (Number.isNaN(parsed)) return;
+    this.itemsEdit.update((list) =>
+      list.map((item) =>
+        item.productoId === productoId ? { ...item, cantidadEmpaques: Math.max(0, parsed) } : item
+      )
+    );
+  }
+
   guardarCambios(): void {
     const compra = this.compraSeleccionada();
     const proveedor = this.proveedorEdit();
@@ -471,6 +481,7 @@ export class GestionComprasComponent implements OnInit {
         pesoKg: Number(linea.pesoKg) || 0,
         empaque,
         unidades: productoEsUnidad(producto) ? unidadesItem(linea.unidades) : undefined,
+        cantidadEmpaques: linea.cantidadEmpaques != null ? Number(linea.cantidadEmpaques) : 1,
       };
     });
   }

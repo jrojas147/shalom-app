@@ -192,6 +192,7 @@ export class ComprasComponent implements OnInit {
       pesoKg: 0.5,
       empaque,
       unidades: productoEsUnidad(producto) ? 1 : undefined,
+      cantidadEmpaques: 1,
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);
@@ -298,6 +299,17 @@ export class ComprasComponent implements OnInit {
       list.map((item) => {
         if (item.productoId !== productoId) return item;
         return { ...item, empaque };
+      })
+    );
+  }
+
+  setCantidadEmpaques(productoId: number, value: string | number): void {
+    const parsed = parseInt(String(value).replace(/\D/g, ''), 10);
+    if (Number.isNaN(parsed)) return;
+    this.items.update((list) =>
+      list.map((item) => {
+        if (item.productoId !== productoId) return item;
+        return { ...item, cantidadEmpaques: Math.max(0, parsed) };
       })
     );
   }

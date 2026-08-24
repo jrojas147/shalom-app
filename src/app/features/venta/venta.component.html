@@ -129,6 +129,16 @@
                 </option>
               }
             </select>
+            <label class="item-empaque-label" [for]="'venta-empaque-cant-' + item.productoId">Cant.</label>
+            <input
+              [id]="'venta-empaque-cant-' + item.productoId"
+              type="text"
+              inputmode="numeric"
+              class="item-empaque-cant"
+              [ngModel]="item.cantidadEmpaques ?? 1"
+              (ngModelChange)="setCantidadEmpaques(item.productoId, $event)"
+              title="Cantidad de empaques que quedan en poder del cliente"
+            />
           </div>
           <div class="item-bottom">
             <div class="item-qty-stack">

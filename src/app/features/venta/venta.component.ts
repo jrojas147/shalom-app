@@ -257,6 +257,7 @@ export class VentaComponent implements OnInit {
       pesoKg: netoInicial,
       empaque,
       unidades: productoEsUnidad(catalogo) ? 1 : undefined,
+      cantidadEmpaques: 1,
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);
@@ -416,6 +417,17 @@ export class VentaComponent implements OnInit {
         // el bruto se recalcula solo con la tara del nuevo empaque.
         this.error.set(null);
         return { ...item, empaque };
+      })
+    );
+  }
+
+  setCantidadEmpaques(productoId: number, value: string | number): void {
+    const parsed = parseInt(String(value).replace(/\D/g, ''), 10);
+    if (Number.isNaN(parsed)) return;
+    this.items.update((list) =>
+      list.map((item) => {
+        if (item.productoId !== productoId) return item;
+        return { ...item, cantidadEmpaques: Math.max(0, parsed) };
       })
     );
   }

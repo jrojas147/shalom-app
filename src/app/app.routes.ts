@@ -79,6 +79,12 @@ export const routes: Routes = [
           import('./features/inventario/inventario.component').then((m) => m.InventarioComponent),
       },
       {
+        path: 'empaques',
+        canActivate: [operadorModules],
+        loadComponent: () =>
+          import('./features/empaques/empaques.component').then((m) => m.EmpaquesComponent),
+      },
+      {
         path: 'movimientos',
         canActivate: [adminDireccion],
         loadComponent: () =>

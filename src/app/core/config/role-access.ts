@@ -3,6 +3,7 @@ import { UserRole } from '../models/user.model';
 export const OPERADOR_APP_ROUTES = [
   '/app/pre-compra',
   '/app/inventario',
+  '/app/empaques',
   '/app/proveedores',
   '/app/clientes',
 ] as const;

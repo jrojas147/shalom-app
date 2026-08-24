@@ -9,4 +9,5 @@ export interface CompraDetalleItem {
   pesoKg: number;
   empaque: EmpaqueTipo;
   unidades?: number;
+  cantidadEmpaques?: number;
 }

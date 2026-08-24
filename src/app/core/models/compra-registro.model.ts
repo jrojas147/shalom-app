@@ -12,6 +12,7 @@ export interface CompraDetalleLinea {
   precioUnitario?: number;
   subtotal?: number;
   unidades?: number | null;
+  cantidadEmpaques?: number | null;
 }
 
 export interface CompraResumen {
@@ -57,6 +58,7 @@ export interface RegistrarCompraRequest {
     pesoKg: number;
     empaque?: string;
     unidades?: number;
+    cantidadEmpaques?: number;
   }>;
   total?: number;
   pesoTotal?: number;

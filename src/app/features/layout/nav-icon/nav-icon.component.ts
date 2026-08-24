@@ -9,6 +9,7 @@ export type NavIconName =
   | 'gastos'
   | 'productos'
   | 'inventario'
+  | 'empaques'
   | 'movimientos'
   | 'proveedores'
   | 'clientes'
@@ -99,6 +100,15 @@ export type NavIconName =
             stroke-linejoin="round"
           />
           <path d="M12 8v13M4 7.5l8 3.5 8-3.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+        }
+        @case ('empaques') {
+          <path
+            d="M4 8.5L12 4l8 4.5v9L12 22l-8-4.5v-9z"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+          <path d="M12 12.5V22M4 8.5l8 4 8-4M9 10.2l6-3.2" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
         }
         @case ('movimientos') {
           <path

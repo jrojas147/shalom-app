@@ -1,0 +1,113 @@
+.empaques {
+  .rp-page-header {
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+.empaques-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.empaques-stat {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+}
+
+.empaques-stat__label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--rp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.empaques-stat__value {
+  font-size: 1.25rem;
+  color: var(--rp-text);
+}
+
+.empaques__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.empaques-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.empaques-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-full);
+  background: var(--rp-surface);
+  color: var(--rp-text-secondary);
+  font-family: var(--font-headline);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(.active) {
+    border-color: var(--rp-border-strong);
+    color: var(--rp-text);
+  }
+
+  &.active {
+    background: var(--rp-primary);
+    border-color: var(--rp-primary);
+    color: var(--rp-on-primary);
+  }
+}
+
+.empaques__form {
+  margin-top: var(--spacing-sm);
+}
+
+.empaques__observacion,
+.empaques__actions {
+  grid-column: 1 / -1;
+}
+
+.empaques__hint {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 0.8125rem;
+  color: var(--rp-text-secondary);
+}
+
+.empaques__filters {
+  margin-bottom: var(--spacing-sm);
+}
+
+.empaques__search {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.4375rem 0.75rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+  color: var(--rp-text);
+  font-size: 0.8125rem;
+}
+
+.empaques__sub {
+  display: block;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .empaques-stat__value {
+    font-size: 1.125rem;
+  }
+}

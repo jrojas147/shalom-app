@@ -86,6 +86,7 @@ export class ComprasService {
         pesoKg: item.pesoKg,
         empaque: item.empaque,
         unidades: unidadesParaEnvio(item.producto, item.unidades),
+        cantidadEmpaques: item.cantidadEmpaques ?? 1,
       })),
       total: payload.total,
       pesoTotal: payload.pesoTotal,

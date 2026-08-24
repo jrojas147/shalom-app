@@ -46,7 +46,7 @@ export class ParametrizacionComponent {
     {
       id: 'empaque',
       titulo: 'Tipos de empaque',
-      descripcion: 'Empaques y tara usados en compras y ventas.',
+      descripcion: 'Empaques, tara y catálogo usado en compras, ventas y control de saldos.',
     },
     {
       id: 'gasto',

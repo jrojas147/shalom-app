@@ -1,0 +1,305 @@
+<div class="empaques">
+  <header class="rp-page-header">
+    <div>
+      <h1>Empaques</h1>
+      <p>
+        Inventario en bodega y control de empaques en poder de proveedores o clientes. Los tipos se
+        parametrizan en <strong>Tipos de empaque</strong>.
+      </p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  @if (resumen(); as resumen) {
+    <section class="empaques-stats">
+      <article class="empaques-stat">
+        <span class="empaques-stat__label">En bodega</span>
+        <strong class="empaques-stat__value">{{ resumen.bodegaCantidad }}</strong>
+      </article>
+      <article class="empaques-stat">
+        <span class="empaques-stat__label">Proveedores me tienen</span>
+        <strong class="empaques-stat__value">{{ resumen.proveedoresEllosTienen }}</strong>
+      </article>
+      <article class="empaques-stat">
+        <span class="empaques-stat__label">Tengo de proveedores</span>
+        <strong class="empaques-stat__value">{{ resumen.proveedoresYoTengo }}</strong>
+      </article>
+      <article class="empaques-stat">
+        <span class="empaques-stat__label">Clientes me tienen</span>
+        <strong class="empaques-stat__value">{{ resumen.clientesEllosTienen }}</strong>
+      </article>
+    </section>
+  }
+
+  <section class="rp-panel">
+    <div class="panel-header empaques__toolbar">
+      <div class="empaques-tabs">
+        <button
+          type="button"
+          class="empaques-tab"
+          [class.active]="vista() === 'bodega'"
+          (click)="setVista('bodega')"
+        >
+          Bodega
+        </button>
+        <button
+          type="button"
+          class="empaques-tab"
+          [class.active]="vista() === 'proveedores'"
+          (click)="setVista('proveedores')"
+        >
+          Proveedores internos
+        </button>
+        <button
+          type="button"
+          class="empaques-tab"
+          [class.active]="vista() === 'clientes'"
+          (click)="setVista('clientes')"
+        >
+          Clientes
+        </button>
+        <button
+          type="button"
+          class="empaques-tab"
+          [class.active]="vista() === 'movimientos'"
+          (click)="setVista('movimientos')"
+        >
+          Movimientos
+        </button>
+      </div>
+      <button type="button" class="rp-btn rp-btn--secondary" (click)="loadAll()">Actualizar</button>
+    </div>
+
+    @if (vista() !== 'movimientos') {
+      <form class="rp-form-grid empaques__form" [formGroup]="form" (ngSubmit)="registrar()">
+        @if (vista() === 'bodega') {
+          <div class="rp-field">
+            <label for="operacion">Operación</label>
+            <select id="operacion" formControlName="operacion">
+              <option value="INGRESO">Ingresar a bodega</option>
+              <option value="BAJA">Dar de baja</option>
+            </select>
+          </div>
+        } @else {
+          <div class="rp-field">
+            <label for="operacion">Operación</label>
+            <select id="operacion" formControlName="operacion">
+              @if (vista() === 'proveedores') {
+                <option value="ENTREGAR">Entregar</option>
+              }
+              <option value="RECIBIR">Recibir</option>
+            </select>
+          </div>
+          <div class="rp-field">
+            <label for="contraparteId">
+              {{ vista() === 'clientes' ? 'Cliente' : 'Proveedor interno' }}
+            </label>
+            <select id="contraparteId" formControlName="contraparteId">
+              <option [ngValue]="null">Seleccione</option>
+              @for (item of contrapartesForm(); track item.id) {
+                <option [ngValue]="item.id">{{ item.nombre }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div class="rp-field">
+          <label for="tipoEmpaqueId">Tipo de empaque</label>
+          <select id="tipoEmpaqueId" formControlName="tipoEmpaqueId">
+            <option [ngValue]="null">Seleccione</option>
+            @for (tipo of tiposEmpaque(); track tipo.id) {
+              <option [ngValue]="tipo.id">{{ tipo.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div class="rp-field">
+          <label for="cantidad">Cantidad</label>
+          <input id="cantidad" type="number" min="1" step="1" formControlName="cantidad" />
+        </div>
+        <div class="rp-field empaques__observacion">
+          <label for="observacion">Observación</label>
+          <input
+            id="observacion"
+            type="text"
+            maxlength="500"
+            formControlName="observacion"
+            placeholder="Opcional"
+          />
+        </div>
+        <div class="rp-form-actions empaques__actions">
+          <button
+            type="submit"
+            class="rp-btn rp-btn--primary"
+            [disabled]="saving() || form.invalid || !tiposEmpaque().length"
+          >
+            {{ saving() ? 'Registrando...' : 'Registrar' }}
+          </button>
+        </div>
+      </form>
+      <p class="empaques__hint">
+        @if (vista() === 'bodega') {
+          Ingrese los empaques que llegan a bodega. Entregar a un proveedor o vender descuenta este
+          inventario. Recibirlos de vuelta (pre-compra o devolución) lo aumenta.
+        } @else if (vista() === 'proveedores') {
+          Entregar sale de bodega y queda en poder del proveedor. Recibir (o confirmar una
+          pre-compra) los devuelve a bodega, o deja registrados los empaques del proveedor que
+          quedan en planta.
+        } @else {
+          No se entregan empaques al cliente por aparte: al vender, el tipo seleccionado queda en
+          su poder y sale de bodega. Aquí solo registra la devolución.
+        }
+      </p>
+    }
+
+    <div class="empaques__filters">
+      <input
+        type="search"
+        class="empaques__search"
+        [placeholder]="
+          vista() === 'movimientos'
+            ? 'Buscar movimiento...'
+            : vista() === 'bodega'
+              ? 'Buscar tipo de empaque...'
+              : 'Buscar por nombre o tipo de empaque...'
+        "
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando empaques...</p>
+    } @else if (vista() === 'movimientos') {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Operación</th>
+            <th>Contraparte</th>
+            <th>Tipo</th>
+            <th>Cantidad</th>
+            <th>Bodega</th>
+            <th>Me tienen</th>
+            <th>Tengo de ellos</th>
+            <th>Origen</th>
+            <th>Usuario</th>
+            @if (puedeAnular()) {
+              <th></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (mov of movimientosFiltrados(); track mov.id) {
+            <tr>
+              <td class="cell-secondary">{{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="cell-primary">{{ operacionLabel(mov.operacion) }}</td>
+              <td>
+                <strong>{{ mov.contraparteNombre }}</strong>
+                <span class="cell-secondary empaques__sub">{{
+                  contraparteTipoLabel(mov.contraparteTipo)
+                }}</span>
+              </td>
+              <td class="cell-secondary">{{ mov.tipoEmpaqueNombre }}</td>
+              <td class="cell-secondary">{{ mov.cantidad }}</td>
+              <td class="cell-secondary">{{ formatDelta(mov.bodegaDelta) }}</td>
+              <td class="cell-secondary">{{ formatDelta(mov.ellosTienenDelta) }}</td>
+              <td class="cell-secondary">{{ formatDelta(mov.yoTengoDelta) }}</td>
+              <td class="cell-secondary">{{ referenciaLabel(mov.referenciaTipo) }}</td>
+              <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>
+              @if (puedeAnular()) {
+                <td>
+                  @if (esAnulable(mov)) {
+                    <button type="button" class="rp-btn rp-btn--secondary" (click)="anular(mov)">
+                      Anular
+                    </button>
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="11" class="rp-empty">No hay movimientos de empaque</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else if (vista() === 'bodega') {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Tipo de empaque</th>
+            <th>En bodega</th>
+            <th>De proveedores</th>
+            <th>En proveedores</th>
+            <th>En clientes</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of bodegaFiltrada(); track item.tipoEmpaqueId) {
+            <tr>
+              <td class="cell-primary">{{ item.tipoEmpaqueNombre }}</td>
+              <td>
+                <strong>{{ item.enBodega }}</strong>
+              </td>
+              <td class="cell-secondary">{{ item.deProveedores }}</td>
+              <td class="cell-secondary">{{ item.enProveedores }}</td>
+              <td class="cell-secondary">{{ item.enClientes }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="rp-empty">
+                No hay tipos de empaque. Parametrice al menos uno en Tipos de empaque.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>{{ vista() === 'clientes' ? 'Cliente' : 'Proveedor interno' }}</th>
+            <th>Tipo de empaque</th>
+            <th>Me tienen</th>
+            @if (vista() === 'proveedores') {
+              <th>Tengo de ellos</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (saldo of saldosFiltrados(); track saldo.id) {
+            <tr>
+              <td class="cell-primary">{{ saldo.contraparteNombre }}</td>
+              <td class="cell-secondary">{{ saldo.tipoEmpaqueNombre }}</td>
+              <td>
+                <strong>{{ saldo.ellosTienen }}</strong>
+              </td>
+              @if (vista() === 'proveedores') {
+                <td>
+                  <strong>{{ saldo.yoTengo }}</strong>
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="vista() === 'proveedores' ? 4 : 3" class="rp-empty">
+                @if (vista() === 'clientes') {
+                  No hay empaques en poder de clientes. Se registran al vender con cantidad de
+                  empaque.
+                } @else {
+                  No hay saldos con proveedores. Entregue unidades desde bodega o confirme una
+                  pre-compra.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>

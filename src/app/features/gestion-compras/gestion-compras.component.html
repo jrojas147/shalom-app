@@ -139,6 +139,7 @@
               <th>Unidades</th>
               <th>Peso producto (KG)</th>
               <th>Empaque</th>
+              <th>Cant.</th>
               <th>Precio</th>
               <th>Subtotal</th>
             </tr>
@@ -214,6 +215,19 @@
                     </select>
                   } @else {
                     {{ empaqueLabel(item.empaque) }}
+                  }
+                </td>
+                <td>
+                  @if (editMode()) {
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      class="gestion-compras-modal__cant"
+                      [ngModel]="item.cantidadEmpaques ?? 1"
+                      (ngModelChange)="setCantidadEmpaques(item.productoId, $event)"
+                    />
+                  } @else {
+                    {{ item.cantidadEmpaques ?? 0 }}
                   }
                 </td>
                 <td class="cell-secondary">

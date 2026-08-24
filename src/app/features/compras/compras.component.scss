@@ -435,6 +435,7 @@
 .item-empaque-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.375rem;
   margin: 0 0 0.375rem 2.5rem;
 }
@@ -449,8 +450,8 @@
 .item-empaque {
   flex: 1 1 auto;
   width: 100%;
-  min-width: 12rem;
-  max-width: 18rem;
+  min-width: 8rem;
+  max-width: 14rem;
   padding: 0.2rem 0.375rem;
   border: 1px solid var(--rp-border);
   border-radius: var(--radius-sm);
@@ -459,6 +460,19 @@
   line-height: 1.2;
   color: var(--rp-text);
   cursor: pointer;
+}
+
+.item-empaque-cant {
+  flex: 0 0 3.25rem;
+  width: 3.25rem;
+  padding: 0.2rem 0.25rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-sm);
+  background: var(--rp-surface-muted);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--rp-text);
 }
 
 .item-delete {
