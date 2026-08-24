@@ -1,12 +1,19 @@
 import { Component, signal } from '@angular/core';
 import { CodigosCiiuConfigComponent } from './codigos-ciiu-config/codigos-ciiu-config.component';
+import { CierreMesConfigComponent } from './cierre-mes-config/cierre-mes-config.component';
 import { LecturaPesoConfigComponent } from './lectura-peso-config/lectura-peso-config.component';
 import { MediosCajaConfigComponent } from './medios-caja-config/medios-caja-config.component';
 import { TiposEmpaqueConfigComponent } from './tipos-empaque-config/tipos-empaque-config.component';
 import { TiposGastoConfigComponent } from './tipos-gasto-config/tipos-gasto-config.component';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
-export type CatalogoParamId = 'ciiu' | 'empaque' | 'gasto' | 'medios' | 'lectura-peso';
+export type CatalogoParamId =
+  | 'ciiu'
+  | 'empaque'
+  | 'gasto'
+  | 'medios'
+  | 'lectura-peso'
+  | 'cierre-mes';
 
 interface CatalogoParam {
   id: CatalogoParamId;
@@ -23,6 +30,7 @@ interface CatalogoParam {
     MediosCajaConfigComponent,
     TiposGastoConfigComponent,
     LecturaPesoConfigComponent,
+    CierreMesConfigComponent,
     RpModalComponent,
   ],
   templateUrl: './parametrizacion.component.html',
@@ -54,6 +62,11 @@ export class ParametrizacionComponent {
       id: 'lectura-peso',
       titulo: 'Lectura de peso',
       descripcion: 'Báscula o ingreso manual en pre-compra y venta.',
+    },
+    {
+      id: 'cierre-mes',
+      titulo: 'Cierre de mes',
+      descripcion: 'Día del mes para cerrar inventario, compras y ventas de material.',
     },
   ];
 

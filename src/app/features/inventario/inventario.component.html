@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Inventario</h1>
-      <p>Consulta de existencias por producto y movimientos de inventario.</p>
+      <p>Consulta de existencias por producto, movimientos y cierre de mes.</p>
     </div>
   </header>
 
@@ -10,7 +10,8 @@
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
 
-  <section class="inventario-stats">
+  @if (vista() !== 'cierre') {
+    <section class="inventario-stats">
     <article class="inventario-stat">
       <span class="inventario-stat__label">Productos con stock</span>
       <strong class="inventario-stat__value">{{ totalProductos() }}</strong>
@@ -22,8 +23,9 @@
     <article class="inventario-stat">
       <span class="inventario-stat__label">Entradas disponibles</span>
       <strong class="inventario-stat__value">{{ entradasDisponibles() }}</strong>
-    </article>
-  </section>
+      </article>
+    </section>
+  }
 
   <section class="rp-panel inventario-panel">
     <div class="panel-header inventario__toolbar">
@@ -44,12 +46,21 @@
         >
           Movimientos detallados
         </button>
+        <button
+          type="button"
+          class="inventario-tab"
+          [class.active]="vista() === 'cierre'"
+          (click)="setVista('cierre')"
+        >
+          Cierre mes
+        </button>
       </div>
       <button type="button" class="rp-btn rp-btn--secondary" (click)="loadInventario()">
         Actualizar
       </button>
     </div>
 
+    @if (vista() !== 'cierre') {
     <div class="inventario__filters">
       <input
         type="search"
@@ -77,6 +88,7 @@
         </select>
       </div>
     </div>
+    }
 
     @if (vista() === 'detalle' && productoFiltroId() !== null) {
       <div class="inventario__product-filter">
@@ -87,7 +99,9 @@
       </div>
     }
 
-    @if (loading()) {
+    @if (vista() === 'cierre') {
+      <app-inventario-cierre-mes [refreshToken]="cierreRefresh()" />
+    } @else if (loading()) {
       <p class="rp-loading">Cargando inventario...</p>
     } @else if (vista() === 'resumen') {
       <table class="rp-table">

@@ -13,13 +13,14 @@ import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
+import { InventarioCierreMesComponent } from './inventario-cierre-mes/inventario-cierre-mes.component';
 
-type VistaInventario = 'resumen' | 'detalle';
+type VistaInventario = 'resumen' | 'detalle' | 'cierre';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [DatePipe, RpModalComponent],
+  imports: [DatePipe, RpModalComponent, InventarioCierreMesComponent],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.scss',
 })
@@ -39,6 +40,7 @@ export class InventarioComponent implements OnInit {
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
   readonly productosById = signal<Map<number, Producto>>(new Map());
   readonly vista = signal<VistaInventario>('resumen');
+  readonly cierreRefresh = signal(0);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly showDetalle = signal(false);
@@ -105,6 +107,11 @@ export class InventarioComponent implements OnInit {
   }
 
   loadInventario(): void {
+    if (this.vista() === 'cierre') {
+      this.cierreRefresh.update((value) => value + 1);
+      return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
 

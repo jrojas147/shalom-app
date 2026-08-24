@@ -1,0 +1,41 @@
+<section class="param-block">
+  <h2 class="param-block__title">Cierre de mes</h2>
+  <p class="param-block__desc">
+    Defina el día del mes (1 a 28) en que se cierra el inventario, las compras y las ventas de
+    material. Desde esa fecha se puede ejecutar el cierre del mes en curso; antes de ese día se
+    cierra el mes anterior.
+  </p>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando...</p>
+  } @else {
+    <form class="cierre-mes-form" [formGroup]="form" (ngSubmit)="save()">
+      <label class="cierre-mes-field">
+        <span>Día de cierre</span>
+        <select formControlName="diaCierre">
+          @for (dia of dias; track dia) {
+            <option [ngValue]="dia">Día {{ dia }}</option>
+          }
+        </select>
+      </label>
+
+      <p class="cierre-mes-hint">
+        Se limita a 28 para que el cierre exista todos los meses, incluido febrero.
+      </p>
+
+      <div class="cierre-mes-actions">
+        <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving() || form.pristine">
+          {{ saving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

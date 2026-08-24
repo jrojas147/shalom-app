@@ -1,0 +1,282 @@
+<div class="cierre-mes">
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  @if (loading() && !preview()) {
+    <p class="rp-loading">Cargando cierre de mes...</p>
+  }
+
+  @if (preview(); as data) {
+    <section class="cierre-mes__meta">
+      <article>
+        <span>Periodo</span>
+        <strong>{{ data.periodoLabel }}</strong>
+      </article>
+      <article>
+        <span>Día de cierre</span>
+        <strong>{{ data.diaCierre }}</strong>
+      </article>
+      <article>
+        <span>Desde</span>
+        <strong>{{ data.periodoDesde | date: 'dd/MM/yyyy HH:mm' }}</strong>
+      </article>
+      <article>
+        <span>Hasta</span>
+        <strong>{{ data.periodoHasta | date: 'dd/MM/yyyy HH:mm' }}</strong>
+      </article>
+      @if (data.ultimoCierre) {
+        <article>
+          <span>Último cierre</span>
+          <strong>{{ data.ultimoCierre.periodoLabel }}</strong>
+        </article>
+      }
+    </section>
+
+    @if (data.yaCerrado) {
+      <div class="rp-alert rp-alert--warning">
+        El periodo {{ data.periodoLabel }} ya está cerrado. El registro queda como consulta.
+        @if (data.observacion) {
+          Observación: {{ data.observacion }}
+        }
+      </div>
+    } @else {
+      <p class="cierre-mes__hint">
+        Marque cada producto para confirmar stock, compras y ventas. El cierre se ejecuta cuando
+        todos estén validados.
+      </p>
+    }
+
+    <section class="cierre-mes__stats">
+      <article>
+        <span>Productos</span>
+        <strong>{{ data.totales.productos }}</strong>
+      </article>
+      <article>
+        <span>Stock</span>
+        <strong>{{ formatPeso(data.totales.stockKg) }} KG</strong>
+      </article>
+      <article>
+        <span>Compras</span>
+        <strong>{{ formatPeso(data.totales.comprasKg) }} KG · {{ formatMoneda(data.totales.comprasTotal) }}</strong>
+      </article>
+      <article>
+        <span>Ventas</span>
+        <strong>{{ formatPeso(data.totales.ventasKg) }} KG · {{ formatMoneda(data.totales.ventasTotal) }}</strong>
+      </article>
+    </section>
+
+    <div class="cierre-mes__toolbar">
+      <label class="cierre-mes__check-all">
+        <input
+          type="checkbox"
+          [checked]="todosValidados()"
+          [disabled]="data.yaCerrado || totalProductos() === 0"
+          (change)="toggleTodos($any($event.target).checked)"
+        />
+        Marcar todos
+      </label>
+      <input
+        type="search"
+        class="cierre-mes__search"
+        placeholder="Buscar por código, producto o categoría SUI..."
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+      <span class="cierre-mes__progress">
+        Validados {{ totalValidados() }} / {{ totalProductos() }}
+      </span>
+    </div>
+
+    @for (categoria of categoriasFiltradas(); track categoria.codigoSui + categoria.nombreSui) {
+      <section class="cierre-mes__categoria">
+        <header>
+          <label>
+            <input
+              type="checkbox"
+              [checked]="categoriaCompleta(categoria)"
+              [indeterminate]="categoriaParcial(categoria)"
+              [disabled]="data.yaCerrado"
+              (change)="toggleCategoria(categoria, $any($event.target).checked)"
+            />
+            <span>
+              {{ categoria.nombreSui }}
+              @if (categoria.codigoSui) {
+                <em>{{ categoria.codigoSui }}</em>
+              }
+            </span>
+          </label>
+          <small>{{ categoria.productos }} productos · {{ formatPeso(categoria.totales.stockKg) }} KG</small>
+        </header>
+
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th class="cell-check"></th>
+              <th>Código</th>
+              <th>Producto</th>
+              <th class="cell-num">Stock UND</th>
+              <th class="cell-num">Stock KG</th>
+              <th class="cell-num">Compras UND</th>
+              <th class="cell-num">Compras KG</th>
+              <th class="cell-num">Compras $</th>
+              <th class="cell-num">Ventas UND</th>
+              <th class="cell-num">Ventas KG</th>
+              <th class="cell-num">Ventas $</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of categoria.items; track item.productoId) {
+              <tr [class.cierre-mes__row--ok]="productoValidado(item.productoId)">
+                <td class="cell-check">
+                  <input
+                    type="checkbox"
+                    [checked]="productoValidado(item.productoId)"
+                    [disabled]="data.yaCerrado"
+                    (change)="toggleProducto(item.productoId, $any($event.target).checked)"
+                  />
+                </td>
+                <td class="cell-mono">{{ item.idVisible }}</td>
+                <td class="cell-primary">{{ item.nombreProducto }}</td>
+                <td class="cell-num">{{ formatUnidades(item.stockUnidades) }}</td>
+                <td class="cell-num">{{ formatPeso(item.stockKg) }}</td>
+                <td class="cell-num">{{ formatUnidades(item.comprasUnidades) }}</td>
+                <td class="cell-num">{{ formatPeso(item.comprasKg) }}</td>
+                <td class="cell-num">{{ formatMoneda(item.comprasTotal) }}</td>
+                <td class="cell-num">{{ formatUnidades(item.ventasUnidades) }}</td>
+                <td class="cell-num">{{ formatPeso(item.ventasKg) }}</td>
+                <td class="cell-num">{{ formatMoneda(item.ventasTotal) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    } @empty {
+      <p class="cierre-mes__empty">
+        {{
+          busqueda()
+            ? 'No hay productos que coincidan con la búsqueda.'
+            : 'No hay productos vigentes para cerrar.'
+        }}
+      </p>
+    }
+
+    @if (!data.yaCerrado) {
+      <div class="cierre-mes__footer">
+        <label class="cierre-mes__obs">
+          <span>Observación (opcional)</span>
+          <textarea
+            rows="2"
+            maxlength="500"
+            [value]="observacion()"
+            (input)="onObservacionChange($any($event.target).value)"
+            placeholder="Notas del cierre..."
+          ></textarea>
+        </label>
+        <button
+          type="button"
+          class="rp-btn rp-btn--primary"
+          [disabled]="saving() || !todosValidados()"
+          (click)="ejecutar()"
+        >
+          {{ saving() ? 'Registrando...' : 'Ejecutar cierre' }}
+        </button>
+      </div>
+    }
+  }
+
+  <section class="cierre-mes__historial">
+    <h2>Historial de cierres</h2>
+    <table class="rp-table">
+      <thead>
+        <tr>
+          <th>Periodo</th>
+          <th>Rango</th>
+          <th>Día cierre</th>
+          <th>Usuario</th>
+          <th>Registrado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of historial(); track item.id) {
+          <tr>
+            <td class="cell-primary">{{ item.periodoLabel }}</td>
+            <td class="cell-secondary">
+              {{ item.periodoDesde | date: 'dd/MM/yyyy' }}
+              —
+              {{ item.periodoHasta | date: 'dd/MM/yyyy' }}
+            </td>
+            <td>{{ item.diaCierre }}</td>
+            <td class="cell-secondary">{{ item.usuarioNombre || '—' }}</td>
+            <td class="cell-secondary">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td class="cell-actions">
+              <button type="button" class="rp-btn rp-btn--ghost" (click)="verCierre(item)">
+                Ver registro
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="cell-empty">Aún no hay cierres registrados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>
+
+@if (cierreHistorial(); as cierre) {
+  <app-rp-modal [title]="'Cierre ' + cierre.periodoLabel" [wide]="true" (closed)="cerrarHistorialDetalle()">
+    <p class="cierre-mes__modal-meta">
+      {{ cierre.periodoDesde | date: 'dd/MM/yyyy HH:mm' }}
+      —
+      {{ cierre.periodoHasta | date: 'dd/MM/yyyy HH:mm' }}
+      · Día {{ cierre.diaCierre }}
+      @if (cierre.usuarioNombre) {
+        · {{ cierre.usuarioNombre }}
+      }
+    </p>
+    @for (categoria of cierre.categorias; track categoria.codigoSui + categoria.nombreSui) {
+      <h3 class="cierre-mes__modal-cat">
+        {{ categoria.nombreSui }}
+        @if (categoria.codigoSui) {
+          <em>{{ categoria.codigoSui }}</em>
+        }
+      </h3>
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Producto</th>
+            <th class="cell-num">Stock KG</th>
+            <th class="cell-num">Compras KG</th>
+            <th class="cell-num">Compras $</th>
+            <th class="cell-num">Ventas KG</th>
+            <th class="cell-num">Ventas $</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of categoria.items; track item.productoId) {
+            <tr>
+              <td class="cell-mono">{{ item.idVisible }}</td>
+              <td>{{ item.nombreProducto }}</td>
+              <td class="cell-num">{{ formatPeso(item.stockKg) }}</td>
+              <td class="cell-num">{{ formatPeso(item.comprasKg) }}</td>
+              <td class="cell-num">{{ formatMoneda(item.comprasTotal) }}</td>
+              <td class="cell-num">{{ formatPeso(item.ventasKg) }}</td>
+              <td class="cell-num">{{ formatMoneda(item.ventasTotal) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    @if (cierre.observacion) {
+      <p class="cierre-mes__obs-view"><strong>Observación:</strong> {{ cierre.observacion }}</p>
+    }
+  </app-rp-modal>
+}
