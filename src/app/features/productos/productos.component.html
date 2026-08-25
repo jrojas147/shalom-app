@@ -99,6 +99,9 @@
                 @if (producto.tipoMedida === 'UNIDAD') {
                   <span class="rp-badge rp-badge--neutral">Unidad</span>
                 }
+                @if (producto.siigoId) {
+                  <span class="rp-badge rp-badge--success">Siigo</span>
+                }
               </td>
               <td class="cell-secondary">
                 @if (producto.codigoCiiu || producto.nombreCiiu) {
@@ -248,7 +251,9 @@
           <div class="rp-field rp-field--full">
             <label for="siigoAccountGroupId">Grupo Siigo</label>
             <select id="siigoAccountGroupId" formControlName="siigoAccountGroupId">
-              <option [ngValue]="null">Sin grupo Siigo</option>
+              <option [ngValue]="null">
+                {{ gruposSiigo().length ? 'Seleccione grupo Siigo' : 'Sin grupo Siigo' }}
+              </option>
               @if (grupoSiigoFueraDeCatalogo()) {
                 <option [ngValue]="form.controls.siigoAccountGroupId.value">
                   Grupo {{ form.controls.siigoAccountGroupId.value }}
@@ -258,11 +263,21 @@
                 <option [ngValue]="grupo.id">{{ grupo.nombre }} ({{ grupo.id }})</option>
               }
             </select>
+            @if (form.controls.siigoAccountGroupId.touched && form.controls.siigoAccountGroupId.invalid) {
+              <span class="rp-field-error">El grupo Siigo es obligatorio para crear el producto en Siigo Nube.</span>
+            }
             @if (loadingGruposSiigo() && !gruposSiigo().length) {
               <span class="productos-siigo-hint">Consultando grupos de Siigo Nube...</span>
             }
             @if (siigoGruposError()) {
               <span class="productos-siigo-hint">{{ siigoGruposError() }}</span>
+            }
+            @if (editingSiigoId()) {
+              <span class="productos-siigo-hint">Este producto ya existe en Siigo Nube.</span>
+            } @else if (gruposSiigo().length) {
+              <span class="productos-siigo-hint">
+                Al guardar se crea en Siigo Nube con el código (ID interno), el nombre y este grupo.
+              </span>
             }
           </div>
         }

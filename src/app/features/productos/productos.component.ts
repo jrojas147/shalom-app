@@ -61,6 +61,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly gruposSiigo = signal<SiigoCatalogoItem[]>([]);
   readonly loadingGruposSiigo = signal(false);
   readonly siigoGruposError = signal<string | null>(null);
+  readonly editingSiigoId = signal<string | null>(null);
 
   readonly imagenPendiente = signal<File | null>(null);
   readonly imagenGuardada = signal<string | null>(null);
@@ -178,13 +179,16 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   openCreate(): void {
     this.editingId.set(null);
+    this.editingSiigoId.set(null);
     this.resetForm();
+    this.actualizarValidacionGrupoSiigo();
     this.showForm.set(true);
     this.error.set(null);
   }
 
   openEdit(producto: Producto): void {
     this.editingId.set(producto.id);
+    this.editingSiigoId.set(producto.siigoId ?? null);
     this.resetImagenState();
     this.form.patchValue({
       idInterno: producto.idInterno ?? '',
@@ -199,6 +203,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     });
     this.imagenGuardada.set(producto.imagen ?? null);
     this.syncPrecioDisplays();
+    this.actualizarValidacionGrupoSiigo();
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -206,6 +211,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+    this.editingSiigoId.set(null);
     this.error.set(null);
     this.resetForm();
   }
@@ -471,6 +477,16 @@ export class ProductosComponent implements OnInit, OnDestroy {
     return !this.gruposSiigo().some((grupo) => grupo.id === id);
   }
 
+  private actualizarValidacionGrupoSiigo(): void {
+    const control = this.form.controls.siigoAccountGroupId;
+    if (this.gruposSiigo().length && !this.editingSiigoId()) {
+      control.setValidators([Validators.required]);
+    } else {
+      control.clearValidators();
+    }
+    control.updateValueAndValidity({ emitEvent: false });
+  }
+
   estadoLabel(estado: ProductoEstado): string {
     switch (estado) {
       case 'ACTIVO':
@@ -536,11 +552,14 @@ export class ProductosComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.gruposSiigo.set((data ?? []).filter((grupo) => grupo.activo !== false));
         this.loadingGruposSiigo.set(false);
-        if (!this.gruposSiigo().length) {
+        if (this.gruposSiigo().length) {
+          this.siigoGruposError.set(null);
+        } else {
           this.siigoGruposError.set(
             'Siigo no devolvió grupos de inventario. Créelos en Siigo Nube (clasificación de productos).'
           );
         }
+        this.actualizarValidacionGrupoSiigo();
       },
       error: (err) => {
         this.gruposSiigo.set([]);
@@ -548,6 +567,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
           err.error?.message ?? 'No se pudieron consultar los grupos de Siigo Nube.'
         );
         this.loadingGruposSiigo.set(false);
+        this.actualizarValidacionGrupoSiigo();
       },
     });
   }

@@ -15,6 +15,7 @@ export interface Producto {
   codigoCiiu?: string | null;
   nombreCiiu?: string | null;
   siigoAccountGroupId?: number | null;
+  siigoId?: string | null;
   precioCompra?: number | null;
   precioVenta?: number | null;
   tipoMedida?: TipoMedida | null;
