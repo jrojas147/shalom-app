@@ -193,7 +193,7 @@
             id="idInterno"
             type="text"
             formControlName="idInterno"
-            [maxlength]="gruposSiigo().length && !editingSiigoId() ? 30 : 50"
+            [maxlength]="gruposSiigo().length ? 30 : 50"
             placeholder="Ej. 101"
           />
           @if (form.controls.idInterno.touched && form.controls.idInterno.invalid) {
@@ -205,7 +205,7 @@
               <span class="rp-field-error">El ID interno es obligatorio.</span>
             }
           }
-          @if (gruposSiigo().length && !editingSiigoId()) {
+          @if (gruposSiigo().length) {
             <span class="productos-siigo-hint">
               Este ID es el código único en Siigo: sin espacios, máximo 30 caracteres.
             </span>
@@ -284,7 +284,10 @@
               <span class="productos-siigo-hint">{{ siigoGruposError() }}</span>
             }
             @if (editingSiigoId()) {
-              <span class="productos-siigo-hint">Este producto ya existe en Siigo Nube.</span>
+              <span class="productos-siigo-hint">
+                Al guardar se actualiza el producto en Siigo Nube (código, nombre, grupo, precio, unidad y descripción).
+                Si el producto ya tiene movimientos en Siigo, el grupo no se podrá cambiar.
+              </span>
             } @else if (gruposSiigo().length) {
               <span class="productos-siigo-hint">
                 Al guardar se crea en Siigo Nube: código (ID), nombre, grupo, precio de venta, unidad y descripción.

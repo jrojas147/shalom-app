@@ -481,7 +481,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private actualizarValidacionGrupoSiigo(): void {
     const grupo = this.form.controls.siigoAccountGroupId;
     const idInterno = this.form.controls.idInterno;
-    const syncSiigo = this.gruposSiigo().length > 0 && !this.editingSiigoId();
+    const syncSiigo = this.gruposSiigo().length > 0;
     if (syncSiigo) {
       grupo.setValidators([Validators.required]);
       idInterno.setValidators([
