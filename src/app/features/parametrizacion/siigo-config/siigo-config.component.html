@@ -1,0 +1,99 @@
+<section class="param-block">
+  <h2 class="param-block__title">Siigo Nube</h2>
+  <p class="param-block__desc">
+    Conecte este comercio con
+    <a href="https://developers.siigolatam.com/docs/siigoapi/" target="_blank" rel="noopener">
+      Siigo API
+    </a>
+    para facturación y contabilidad. Las credenciales se generan en Siigo Nube, menú
+    <strong>Alianzas → Mi Credencial API</strong>.
+  </p>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+  @if (mensaje()) {
+    <div class="rp-alert rp-alert--warning">{{ mensaje() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="rp-loading">Cargando...</p>
+  } @else {
+    <form class="siigo-form" [formGroup]="form" (ngSubmit)="save()">
+      <label class="siigo-check">
+        <input type="checkbox" formControlName="activo" />
+        Activar integración
+      </label>
+
+      <label class="siigo-field">
+        <span>Usuario API (correo)</span>
+        <input type="email" formControlName="username" autocomplete="off" maxlength="200" />
+      </label>
+
+      <label class="siigo-field">
+        <span>Access key</span>
+        <input
+          type="password"
+          formControlName="accessKey"
+          autocomplete="new-password"
+          maxlength="500"
+          [placeholder]="accessKeyConfigured() ? 'Dejar vacío para conservar la clave actual' : ''"
+        />
+      </label>
+
+      <p class="siigo-hint">
+        Partner-Id enviado a Siigo: <strong>{{ partnerId() }}</strong>. El token dura 24 horas y
+        Siigo solo permite generar uno por día; se guarda para reutilizarlo.
+      </p>
+
+      @if (loadingCatalogos()) {
+        <p class="rp-loading">Consultando catálogos de Siigo...</p>
+      }
+
+      @if (documentos().length) {
+        <label class="siigo-field">
+          <span>Tipo de factura de venta (FV)</span>
+          <select formControlName="documentTypeId">
+            <option [ngValue]="null">Seleccione</option>
+            @for (item of documentos(); track item.id) {
+              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+            }
+          </select>
+        </label>
+      }
+
+      @if (mediosPago().length) {
+        <label class="siigo-field">
+          <span>Medio de pago en Siigo</span>
+          <select formControlName="paymentTypeId">
+            <option [ngValue]="null">Seleccione</option>
+            @for (item of mediosPago(); track item.id) {
+              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+            }
+          </select>
+        </label>
+      }
+
+      @if (vendedores().length) {
+        <label class="siigo-field">
+          <span>Vendedor en Siigo</span>
+          <select formControlName="sellerId">
+            <option [ngValue]="null">Seleccione</option>
+            @for (item of vendedores(); track item.id) {
+              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+            }
+          </select>
+        </label>
+      }
+
+      <div class="siigo-actions">
+        <button type="button" class="rp-btn rp-btn--secondary" (click)="probar()" [disabled]="testing() || saving()">
+          {{ testing() ? 'Probando...' : 'Probar conexión' }}
+        </button>
+        <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+          {{ saving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

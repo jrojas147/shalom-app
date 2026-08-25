@@ -14,6 +14,7 @@ export interface Producto {
   codigoCiiuId?: number | null;
   codigoCiiu?: string | null;
   nombreCiiu?: string | null;
+  siigoAccountGroupId?: number | null;
   precioCompra?: number | null;
   precioVenta?: number | null;
   tipoMedida?: TipoMedida | null;
@@ -26,6 +27,7 @@ export interface ProductoRequest {
   nombreInterno: string;
   activo?: boolean;
   codigoCiiuId?: number | null;
+  siigoAccountGroupId?: number | null;
   precioCompra?: number | null;
   precioVenta?: number | null;
   tipoMedida?: TipoMedida;

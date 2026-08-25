@@ -3,6 +3,7 @@ import { CodigosCiiuConfigComponent } from './codigos-ciiu-config/codigos-ciiu-c
 import { CierreMesConfigComponent } from './cierre-mes-config/cierre-mes-config.component';
 import { LecturaPesoConfigComponent } from './lectura-peso-config/lectura-peso-config.component';
 import { MediosCajaConfigComponent } from './medios-caja-config/medios-caja-config.component';
+import { SiigoConfigComponent } from './siigo-config/siigo-config.component';
 import { TiposEmpaqueConfigComponent } from './tipos-empaque-config/tipos-empaque-config.component';
 import { TiposGastoConfigComponent } from './tipos-gasto-config/tipos-gasto-config.component';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
@@ -13,7 +14,8 @@ export type CatalogoParamId =
   | 'gasto'
   | 'medios'
   | 'lectura-peso'
-  | 'cierre-mes';
+  | 'cierre-mes'
+  | 'siigo';
 
 interface CatalogoParam {
   id: CatalogoParamId;
@@ -31,6 +33,7 @@ interface CatalogoParam {
     TiposGastoConfigComponent,
     LecturaPesoConfigComponent,
     CierreMesConfigComponent,
+    SiigoConfigComponent,
     RpModalComponent,
   ],
   templateUrl: './parametrizacion.component.html',
@@ -67,6 +70,11 @@ export class ParametrizacionComponent {
       id: 'cierre-mes',
       titulo: 'Cierre de mes',
       descripcion: 'Día del mes para cerrar inventario, compras y ventas de material.',
+    },
+    {
+      id: 'siigo',
+      titulo: 'Siigo Nube',
+      descripcion: 'Credenciales API para facturar y sincronizar con Siigo.',
     },
   ];
 

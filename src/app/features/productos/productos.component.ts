@@ -19,7 +19,9 @@ import {
   ProductoRequest,
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
+import { SiigoCatalogoItem } from '../../core/models/configuracion-siigo.model';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { ProductosService } from '../../core/services/productos.service';
 import {
   formatCurrencyCo,
@@ -48,6 +50,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   private previewObjectUrl: string | null = null;
@@ -55,6 +58,9 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly productoImagenUrl = productoImagenUrl;
 
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
+  readonly gruposSiigo = signal<SiigoCatalogoItem[]>([]);
+  readonly loadingGruposSiigo = signal(false);
+  readonly siigoGruposError = signal<string | null>(null);
 
   readonly imagenPendiente = signal<File | null>(null);
   readonly imagenGuardada = signal<string | null>(null);
@@ -140,6 +146,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     nombreInterno: ['', [Validators.required, Validators.maxLength(100)]],
     activo: [true],
     codigoCiiuId: [null as number | null],
+    siigoAccountGroupId: [null as number | null],
     medidaUnidad: [false],
     precioCompra: [null as number | null, Validators.min(0)],
     precioVenta: [null as number | null, Validators.min(0)],
@@ -149,6 +156,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadProductos();
     this.loadCodigosCiiu();
+    this.loadGruposSiigo();
   }
 
   ngOnDestroy(): void {
@@ -183,6 +191,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
       nombreInterno: producto.nombreInterno,
       activo: producto.activo,
       codigoCiiuId: producto.codigoCiiuId ?? null,
+      siigoAccountGroupId: producto.siigoAccountGroupId ?? null,
       medidaUnidad: producto.tipoMedida === 'UNIDAD',
       precioCompra: producto.precioCompra ?? null,
       precioVenta: producto.precioVenta ?? null,
@@ -361,6 +370,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
       nombreInterno: raw.nombreInterno.trim(),
       activo: raw.activo,
       codigoCiiuId: raw.codigoCiiuId ?? undefined,
+      siigoAccountGroupId: raw.siigoAccountGroupId ?? undefined,
       tipoMedida: raw.medidaUnidad ? 'UNIDAD' : 'PESO',
       precioCompra: raw.precioCompra,
       precioVenta: raw.precioVenta,
@@ -453,6 +463,14 @@ export class ProductosComponent implements OnInit, OnDestroy {
       });
   }
 
+  grupoSiigoFueraDeCatalogo(): boolean {
+    const id = this.form.controls.siigoAccountGroupId.value;
+    if (id == null) {
+      return false;
+    }
+    return !this.gruposSiigo().some((grupo) => grupo.id === id);
+  }
+
   estadoLabel(estado: ProductoEstado): string {
     switch (estado) {
       case 'ACTIVO':
@@ -511,6 +529,29 @@ export class ProductosComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadGruposSiigo(): void {
+    this.loadingGruposSiigo.set(true);
+    this.siigoGruposError.set(null);
+    this.configuracionSiigoService.gruposCuenta().subscribe({
+      next: (data) => {
+        this.gruposSiigo.set((data ?? []).filter((grupo) => grupo.activo !== false));
+        this.loadingGruposSiigo.set(false);
+        if (!this.gruposSiigo().length) {
+          this.siigoGruposError.set(
+            'Siigo no devolvió grupos de inventario. Créelos en Siigo Nube (clasificación de productos).'
+          );
+        }
+      },
+      error: (err) => {
+        this.gruposSiigo.set([]);
+        this.siigoGruposError.set(
+          err.error?.message ?? 'No se pudieron consultar los grupos de Siigo Nube.'
+        );
+        this.loadingGruposSiigo.set(false);
+      },
+    });
+  }
+
   private matchesSearch(producto: Producto, q: string): boolean {
     const fields = [
       producto.idInterno,
@@ -529,6 +570,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
       nombreInterno: '',
       activo: true,
       codigoCiiuId: null,
+      siigoAccountGroupId: null,
       medidaUnidad: false,
       precioCompra: null,
       precioVenta: null,
