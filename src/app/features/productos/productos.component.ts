@@ -33,6 +33,7 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 
 const MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
 const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const SIIGO_CODIGO_PATTERN = /^[A-Za-z0-9._-]{1,30}$/;
 
 @Component({
   selector: 'app-productos',
@@ -478,13 +479,22 @@ export class ProductosComponent implements OnInit, OnDestroy {
   }
 
   private actualizarValidacionGrupoSiigo(): void {
-    const control = this.form.controls.siigoAccountGroupId;
-    if (this.gruposSiigo().length && !this.editingSiigoId()) {
-      control.setValidators([Validators.required]);
+    const grupo = this.form.controls.siigoAccountGroupId;
+    const idInterno = this.form.controls.idInterno;
+    const syncSiigo = this.gruposSiigo().length > 0 && !this.editingSiigoId();
+    if (syncSiigo) {
+      grupo.setValidators([Validators.required]);
+      idInterno.setValidators([
+        Validators.required,
+        Validators.maxLength(30),
+        Validators.pattern(SIIGO_CODIGO_PATTERN),
+      ]);
     } else {
-      control.clearValidators();
+      grupo.clearValidators();
+      idInterno.setValidators([Validators.required, Validators.maxLength(50)]);
     }
-    control.updateValueAndValidity({ emitEvent: false });
+    grupo.updateValueAndValidity({ emitEvent: false });
+    idInterno.updateValueAndValidity({ emitEvent: false });
   }
 
   estadoLabel(estado: ProductoEstado): string {
