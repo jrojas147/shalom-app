@@ -32,6 +32,8 @@ export interface Cliente {
   tipoDocumento: TipoDocumento;
   documento: string;
   nombre: string;
+  nombres?: string | null;
+  apellidos?: string | null;
   fechaNacimiento?: string | null;
   sexo?: SexoCliente | null;
   telefonoFijo?: string | null;
@@ -53,6 +55,8 @@ export interface ClienteRequest {
   tipoDocumento: TipoDocumento;
   documento: string;
   nombre: string;
+  nombres?: string | null;
+  apellidos?: string | null;
   fechaNacimiento?: string | null;
   sexo?: SexoCliente | null;
   telefonoFijo?: string | null;

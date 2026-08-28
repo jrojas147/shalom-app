@@ -184,10 +184,21 @@
           <input id="documento" type="text" formControlName="documento" maxlength="30" />
         </div>
 
-        <div class="rp-field rp-field--full">
-          <label for="nombre">Nombre completo / Razón social</label>
-          <input id="nombre" type="text" formControlName="nombre" maxlength="200" />
-        </div>
+        @if (esEmpresa()) {
+          <div class="rp-field rp-field--full">
+            <label for="nombre">Razón social</label>
+            <input id="nombre" type="text" formControlName="nombre" maxlength="200" />
+          </div>
+        } @else {
+          <div class="rp-field">
+            <label for="nombres">Nombres</label>
+            <input id="nombres" type="text" formControlName="nombres" maxlength="100" />
+          </div>
+          <div class="rp-field">
+            <label for="apellidos">Apellidos</label>
+            <input id="apellidos" type="text" formControlName="apellidos" maxlength="100" />
+          </div>
+        }
 
         <div class="rp-field">
           <label for="fechaNacimiento">Fecha de nacimiento</label>

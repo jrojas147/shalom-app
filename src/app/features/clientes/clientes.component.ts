@@ -84,7 +84,9 @@ export class ClientesComponent implements OnInit {
     tipoCliente: ['NATURAL' as TipoCliente, Validators.required],
     tipoDocumento: ['CC' as TipoDocumento, Validators.required],
     documento: ['', [Validators.required, Validators.maxLength(30)]],
-    nombre: ['', [Validators.required, Validators.maxLength(200)]],
+    nombre: ['', Validators.maxLength(200)],
+    nombres: ['', [Validators.required, Validators.maxLength(100)]],
+    apellidos: ['', [Validators.required, Validators.maxLength(100)]],
     fechaNacimiento: [''],
     sexo: ['M' as SexoCliente],
     telefonoFijo: ['', Validators.maxLength(30)],
@@ -109,10 +111,11 @@ export class ClientesComponent implements OnInit {
 
     this.form.controls.tipoCliente.valueChanges.subscribe((tipo) => {
       if (tipo === 'EMPRESA') {
-        this.form.patchValue({ sexo: 'NO_APLICA' });
+        this.form.patchValue({ sexo: 'NO_APLICA', nombres: '', apellidos: '' });
       } else if (this.form.controls.sexo.value === 'NO_APLICA') {
-        this.form.patchValue({ sexo: 'M' });
+        this.form.patchValue({ sexo: 'M', nombre: '' });
       }
+      this.actualizarValidacionNombre();
     });
 
     this.form.controls.departamentoId.valueChanges.subscribe((departamentoId) => {
@@ -257,21 +260,27 @@ export class ClientesComponent implements OnInit {
     this.soloLectura.set(readOnly);
     this.viewingCliente.set(readOnly ? cliente : null);
     this.resetForm();
-    this.form.patchValue({
-      tipoCliente: cliente.tipoCliente,
-      tipoDocumento: cliente.tipoDocumento,
-      documento: cliente.documento,
-      nombre: cliente.nombre,
-      fechaNacimiento: cliente.fechaNacimiento ?? '',
-      sexo: cliente.sexo ?? (cliente.tipoCliente === 'EMPRESA' ? 'NO_APLICA' : 'M'),
-      telefonoFijo: cliente.telefonoFijo ?? '',
-      telefonoCelular: cliente.telefonoCelular ?? '',
-      email: cliente.email ?? '',
-      direccion: cliente.direccion ?? '',
-      metodoPagoPreferido: cliente.metodoPagoPreferido ?? null,
-      observaciones: cliente.observaciones ?? '',
-      activo: cliente.activo,
-    });
+    const partes = this.partirNombre(cliente);
+    this.form.patchValue(
+      {
+        tipoCliente: cliente.tipoCliente,
+        tipoDocumento: cliente.tipoDocumento,
+        documento: cliente.documento,
+        nombre: cliente.tipoCliente === 'EMPRESA' ? cliente.nombre : '',
+        nombres: partes.nombres,
+        apellidos: partes.apellidos,
+        fechaNacimiento: cliente.fechaNacimiento ?? '',
+        sexo: cliente.sexo ?? (cliente.tipoCliente === 'EMPRESA' ? 'NO_APLICA' : 'M'),
+        telefonoFijo: cliente.telefonoFijo ?? '',
+        telefonoCelular: cliente.telefonoCelular ?? '',
+        email: cliente.email ?? '',
+        direccion: cliente.direccion ?? '',
+        metodoPagoPreferido: cliente.metodoPagoPreferido ?? null,
+        observaciones: cliente.observaciones ?? '',
+        activo: cliente.activo,
+      },
+      { emitEvent: false }
+    );
     this.patchUbicacion(cliente.departamento, cliente.municipio);
 
     if (readOnly) {
@@ -283,6 +292,7 @@ export class ClientesComponent implements OnInit {
       }
     }
 
+    this.actualizarValidacionNombre();
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -312,11 +322,17 @@ export class ClientesComponent implements OnInit {
     const departamento = this.departamentos().find((d) => d.id === raw.departamentoId);
     const municipio = this.municipios().find((m) => m.id === raw.municipioId);
 
+    const nombres = raw.nombres.trim();
+    const apellidos = raw.apellidos.trim();
+    const empresa = raw.tipoCliente === 'EMPRESA';
+
     return {
       tipoCliente: raw.tipoCliente,
       tipoDocumento: raw.tipoDocumento,
       documento: raw.documento.trim(),
-      nombre: raw.nombre.trim(),
+      nombre: empresa ? raw.nombre.trim() : `${nombres} ${apellidos}`.trim(),
+      nombres: empresa ? undefined : nombres,
+      apellidos: empresa ? undefined : apellidos,
       fechaNacimiento: raw.fechaNacimiento || null,
       sexo: raw.tipoCliente === 'EMPRESA' ? raw.sexo ?? 'NO_APLICA' : raw.sexo,
       telefonoFijo,
@@ -363,6 +379,8 @@ export class ClientesComponent implements OnInit {
       tipoDocumento: 'CC',
       documento: '',
       nombre: '',
+      nombres: '',
+      apellidos: '',
       fechaNacimiento: '',
       sexo: 'M',
       telefonoFijo: '',
@@ -377,7 +395,44 @@ export class ClientesComponent implements OnInit {
     });
     this.form.enable();
     this.form.controls.municipioId.disable();
+    this.actualizarValidacionNombre();
     this.actualizarValidacionSiigo();
+  }
+
+  private actualizarValidacionNombre(): void {
+    const empresa = this.esEmpresa();
+    const nombre = this.form.controls.nombre;
+    const nombres = this.form.controls.nombres;
+    const apellidos = this.form.controls.apellidos;
+    nombre.setValidators(
+      empresa ? [Validators.required, Validators.maxLength(200)] : [Validators.maxLength(200)]
+    );
+    nombres.setValidators(
+      empresa ? [Validators.maxLength(100)] : [Validators.required, Validators.maxLength(100)]
+    );
+    apellidos.setValidators(
+      empresa ? [Validators.maxLength(100)] : [Validators.required, Validators.maxLength(100)]
+    );
+    nombre.updateValueAndValidity({ emitEvent: false });
+    nombres.updateValueAndValidity({ emitEvent: false });
+    apellidos.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private partirNombre(cliente: Cliente): { nombres: string; apellidos: string } {
+    if (cliente.tipoCliente === 'EMPRESA') {
+      return { nombres: '', apellidos: '' };
+    }
+    const nombres = cliente.nombres?.trim() ?? '';
+    const apellidos = cliente.apellidos?.trim() ?? '';
+    if (nombres || apellidos) {
+      return { nombres, apellidos };
+    }
+    const full = (cliente.nombre ?? '').trim();
+    const space = full.indexOf(' ');
+    if (space < 0) {
+      return { nombres: full, apellidos: '' };
+    }
+    return { nombres: full.slice(0, space).trim(), apellidos: full.slice(space + 1).trim() };
   }
 
   private loadSiigo(): void {
@@ -412,6 +467,8 @@ export class ClientesComponent implements OnInit {
     const fields = [
       String(cliente.id),
       cliente.nombre,
+      cliente.nombres,
+      cliente.apellidos,
       cliente.documento,
       cliente.tipoDocumento,
       cliente.email,
