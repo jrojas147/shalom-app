@@ -20,6 +20,7 @@ import {
 import { Departamento, Municipio } from '../../core/models/ubicacion.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ClientesService } from '../../core/services/clientes.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
@@ -35,6 +36,7 @@ export class ClientesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly clientesService = inject(ClientesService);
   private readonly ubicacionesService = inject(UbicacionesService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly auth = inject(AuthService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
@@ -58,6 +60,8 @@ export class ClientesComponent implements OnInit {
   readonly soloLectura = signal(false);
   readonly viewingCliente = signal<Cliente | null>(null);
   readonly editingId = signal<number | null>(null);
+  readonly editingSiigoId = signal<string | null>(null);
+  readonly siigoActivo = signal(false);
 
   readonly puedeGestionar = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
 
@@ -97,6 +101,7 @@ export class ClientesComponent implements OnInit {
   ngOnInit(): void {
     this.form.controls.municipioId.disable();
     this.loadClientes();
+    this.loadSiigo();
     this.ubicacionesService.getDepartamentos().subscribe({
       next: (data) => this.departamentos.set(data),
       error: () => this.departamentos.set([]),
@@ -136,6 +141,7 @@ export class ClientesComponent implements OnInit {
 
   openCreate(): void {
     this.editingId.set(null);
+    this.editingSiigoId.set(null);
     this.soloLectura.set(false);
     this.resetForm();
     this.showForm.set(true);
@@ -153,6 +159,7 @@ export class ClientesComponent implements OnInit {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+    this.editingSiigoId.set(null);
     this.soloLectura.set(false);
     this.viewingCliente.set(null);
     this.error.set(null);
@@ -169,6 +176,7 @@ export class ClientesComponent implements OnInit {
     }
 
     this.form.controls.municipioId.enable();
+    this.actualizarValidacionSiigo();
     this.ubicacionesService.getMunicipiosByDepartamento(departamentoId).subscribe({
       next: (data) => this.municipios.set(data),
       error: () => this.municipios.set([]),
@@ -245,6 +253,7 @@ export class ClientesComponent implements OnInit {
 
   private patchFormFromCliente(cliente: Cliente, readOnly: boolean): void {
     this.editingId.set(readOnly ? null : cliente.id);
+    this.editingSiigoId.set(cliente.siigoId ?? null);
     this.soloLectura.set(readOnly);
     this.viewingCliente.set(readOnly ? cliente : null);
     this.resetForm();
@@ -291,6 +300,12 @@ export class ClientesComponent implements OnInit {
 
     if (raw.tipoCliente === 'NATURAL' && !raw.sexo) {
       this.error.set('El sexo es obligatorio para clientes naturales.');
+      return null;
+    }
+
+    if (this.siigoActivo() && (!raw.direccion.trim() || !raw.departamentoId || !raw.municipioId)) {
+      this.error.set('Con Siigo activo debe indicar dirección, departamento y ciudad.');
+      this.form.markAllAsTouched();
       return null;
     }
 
@@ -362,6 +377,35 @@ export class ClientesComponent implements OnInit {
     });
     this.form.enable();
     this.form.controls.municipioId.disable();
+    this.actualizarValidacionSiigo();
+  }
+
+  private loadSiigo(): void {
+    this.configuracionSiigoService.get().subscribe({
+      next: (config) => {
+        this.siigoActivo.set(!!config.activo);
+        this.actualizarValidacionSiigo();
+      },
+      error: () => {
+        this.siigoActivo.set(false);
+        this.actualizarValidacionSiigo();
+      },
+    });
+  }
+
+  private actualizarValidacionSiigo(): void {
+    const required = this.siigoActivo();
+    const direccion = this.form.controls.direccion;
+    const departamento = this.form.controls.departamentoId;
+    const municipio = this.form.controls.municipioId;
+    direccion.setValidators(
+      required ? [Validators.required, Validators.maxLength(255)] : [Validators.maxLength(255)]
+    );
+    departamento.setValidators(required ? [Validators.required] : []);
+    municipio.setValidators(required ? [Validators.required] : []);
+    direccion.updateValueAndValidity({ emitEvent: false });
+    departamento.updateValueAndValidity({ emitEvent: false });
+    municipio.updateValueAndValidity({ emitEvent: false });
   }
 
   private matchesSearch(cliente: Cliente, q: string): boolean {

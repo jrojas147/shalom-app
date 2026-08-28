@@ -59,7 +59,12 @@
             <tr>
               <td class="cell-mono">{{ cliente.id }}</td>
               <td class="cell-secondary">{{ documentoClienteLabel(cliente) }}</td>
-              <td class="cell-primary">{{ cliente.nombre }}</td>
+              <td class="cell-primary">
+                <span>{{ cliente.nombre }}</span>
+                @if (cliente.siigoId) {
+                  <span class="rp-badge rp-badge--success">Siigo</span>
+                }
+              </td>
               <td class="cell-secondary">{{ tipoClienteLabel(cliente.tipoCliente) }}</td>
               <td class="cell-secondary">
                 {{ cliente.telefonoCelular || cliente.telefonoFijo || cliente.email || '—' }}
@@ -228,12 +233,15 @@
         </div>
 
         <div class="rp-field rp-field--full">
-          <label for="direccion">Dirección</label>
+          <label for="direccion">Dirección{{ siigoActivo() ? ' *' : '' }}</label>
           <input id="direccion" type="text" formControlName="direccion" maxlength="255" />
+          @if (siigoActivo() && form.controls.direccion.touched && form.controls.direccion.invalid) {
+            <span class="rp-field-error">La dirección es obligatoria para crear el cliente en Siigo Nube.</span>
+          }
         </div>
 
         <div class="rp-field">
-          <label for="departamentoId">Departamento</label>
+          <label for="departamentoId">Departamento{{ siigoActivo() ? ' *' : '' }}</label>
           <select id="departamentoId" formControlName="departamentoId">
             <option [ngValue]="null">Seleccione...</option>
             @for (dep of departamentos(); track dep.id) {
@@ -243,13 +251,22 @@
         </div>
 
         <div class="rp-field">
-          <label for="municipioId">Ciudad / Municipio</label>
+          <label for="municipioId">Ciudad / Municipio{{ siigoActivo() ? ' *' : '' }}</label>
           <select id="municipioId" formControlName="municipioId">
             <option [ngValue]="null">Seleccione...</option>
             @for (mun of municipios(); track mun.id) {
               <option [ngValue]="mun.id">{{ mun.nombre }}</option>
             }
           </select>
+          @if (siigoActivo()) {
+            <span class="clientes-siigo-hint">
+              @if (editingSiigoId()) {
+                Este cliente ya está en Siigo Nube. Al guardar se actualiza allá.
+              } @else {
+                Siigo está activo: dirección y ciudad se envían al crear el tercero.
+              }
+            </span>
+          }
         </div>
 
         <div class="rp-field rp-field--full">

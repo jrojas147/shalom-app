@@ -34,6 +34,18 @@
   }
 }
 
+.clientes-siigo-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--rp-text-muted);
+}
+
+.clientes .cell-primary .rp-badge {
+  margin-left: 0.5rem;
+  font-weight: 500;
+}
+
 .clientes-modal-form {
   .rp-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

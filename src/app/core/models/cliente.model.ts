@@ -42,6 +42,7 @@ export interface Cliente {
   municipio?: string | null;
   metodoPagoPreferido?: MetodoPagoPreferido | null;
   observaciones?: string | null;
+  siigoId?: string | null;
   activo: boolean;
   createdAt: string;
   updatedAt: string;
