@@ -22,7 +22,7 @@
           type="button"
           class="rp-btn rp-btn--secondary"
           (click)="downloadExcel()"
-          [disabled]="downloadingExcel() || importingExcel()"
+          [disabled]="downloadingExcel() || importingExcel() || syncingSiigo()"
         >
           {{ downloadingExcel() ? 'Descargando...' : 'Descargar Excel' }}
         </button>
@@ -30,9 +30,18 @@
           type="button"
           class="rp-btn rp-btn--secondary"
           (click)="openExcelModal()"
-          [disabled]="importingExcel()"
+          [disabled]="importingExcel() || syncingSiigo()"
         >
           Cargar Excel
+        </button>
+        <button
+          type="button"
+          class="rp-btn rp-btn--secondary"
+          (click)="openSiigoModal()"
+          [disabled]="syncingSiigo() || loadingSiigoCatalogo() || importingExcel() || !siigoActivo()"
+          [title]="siigoActivo() ? 'Traer productos desde Siigo Nube' : 'Debe activar Siigo en Parametrización'"
+        >
+          {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar' }}
         </button>
         <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
           + Nuevo producto
@@ -63,6 +72,40 @@
         </select>
       </div>
     </div>
+
+    @if (siigoSyncResult(); as result) {
+      <div class="productos-excel-result">
+        <p>
+          Siigo Nube:
+          <strong>{{ result.consultados }}</strong> consultado(s),
+          <strong>{{ result.creados }}</strong> creado(s),
+          <strong>{{ result.actualizados }}</strong> actualizado(s)
+          @if (result.errores) {
+            y <strong>{{ result.errores }}</strong> error(es).
+          } @else {
+            sin errores.
+          }
+        </p>
+        @if (result.detalleErrores.length) {
+          <table class="rp-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of result.detalleErrores; track item.codigo + item.mensaje) {
+                <tr>
+                  <td class="cell-mono">{{ item.codigo }}</td>
+                  <td class="cell-secondary">{{ item.mensaje }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
 
     @if (loading()) {
       <p class="rp-loading">Cargando...</p>
@@ -522,6 +565,160 @@
         {{ importingExcel() ? 'Importando...' : 'Importar productos' }}
       </button>
     </div>
+    </div>
+  </app-rp-modal>
+}
+
+@if (showSiigoModal()) {
+  <app-rp-modal title="Sincronizar productos de Siigo" [wide]="true" (closed)="closeSiigoModal()">
+    <div class="productos-modal-form">
+      @if (siigoCatalogoError()) {
+        <div class="rp-alert rp-alert--error">{{ siigoCatalogoError() }}</div>
+      }
+      @if (siigoSyncResult(); as result) {
+        <div class="productos-excel-result">
+          <p>
+            Siigo Nube:
+            <strong>{{ result.consultados }}</strong> seleccionado(s),
+            <strong>{{ result.creados }}</strong> creado(s),
+            <strong>{{ result.actualizados }}</strong> actualizado(s)
+            @if (result.errores) {
+              y <strong>{{ result.errores }}</strong> error(es).
+            } @else {
+              sin errores.
+            }
+          </p>
+          @if (result.detalleErrores.length) {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of result.detalleErrores; track item.codigo + item.mensaje) {
+                  <tr>
+                    <td class="cell-mono">{{ item.codigo }}</td>
+                    <td class="cell-secondary">{{ item.mensaje }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      }
+
+      <p class="productos-siigo-modal__hint">
+        Marque los productos que desea crear o actualizar. Se cargan de 100 en 100 para no saturar
+        el cupo de Siigo (10 consultas por minuto en pruebas). La búsqueda filtra lo ya cargado.
+      </p>
+
+      <div class="productos-siigo-modal__toolbar">
+        <label class="productos-siigo-modal__check-all">
+          <input
+            type="checkbox"
+            [checked]="siigoTodosVisiblesSeleccionados()"
+            [indeterminate]="siigoAlgunoVisibleSeleccionado()"
+            [disabled]="loadingSiigoCatalogo() || syncingSiigo() || !siigoCatalogoFiltrado().length"
+            (change)="toggleSiigoVisibles($any($event.target).checked)"
+          />
+          Seleccionar visibles
+        </label>
+        <input
+          type="search"
+          class="productos__search"
+          placeholder="Buscar en los productos cargados..."
+          [value]="siigoBusqueda()"
+          (input)="onSiigoBusquedaChange($any($event.target).value)"
+          [disabled]="loadingSiigoCatalogo() || syncingSiigo()"
+        />
+        <span class="productos-siigo-modal__count">
+          {{ siigoSeleccionCount() }} seleccionados · {{ siigoCatalogo().length }} cargados
+          @if (siigoTotal()) {
+            de {{ siigoTotal() }}
+          }
+        </span>
+      </div>
+
+      @if (loadingSiigoCatalogo() && !siigoCatalogo().length) {
+        <p class="rp-loading">Consultando productos en Siigo Nube...</p>
+      } @else if (!siigoCatalogo().length && !siigoCatalogoError()) {
+        <p class="rp-loading">Siigo no devolvió productos.</p>
+      } @else {
+        <div class="productos-siigo-modal__table">
+          <table class="rp-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>Medida</th>
+                <th>Precio venta</th>
+                <th>Estado</th>
+                <th>Shalom</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of siigoCatalogoFiltrado(); track item.id) {
+                <tr>
+                  <td>
+                    <input
+                      type="checkbox"
+                      [checked]="siigoSeleccionado(item.id)"
+                      [disabled]="syncingSiigo()"
+                      (change)="toggleSiigoProducto(item.id, $any($event.target).checked)"
+                    />
+                  </td>
+                  <td class="cell-mono">{{ item.codigo || '—' }}</td>
+                  <td class="cell-primary">{{ item.nombre || '—' }}</td>
+                  <td class="cell-secondary">{{ tipoMedidaSiigoLabel(item.tipoMedida) }}</td>
+                  <td class="cell-secondary">{{ formatPrecio(item.precioVenta) }}</td>
+                  <td class="cell-secondary">{{ item.activo ? 'Activo' : 'Inactivo' }}</td>
+                  <td>
+                    @if (item.yaSincronizado) {
+                      <span class="rp-badge rp-badge--success">Ya en Shalom</span>
+                    } @else {
+                      <span class="cell-secondary">Nuevo</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (siigoHayMas()) {
+          <div class="productos-siigo-modal__more">
+            <button
+              type="button"
+              class="rp-btn rp-btn--secondary"
+              (click)="cargarMasSiigo()"
+              [disabled]="loadingSiigoMas() || syncingSiigo() || loadingSiigoCatalogo()"
+            >
+              {{ loadingSiigoMas() ? 'Cargando...' : 'Cargar más' }}
+            </button>
+          </div>
+        }
+      }
+
+      <div class="rp-form-actions productos-modal-actions">
+        <button
+          type="button"
+          class="rp-btn rp-btn--ghost"
+          (click)="closeSiigoModal()"
+          [disabled]="syncingSiigo()"
+        >
+          Cerrar
+        </button>
+        <button
+          type="button"
+          class="rp-btn rp-btn--primary"
+          (click)="confirmarSincronizarSiigo()"
+          [disabled]="syncingSiigo() || loadingSiigoCatalogo() || !siigoSeleccionCount()"
+        >
+          {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar seleccionados' }}
+        </button>
+      </div>
     </div>
   </app-rp-modal>
 }

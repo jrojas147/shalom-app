@@ -48,6 +48,37 @@ export interface ProductoExcelImportResult {
   detalleErrores: ProductoExcelFilaError[];
 }
 
+export interface ProductoSiigoItem {
+  id: string;
+  codigo?: string | null;
+  nombre?: string | null;
+  activo: boolean;
+  precioVenta?: number | null;
+  tipoMedida?: TipoMedida | null;
+  yaSincronizado: boolean;
+}
+
+export interface ProductoSiigoCatalogo {
+  page: number;
+  pageSize: number;
+  total: number;
+  hayMas: boolean;
+  items: ProductoSiigoItem[];
+}
+
+export interface ProductoSiigoSyncError {
+  codigo: string;
+  mensaje: string;
+}
+
+export interface ProductoSiigoSyncResult {
+  consultados: number;
+  creados: number;
+  actualizados: number;
+  errores: number;
+  detalleErrores: ProductoSiigoSyncError[];
+}
+
 export interface ProductoPrecioHistorial {
   id: number;
   productoId: number;

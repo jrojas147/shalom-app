@@ -17,6 +17,9 @@ import {
   ProductoPrecioHistorial,
   productoImagenUrl,
   ProductoRequest,
+  ProductoSiigoCatalogo,
+  ProductoSiigoItem,
+  ProductoSiigoSyncResult,
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { SiigoCatalogoItem } from '../../core/models/configuracion-siigo.model';
@@ -106,6 +109,19 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly importingExcel = signal(false);
   readonly excelResult = signal<ProductoExcelImportResult | null>(null);
   readonly excelError = signal<string | null>(null);
+  readonly siigoActivo = signal(false);
+  readonly showSiigoModal = signal(false);
+  readonly loadingSiigoCatalogo = signal(false);
+  readonly loadingSiigoMas = signal(false);
+  readonly syncingSiigo = signal(false);
+  readonly siigoCatalogo = signal<ProductoSiigoItem[]>([]);
+  readonly siigoPagina = signal(1);
+  readonly siigoTotal = signal(0);
+  readonly siigoHayMas = signal(false);
+  readonly siigoSeleccion = signal<Set<string>>(new Set());
+  readonly siigoBusqueda = signal('');
+  readonly siigoCatalogoError = signal<string | null>(null);
+  readonly siigoSyncResult = signal<ProductoSiigoSyncResult | null>(null);
 
   readonly showHistorial = signal(false);
   readonly historialProducto = signal<Producto | null>(null);
@@ -143,6 +159,35 @@ export class ProductosComponent implements OnInit, OnDestroy {
     });
   });
 
+  readonly siigoCatalogoFiltrado = computed(() => {
+    const q = this.siigoBusqueda().trim().toLowerCase();
+    if (!q) {
+      return this.siigoCatalogo();
+    }
+    return this.siigoCatalogo().filter((item) => {
+      const fields = [item.codigo, item.nombre, item.id];
+      return fields.some((value) => value?.toLowerCase().includes(q));
+    });
+  });
+
+  readonly siigoSeleccionCount = computed(() => this.siigoSeleccion().size);
+
+  readonly siigoTodosVisiblesSeleccionados = computed(() => {
+    const visibles = this.siigoCatalogoFiltrado();
+    if (!visibles.length) {
+      return false;
+    }
+    const sel = this.siigoSeleccion();
+    return visibles.every((item) => sel.has(item.id));
+  });
+
+  readonly siigoAlgunoVisibleSeleccionado = computed(() => {
+    const visibles = this.siigoCatalogoFiltrado();
+    const sel = this.siigoSeleccion();
+    const n = visibles.filter((item) => sel.has(item.id)).length;
+    return n > 0 && n < visibles.length;
+  });
+
   readonly form = this.fb.nonNullable.group({
     idInterno: ['', [Validators.required, Validators.maxLength(50)]],
     nombreInterno: ['', [Validators.required, Validators.maxLength(100)]],
@@ -159,6 +204,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.loadProductos();
     this.loadCodigosCiiu();
     this.loadGruposSiigo();
+    this.loadSiigoActivo();
   }
 
   ngOnDestroy(): void {
@@ -228,6 +274,131 @@ export class ProductosComponent implements OnInit, OnDestroy {
     }
     this.showExcelModal.set(false);
     this.resetExcelState();
+  }
+
+  openSiigoModal(): void {
+    if (this.loadingSiigoCatalogo() || this.syncingSiigo() || !this.siigoActivo()) {
+      return;
+    }
+    this.showSiigoModal.set(true);
+    this.siigoCatalogo.set([]);
+    this.siigoSeleccion.set(new Set());
+    this.siigoBusqueda.set('');
+    this.siigoCatalogoError.set(null);
+    this.siigoSyncResult.set(null);
+    this.siigoPagina.set(1);
+    this.siigoTotal.set(0);
+    this.siigoHayMas.set(false);
+    this.cargarPaginaSiigo(1, false);
+  }
+
+  closeSiigoModal(): void {
+    if (this.syncingSiigo()) {
+      return;
+    }
+    this.showSiigoModal.set(false);
+    this.siigoCatalogo.set([]);
+    this.siigoSeleccion.set(new Set());
+    this.siigoBusqueda.set('');
+    this.siigoCatalogoError.set(null);
+    this.siigoHayMas.set(false);
+  }
+
+  cargarMasSiigo(): void {
+    if (!this.siigoHayMas() || this.loadingSiigoMas() || this.loadingSiigoCatalogo() || this.syncingSiigo()) {
+      return;
+    }
+    this.cargarPaginaSiigo(this.siigoPagina() + 1, true);
+  }
+
+  private cargarPaginaSiigo(page: number, append: boolean): void {
+    this.siigoCatalogoError.set(null);
+    this.error.set(null);
+    if (append) {
+      this.loadingSiigoMas.set(true);
+    } else {
+      this.loadingSiigoCatalogo.set(true);
+    }
+    this.productosService.listarSiigo(page).subscribe({
+      next: (data) => this.applyPaginaSiigo(data, append),
+      error: (err) => {
+        this.loadingSiigoCatalogo.set(false);
+        this.loadingSiigoMas.set(false);
+        this.siigoCatalogoError.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  private applyPaginaSiigo(data: ProductoSiigoCatalogo, append: boolean): void {
+    const items = data.items ?? [];
+    if (append) {
+      const seen = new Set(this.siigoCatalogo().map((item) => item.id));
+      this.siigoCatalogo.set([...this.siigoCatalogo(), ...items.filter((item) => !seen.has(item.id))]);
+    } else {
+      this.siigoCatalogo.set(items);
+    }
+    this.siigoPagina.set(data.page);
+    this.siigoTotal.set(data.total);
+    this.siigoHayMas.set(!!data.hayMas);
+    this.loadingSiigoCatalogo.set(false);
+    this.loadingSiigoMas.set(false);
+  }
+
+  onSiigoBusquedaChange(value: string): void {
+    this.siigoBusqueda.set(value);
+  }
+
+  siigoSeleccionado(id: string): boolean {
+    return this.siigoSeleccion().has(id);
+  }
+
+  toggleSiigoProducto(id: string, checked: boolean): void {
+    const next = new Set(this.siigoSeleccion());
+    if (checked) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
+    this.siigoSeleccion.set(next);
+  }
+
+  toggleSiigoVisibles(checked: boolean): void {
+    const next = new Set(this.siigoSeleccion());
+    for (const item of this.siigoCatalogoFiltrado()) {
+      if (checked) {
+        next.add(item.id);
+      } else {
+        next.delete(item.id);
+      }
+    }
+    this.siigoSeleccion.set(next);
+  }
+
+  confirmarSincronizarSiigo(): void {
+    const ids = [...this.siigoSeleccion()];
+    if (!ids.length || this.syncingSiigo()) {
+      return;
+    }
+    this.syncingSiigo.set(true);
+    this.siigoSyncResult.set(null);
+    this.siigoCatalogoError.set(null);
+    this.productosService.sincronizarSiigo(ids).subscribe({
+      next: (result) => {
+        this.syncingSiigo.set(false);
+        this.siigoSyncResult.set(result);
+        this.loadProductos();
+        const seleccion = new Set(ids);
+        this.siigoCatalogo.set(
+          this.siigoCatalogo().map((item) =>
+            seleccion.has(item.id) ? { ...item, yaSincronizado: true } : item
+          )
+        );
+      },
+      error: (err) => {
+        this.syncingSiigo.set(false);
+        this.siigoCatalogoError.set(this.extractErrorMessage(err));
+      },
+    });
   }
 
   downloadExcel(): void {
@@ -517,6 +688,10 @@ export class ProductosComponent implements OnInit, OnDestroy {
     return formatCurrencyCo(value);
   }
 
+  tipoMedidaSiigoLabel(tipo?: 'PESO' | 'UNIDAD' | null): string {
+    return tipo === 'UNIDAD' ? 'Unidad' : 'Peso';
+  }
+
   onPrecioInput(campo: 'precioCompra' | 'precioVenta', event: Event): void {
     const input = event.target as HTMLInputElement;
     const selectionStart = input.selectionStart ?? input.value.length;
@@ -579,6 +754,13 @@ export class ProductosComponent implements OnInit, OnDestroy {
         this.loadingGruposSiigo.set(false);
         this.actualizarValidacionGrupoSiigo();
       },
+    });
+  }
+
+  private loadSiigoActivo(): void {
+    this.configuracionSiigoService.get().subscribe({
+      next: (config) => this.siigoActivo.set(!!config.activo),
+      error: () => this.siigoActivo.set(false),
     });
   }
 
