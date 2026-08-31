@@ -4,6 +4,7 @@ export interface CodigoCiiu {
   id: number;
   codigo: string;
   nombre: string;
+  siigoAccountGroupId?: number | null;
   estado: CodigoCiiuEstado;
   fechaEstado: string;
 }

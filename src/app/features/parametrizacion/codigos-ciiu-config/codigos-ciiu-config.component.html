@@ -41,6 +41,9 @@
             <span class="param-block__item-text">
               <strong>{{ item.codigo }}</strong>
               <span class="param-block__item-meta">{{ item.nombre }}</span>
+              @if (item.siigoAccountGroupId) {
+                <span class="rp-badge rp-badge--success">Siigo</span>
+              }
             </span>
             <span class="param-block__item-actions">
               <button

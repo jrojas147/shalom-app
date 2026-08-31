@@ -98,8 +98,10 @@ export class CodigosCiiuConfigComponent implements OnInit {
   deleteCodigo(item: CodigoCiiu): void {
     this.confirmDialog
       .confirm({
-        title: 'Eliminar código CIIU',
-        message: `¿Eliminar el código CIIU "${item.codigo}"? Quedará marcado como eliminado y se mantendrá el historial en productos.`,
+        title: 'Eliminar grupo de materiales',
+        message: item.siigoAccountGroupId
+          ? `¿Eliminar el grupo "${item.codigo}"? Dejará de listarse aquí y se eliminará también en Siigo. El historial en productos se conserva.`
+          : `¿Eliminar el grupo "${item.codigo}"? Dejará de listarse y se mantendrá el historial en productos.`,
         confirmLabel: 'Eliminar',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',
