@@ -20,6 +20,7 @@ import {
   productoImagenUrl,
   ProductoRequest,
   ProductoSiigoCatalogo,
+  ProductoSiigoCodigo,
   ProductoSiigoItem,
   ProductoSiigoSyncResult,
 } from '../../core/models/producto.model';
@@ -121,6 +122,13 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly siigoBusqueda = signal('');
   readonly siigoCatalogoError = signal<string | null>(null);
   readonly siigoSyncResult = signal<ProductoSiigoSyncResult | null>(null);
+  readonly showSiigoBuscarLocalModal = signal(false);
+  readonly siigoBuscarLocalQuery = signal('');
+  readonly siigoBuscarLocalProducto = signal<Producto | null>(null);
+  readonly siigoBuscarLocalResult = signal<ProductoSiigoCodigo | null>(null);
+  readonly siigoBuscarLocalLoading = signal(false);
+  readonly siigoBuscarLocalError = signal<string | null>(null);
+  readonly siigoBuscarLocalSyncResult = signal<ProductoSiigoSyncResult | null>(null);
 
   readonly showHistorial = signal(false);
   readonly historialProducto = signal<Producto | null>(null);
@@ -185,6 +193,35 @@ export class ProductosComponent implements OnInit, OnDestroy {
     const sel = this.siigoSeleccion();
     const n = visibles.filter((item) => sel.has(item.id)).length;
     return n > 0 && n < visibles.length;
+  });
+
+  readonly siigoProductosLocalesFiltrados = computed(() => {
+    const q = this.siigoBuscarLocalQuery().trim().toLowerCase();
+    return this.productos().filter((producto) => {
+      if (producto.estado === 'ELIMINADO') {
+        return false;
+      }
+      if (!q) {
+        return true;
+      }
+      return this.matchesSearch(producto, q);
+    });
+  });
+
+  readonly siigoBuscarLocalTitle = computed(() => {
+    const producto = this.siigoBuscarLocalProducto();
+    return producto
+      ? `Buscar en Siigo — ${producto.nombreInterno}`
+      : 'Buscar mi producto';
+  });
+
+  readonly puedeSincronizarProductoBuscado = computed(() => {
+    const remoto = this.siigoBuscarLocalResult();
+    const local = this.siigoBuscarLocalProducto();
+    if (!remoto?.existe) {
+      return false;
+    }
+    return !!(remoto.siigoId?.trim() || remoto.codigo?.trim() || local?.idInterno?.trim());
   });
 
   readonly form = this.fb.nonNullable.group({
@@ -307,6 +344,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.siigoPagina.set(1);
     this.siigoTotal.set(0);
     this.siigoHayMas.set(false);
+    this.resetSiigoBuscarLocal();
     this.cargarPaginaSiigo(1, false);
   }
 
@@ -320,6 +358,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.siigoBusqueda.set('');
     this.siigoCatalogoError.set(null);
     this.siigoHayMas.set(false);
+    this.resetSiigoBuscarLocal();
   }
 
   cargarMasSiigo(): void {
@@ -353,7 +392,11 @@ export class ProductosComponent implements OnInit, OnDestroy {
       const seen = new Set(this.siigoCatalogo().map((item) => item.id));
       this.siigoCatalogo.set([...this.siigoCatalogo(), ...items.filter((item) => !seen.has(item.id))]);
     } else {
-      this.siigoCatalogo.set(items);
+      const extras = this.siigoCatalogo().filter(
+        (item) =>
+          this.siigoSeleccion().has(item.id) && !items.some((nuevo) => nuevo.id === item.id)
+      );
+      this.siigoCatalogo.set([...extras, ...items]);
     }
     this.siigoPagina.set(data.page);
     this.siigoTotal.set(data.total);
@@ -417,6 +460,138 @@ export class ProductosComponent implements OnInit, OnDestroy {
         this.siigoCatalogoError.set(this.extractErrorMessage(err));
       },
     });
+  }
+
+  openSiigoBuscarLocalModal(): void {
+    if (this.syncingSiigo()) {
+      return;
+    }
+    this.siigoBuscarLocalQuery.set('');
+    this.siigoBuscarLocalProducto.set(null);
+    this.siigoBuscarLocalResult.set(null);
+    this.siigoBuscarLocalLoading.set(false);
+    this.siigoBuscarLocalError.set(null);
+    this.siigoBuscarLocalSyncResult.set(null);
+    this.showSiigoBuscarLocalModal.set(true);
+  }
+
+  closeSiigoBuscarLocalModal(): void {
+    if (this.siigoBuscarLocalLoading() || this.syncingSiigo()) {
+      return;
+    }
+    this.resetSiigoBuscarLocal();
+  }
+
+  onSiigoBuscarLocalQueryChange(value: string): void {
+    this.siigoBuscarLocalQuery.set(value);
+  }
+
+  volverListadoSiigoLocal(): void {
+    if (this.siigoBuscarLocalLoading() || this.syncingSiigo()) {
+      return;
+    }
+    this.siigoBuscarLocalProducto.set(null);
+    this.siigoBuscarLocalResult.set(null);
+    this.siigoBuscarLocalError.set(null);
+    this.siigoBuscarLocalSyncResult.set(null);
+  }
+
+  buscarProductoLocalEnSiigo(producto: Producto): void {
+    const code = producto.idInterno?.trim();
+    this.siigoBuscarLocalProducto.set(producto);
+    this.siigoBuscarLocalResult.set(null);
+    this.siigoBuscarLocalSyncResult.set(null);
+    this.siigoBuscarLocalError.set(null);
+    if (!code) {
+      this.siigoBuscarLocalError.set(
+        'Este producto no tiene ID interno para buscarlo en Siigo.'
+      );
+      return;
+    }
+    this.siigoBuscarLocalLoading.set(true);
+    this.productosService.consultarCodigoSiigo(code).subscribe({
+      next: (res) => {
+        this.siigoBuscarLocalLoading.set(false);
+        this.siigoBuscarLocalResult.set(res);
+        if (res.existe && res.siigoId) {
+          this.incorporarProductoSiigo(
+            {
+              id: res.siigoId,
+              codigo: res.codigo,
+              nombre: res.nombre,
+              activo: true,
+              yaSincronizado: this.productos().some((item) => item.siigoId === res.siigoId),
+            },
+            true
+          );
+        }
+      },
+      error: (err) => {
+        this.siigoBuscarLocalLoading.set(false);
+        this.siigoBuscarLocalError.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  sincronizarProductoBuscado(): void {
+    const remoto = this.siigoBuscarLocalResult();
+    const local = this.siigoBuscarLocalProducto();
+    const siigoId = remoto?.siigoId?.trim();
+    const code = remoto?.codigo?.trim() || local?.idInterno?.trim();
+    if ((!siigoId && !code) || this.syncingSiigo() || this.siigoBuscarLocalLoading()) {
+      if (!siigoId && !code) {
+        this.siigoBuscarLocalError.set(
+          'No se pudo identificar el producto en Siigo para sincronizarlo.'
+        );
+      }
+      return;
+    }
+    this.syncingSiigo.set(true);
+    this.siigoBuscarLocalError.set(null);
+    this.siigoBuscarLocalSyncResult.set(null);
+    this.productosService
+      .sincronizarSiigo(code ? [] : siigoId ? [siigoId] : [], code ? [code] : [])
+      .subscribe({
+      next: (result) => {
+        this.syncingSiigo.set(false);
+        this.siigoBuscarLocalSyncResult.set(result);
+        this.siigoSyncResult.set(result);
+        this.loadProductos();
+        if (siigoId) {
+          this.siigoCatalogo.set(
+            this.siigoCatalogo().map((item) =>
+              item.id === siigoId ? { ...item, yaSincronizado: true } : item
+            )
+          );
+        }
+      },
+      error: (err) => {
+        this.syncingSiigo.set(false);
+        this.siigoBuscarLocalError.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  private incorporarProductoSiigo(item: ProductoSiigoItem, seleccionar: boolean): void {
+    if (!this.siigoCatalogo().some((actual) => actual.id === item.id)) {
+      this.siigoCatalogo.set([item, ...this.siigoCatalogo()]);
+    }
+    if (!seleccionar) {
+      return;
+    }
+    const next = new Set(this.siigoSeleccion());
+    next.add(item.id);
+    this.siigoSeleccion.set(next);
+  }
+
+  private resetSiigoBuscarLocal(): void {
+    this.showSiigoBuscarLocalModal.set(false);
+    this.siigoBuscarLocalQuery.set('');
+    this.siigoBuscarLocalProducto.set(null);
+    this.siigoBuscarLocalResult.set(null);
+    this.siigoBuscarLocalLoading.set(false);
+    this.siigoBuscarLocalError.set(null);
+    this.siigoBuscarLocalSyncResult.set(null);
   }
 
   downloadExcel(): void {

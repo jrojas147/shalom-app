@@ -3,6 +3,11 @@ import { Component, input, output } from '@angular/core';
 @Component({
   selector: 'app-rp-modal',
   standalone: true,
+  host: {
+    '[style.z-index]': 'stacked() ? 1100 : 1000',
+    '[style.position]': '"relative"',
+    '[style.display]': '"block"',
+  },
   template: `
     <div
       class="rp-modal-overlay"

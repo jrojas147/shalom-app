@@ -54,8 +54,8 @@ export class ProductosService {
     return this.http.get<ProductoSiigoCodigo>(`${this.baseUrl}/siigo/codigo`, { params });
   }
 
-  sincronizarSiigo(ids: string[]): Observable<ProductoSiigoSyncResult> {
-    return this.http.post<ProductoSiigoSyncResult>(`${this.baseUrl}/sincronizar-siigo`, { ids });
+  sincronizarSiigo(ids: string[] = [], codes: string[] = []): Observable<ProductoSiigoSyncResult> {
+    return this.http.post<ProductoSiigoSyncResult>(`${this.baseUrl}/sincronizar-siigo`, { ids, codes });
   }
 
   getHistorialPrecios(id: number): Observable<ProductoPrecioHistorial[]> {

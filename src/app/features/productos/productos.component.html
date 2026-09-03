@@ -585,11 +585,20 @@
       }
 
       <p class="productos-siigo-modal__hint">
-        Marque los productos que desea crear o actualizar. Se cargan de 100 en 100 para no saturar
-        el cupo de Siigo (10 consultas por minuto en pruebas). La búsqueda filtra lo ya cargado.
+        Marque los productos que desea crear o actualizar, o use
+        <strong>Buscar mi producto</strong> para localizar en Siigo uno que ya tenga en Shalom.
+        Se cargan de 100 en 100 para no saturar el cupo de Siigo (10 consultas por minuto en pruebas).
       </p>
 
       <div class="productos-siigo-modal__toolbar">
+        <button
+          type="button"
+          class="rp-btn rp-btn--secondary"
+          (click)="openSiigoBuscarLocalModal(); $event.stopPropagation()"
+          [disabled]="syncingSiigo()"
+        >
+          Buscar mi producto
+        </button>
         <label class="productos-siigo-modal__check-all">
           <input
             type="checkbox"
@@ -687,13 +696,197 @@
         </button>
         <button
           type="button"
+          class="rp-btn rp-btn--secondary"
+          (click)="openSiigoBuscarLocalModal(); $event.stopPropagation()"
+          [disabled]="syncingSiigo()"
+        >
+          Buscar mi producto
+        </button>
+        <button
+          type="button"
           class="rp-btn rp-btn--primary"
           (click)="confirmarSincronizarSiigo()"
-          [disabled]="syncingSiigo() || loadingSiigoCatalogo() || !siigoSeleccionCount()"
+          [disabled]="syncingSiigo() || !siigoSeleccionCount()"
         >
           {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar seleccionados' }}
         </button>
       </div>
+    </div>
+  </app-rp-modal>
+}
+
+@if (showSiigoBuscarLocalModal()) {
+  <app-rp-modal
+    [title]="siigoBuscarLocalTitle()"
+    [wide]="true"
+    [stacked]="true"
+    (closed)="closeSiigoBuscarLocalModal()"
+  >
+    <div class="productos-modal-form">
+      @if (siigoBuscarLocalError()) {
+        <div class="rp-alert rp-alert--error">{{ siigoBuscarLocalError() }}</div>
+      }
+      @if (siigoBuscarLocalSyncResult(); as result) {
+        <div class="productos-excel-result">
+          <p>
+            Siigo Nube:
+            <strong>{{ result.consultados }}</strong> seleccionado(s),
+            <strong>{{ result.creados }}</strong> creado(s),
+            <strong>{{ result.actualizados }}</strong> actualizado(s)
+            @if (result.errores) {
+              y <strong>{{ result.errores }}</strong> error(es).
+            } @else {
+              sin errores.
+            }
+          </p>
+          @if (result.detalleErrores.length) {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of result.detalleErrores; track item.codigo + item.mensaje) {
+                  <tr>
+                    <td class="cell-mono">{{ item.codigo }}</td>
+                    <td class="cell-secondary">{{ item.mensaje }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      }
+
+      @if (siigoBuscarLocalProducto(); as local) {
+        @if (siigoBuscarLocalLoading()) {
+          <p class="rp-loading">Buscando "{{ local.nombreInterno }}" en Siigo Nube...</p>
+        } @else if (siigoBuscarLocalResult(); as remoto) {
+          <div class="productos-siigo-local-result">
+            <div class="productos-siigo-local-card">
+              <span class="productos-siigo-local-card__label">En Shalom</span>
+              <strong>{{ local.nombreInterno }}</strong>
+              <span class="cell-mono">ID {{ local.idInterno || '—' }}</span>
+              @if (local.siigoId) {
+                <span class="rp-badge rp-badge--success">Ya vinculado</span>
+              }
+            </div>
+            @if (remoto.existe) {
+              <div class="productos-siigo-local-card productos-siigo-local-card--siigo">
+                <span class="productos-siigo-local-card__label">En Siigo</span>
+                <strong>{{ remoto.nombre || '—' }}</strong>
+                <span class="cell-mono">Código {{ remoto.codigo || local.idInterno }}</span>
+              </div>
+            } @else {
+              <div class="rp-alert rp-alert--error">
+                No se encontró en Siigo un producto con el código "{{ local.idInterno }}".
+              </div>
+            }
+          </div>
+        }
+        <div class="rp-form-actions productos-modal-actions">
+          <button
+            type="button"
+            class="rp-btn rp-btn--ghost"
+            (click)="volverListadoSiigoLocal()"
+            [disabled]="siigoBuscarLocalLoading() || syncingSiigo()"
+          >
+            Volver al listado
+          </button>
+          @if (puedeSincronizarProductoBuscado()) {
+            <button
+              type="button"
+              class="rp-btn rp-btn--primary"
+              (click)="sincronizarProductoBuscado(); $event.stopPropagation()"
+              [disabled]="syncingSiigo() || siigoBuscarLocalLoading()"
+            >
+              {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar este producto' }}
+            </button>
+          }
+        </div>
+      } @else {
+        <p class="productos-siigo-modal__hint">
+          Elija un producto de Shalom. Se buscará en Siigo por su ID interno y podrá sincronizarlo.
+        </p>
+        <div class="productos-siigo-modal__toolbar">
+          <input
+            type="search"
+            class="productos__search"
+            placeholder="Buscar por ID, nombre, SUI o descripción..."
+            [value]="siigoBuscarLocalQuery()"
+            (input)="onSiigoBuscarLocalQueryChange($any($event.target).value)"
+            [disabled]="siigoBuscarLocalLoading() || syncingSiigo()"
+          />
+          <span class="productos-siigo-modal__count">
+            {{ siigoProductosLocalesFiltrados().length }} producto(s)
+          </span>
+        </div>
+        <div class="productos-siigo-modal__table">
+          <table class="rp-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>SUI</th>
+                <th>Siigo</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (producto of siigoProductosLocalesFiltrados(); track producto.id) {
+                <tr>
+                  <td class="cell-mono">{{ producto.idInterno || '—' }}</td>
+                  <td class="cell-primary">{{ producto.nombreInterno }}</td>
+                  <td class="cell-secondary">
+                    {{ producto.codigoCiiu || '—' }}
+                    @if (producto.nombreCiiu) {
+                      <span class="productos-ciiu-nombre">{{ producto.nombreCiiu }}</span>
+                    }
+                  </td>
+                  <td>
+                    @if (producto.siigoId) {
+                      <span class="rp-badge rp-badge--success">Vinculado</span>
+                    } @else {
+                      <span class="cell-secondary">No</span>
+                    }
+                  </td>
+                  <td class="cell-actions">
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--secondary"
+                      (click)="buscarProductoLocalEnSiigo(producto)"
+                      [disabled]="siigoBuscarLocalLoading() || syncingSiigo() || !producto.idInterno"
+                      [title]="
+                        producto.idInterno
+                          ? 'Buscar este ID en Siigo'
+                          : 'El producto no tiene ID interno'
+                      "
+                    >
+                      Buscar en Siigo
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="rp-empty">No hay productos que coincidan con la búsqueda.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="rp-form-actions productos-modal-actions">
+          <button
+            type="button"
+            class="rp-btn rp-btn--ghost"
+            (click)="closeSiigoBuscarLocalModal()"
+            [disabled]="siigoBuscarLocalLoading() || syncingSiigo()"
+          >
+            Cerrar
+          </button>
+        </div>
+      }
     </div>
   </app-rp-modal>
 }
