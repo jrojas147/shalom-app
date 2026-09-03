@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   computed,
+  DestroyRef,
   ElementRef,
   inject,
   OnDestroy,
@@ -9,6 +10,7 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Producto,
@@ -22,7 +24,6 @@ import {
   ProductoSiigoSyncResult,
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
-import { SiigoCatalogoItem } from '../../core/models/configuracion-siigo.model';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { ProductosService } from '../../core/services/productos.service';
@@ -52,6 +53,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private excelArchivoInput?: ElementRef<HTMLInputElement>;
 
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
@@ -62,9 +64,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly productoImagenUrl = productoImagenUrl;
 
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
-  readonly gruposSiigo = signal<SiigoCatalogoItem[]>([]);
-  readonly loadingGruposSiigo = signal(false);
-  readonly siigoGruposError = signal<string | null>(null);
   readonly editingSiigoId = signal<string | null>(null);
 
   readonly imagenPendiente = signal<File | null>(null);
@@ -193,17 +192,37 @@ export class ProductosComponent implements OnInit, OnDestroy {
     nombreInterno: ['', [Validators.required, Validators.maxLength(100)]],
     activo: [true],
     codigoCiiuId: [null as number | null],
-    siigoAccountGroupId: [null as number | null],
     medidaUnidad: [false],
     precioCompra: [null as number | null, Validators.min(0)],
     precioVenta: [null as number | null, Validators.min(0)],
     descripcion: ['', Validators.maxLength(500)],
   });
 
+  readonly codigoCiiuIdValue = signal<number | null>(null);
+
+  readonly codigoCiiuSeleccionado = computed(() => {
+    const id = this.codigoCiiuIdValue();
+    if (id == null) {
+      return null;
+    }
+    return this.codigosCiiu().find((item) => item.id === id) ?? null;
+  });
+
+  readonly codigoCiiuEnSiigo = computed(
+    () => this.codigoCiiuSeleccionado()?.siigoAccountGroupId != null
+  );
+
+  readonly idInternoMaxLength = computed(() => (this.codigoCiiuEnSiigo() ? 30 : 50));
+
   ngOnInit(): void {
+    this.form.controls.codigoCiiuId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((id) => {
+        this.codigoCiiuIdValue.set(id);
+        this.actualizarValidacionIdInterno();
+      });
     this.loadProductos();
     this.loadCodigosCiiu();
-    this.loadGruposSiigo();
     this.loadSiigoActivo();
   }
 
@@ -228,7 +247,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.editingId.set(null);
     this.editingSiigoId.set(null);
     this.resetForm();
-    this.actualizarValidacionGrupoSiigo();
+    this.actualizarValidacionIdInterno();
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -242,7 +261,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       nombreInterno: producto.nombreInterno,
       activo: producto.activo,
       codigoCiiuId: producto.codigoCiiuId ?? null,
-      siigoAccountGroupId: producto.siigoAccountGroupId ?? null,
       medidaUnidad: producto.tipoMedida === 'UNIDAD',
       precioCompra: producto.precioCompra ?? null,
       precioVenta: producto.precioVenta ?? null,
@@ -250,7 +268,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     });
     this.imagenGuardada.set(producto.imagen ?? null);
     this.syncPrecioDisplays();
-    this.actualizarValidacionGrupoSiigo();
+    this.actualizarValidacionIdInterno();
     this.showForm.set(true);
     this.error.set(null);
   }
@@ -548,7 +566,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       nombreInterno: raw.nombreInterno.trim(),
       activo: raw.activo,
       codigoCiiuId: raw.codigoCiiuId ?? undefined,
-      siigoAccountGroupId: raw.siigoAccountGroupId ?? undefined,
       tipoMedida: raw.medidaUnidad ? 'UNIDAD' : 'PESO',
       precioCompra: raw.precioCompra,
       precioVenta: raw.precioVenta,
@@ -560,10 +577,47 @@ export class ProductosComponent implements OnInit, OnDestroy {
       request.eliminarImagen = true;
     }
 
+    const imagen = this.imagenPendiente();
+    if (!id && this.siigoActivo()) {
+      this.verificarCodigoSiigoYGuardar(request, imagen);
+      return;
+    }
+    this.persistirProducto(id, request, imagen);
+  }
+
+  private verificarCodigoSiigoYGuardar(request: ProductoRequest, imagen?: File | null): void {
     this.saving.set(true);
     this.error.set(null);
+    this.productosService.consultarCodigoSiigo(request.idInterno).subscribe({
+      next: (res) => {
+        if (res.existe) {
+          this.saving.set(false);
+          const nombre = res.nombre?.trim() || res.codigo || request.idInterno;
+          this.confirmDialog.confirm({
+            title: 'El ID ya existe en Siigo',
+            message: `El ID "${request.idInterno}" ya existe en Siigo y corresponde al producto "${nombre}". No se puede crear el producto.`,
+            confirmLabel: 'Entendido',
+            cancelLabel: '',
+            confirmVariant: 'danger',
+          });
+          return;
+        }
+        this.persistirProducto(null, request, imagen);
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
+    });
+  }
 
-    const imagen = this.imagenPendiente();
+  private persistirProducto(
+    id: number | null,
+    request: ProductoRequest,
+    imagen?: File | null
+  ): void {
+    this.saving.set(true);
+    this.error.set(null);
     const op$ = id
       ? this.productosService.update(id, request, imagen)
       : this.productosService.create(request, imagen);
@@ -641,30 +695,17 @@ export class ProductosComponent implements OnInit, OnDestroy {
       });
   }
 
-  grupoSiigoFueraDeCatalogo(): boolean {
-    const id = this.form.controls.siigoAccountGroupId.value;
-    if (id == null) {
-      return false;
-    }
-    return !this.gruposSiigo().some((grupo) => grupo.id === id);
-  }
-
-  private actualizarValidacionGrupoSiigo(): void {
-    const grupo = this.form.controls.siigoAccountGroupId;
+  private actualizarValidacionIdInterno(): void {
     const idInterno = this.form.controls.idInterno;
-    const syncSiigo = this.gruposSiigo().length > 0;
-    if (syncSiigo) {
-      grupo.setValidators([Validators.required]);
+    if (this.codigoCiiuEnSiigo()) {
       idInterno.setValidators([
         Validators.required,
         Validators.maxLength(30),
         Validators.pattern(SIIGO_CODIGO_PATTERN),
       ]);
     } else {
-      grupo.clearValidators();
       idInterno.setValidators([Validators.required, Validators.maxLength(50)]);
     }
-    grupo.updateValueAndValidity({ emitEvent: false });
     idInterno.updateValueAndValidity({ emitEvent: false });
   }
 
@@ -725,35 +766,8 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   private loadCodigosCiiu(): void {
     this.codigosCiiuService.getAll().subscribe({
-      next: (data) => this.codigosCiiu.set(data),
+      next: (data) => this.codigosCiiu.set((data ?? []).filter((item) => item.estado === 'ACTIVO')),
       error: () => this.codigosCiiu.set([]),
-    });
-  }
-
-  private loadGruposSiigo(): void {
-    this.loadingGruposSiigo.set(true);
-    this.siigoGruposError.set(null);
-    this.configuracionSiigoService.gruposCuenta().subscribe({
-      next: (data) => {
-        this.gruposSiigo.set((data ?? []).filter((grupo) => grupo.activo !== false));
-        this.loadingGruposSiigo.set(false);
-        if (this.gruposSiigo().length) {
-          this.siigoGruposError.set(null);
-        } else {
-          this.siigoGruposError.set(
-            'Siigo no devolvió grupos de inventario. Créelos en Siigo Nube (clasificación de productos).'
-          );
-        }
-        this.actualizarValidacionGrupoSiigo();
-      },
-      error: (err) => {
-        this.gruposSiigo.set([]);
-        this.siigoGruposError.set(
-          err.error?.message ?? 'No se pudieron consultar los grupos de Siigo Nube.'
-        );
-        this.loadingGruposSiigo.set(false);
-        this.actualizarValidacionGrupoSiigo();
-      },
     });
   }
 
@@ -782,7 +796,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       nombreInterno: '',
       activo: true,
       codigoCiiuId: null,
-      siigoAccountGroupId: null,
       medidaUnidad: false,
       precioCompra: null,
       precioVenta: null,

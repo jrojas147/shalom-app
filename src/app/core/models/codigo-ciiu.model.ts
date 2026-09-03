@@ -13,3 +13,24 @@ export interface CodigoCiiuRequest {
   codigo: string;
   nombre: string;
 }
+
+export interface CodigoCiiuSiigoItem {
+  id: number;
+  codigo?: string | null;
+  nombre?: string | null;
+  activo: boolean;
+  yaSincronizado: boolean;
+}
+
+export interface CodigoCiiuSiigoSyncError {
+  codigo: string;
+  mensaje: string;
+}
+
+export interface CodigoCiiuSiigoSyncResult {
+  consultados: number;
+  creados: number;
+  actualizados: number;
+  errores: number;
+  detalleErrores: CodigoCiiuSiigoSyncError[];
+}

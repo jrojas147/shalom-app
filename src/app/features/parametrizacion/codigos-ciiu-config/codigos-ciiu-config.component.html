@@ -1,8 +1,25 @@
 <section class="param-block">
-  <h2 class="param-block__title">Grupo Materiales</h2>
-  <p class="param-block__desc">
-    Catálogo de códigos SUI disponibles para grupos de materiales.
-  </p>
+  <div class="param-block__heading">
+    <div>
+      <h2 class="param-block__title">Grupo Materiales</h2>
+      <p class="param-block__desc">
+        Catálogo de códigos SUI disponibles para grupos de materiales.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="rp-btn rp-btn--secondary"
+      (click)="openSiigoModal()"
+      [disabled]="syncingSiigo() || loadingSiigoCatalogo() || !siigoActivo()"
+      [title]="
+        siigoActivo()
+          ? 'Traer categorías de producto desde Siigo Nube'
+          : 'Debe activar Siigo en Parametrización'
+      "
+    >
+      {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar' }}
+    </button>
+  </div>
 
   @if (error()) {
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
@@ -86,3 +103,143 @@
     }
   </div>
 </section>
+
+@if (showSiigoModal()) {
+  <app-rp-modal
+    title="Sincronizar grupos de Siigo"
+    [wide]="true"
+    [stacked]="true"
+    (closed)="closeSiigoModal()"
+  >
+    <div class="ciiu-siigo-modal">
+      @if (siigoCatalogoError()) {
+        <div class="rp-alert rp-alert--error">{{ siigoCatalogoError() }}</div>
+      }
+      @if (siigoSyncResult(); as result) {
+        <div class="ciiu-siigo-modal__result">
+          <p>
+            Siigo Nube:
+            <strong>{{ result.consultados }}</strong> seleccionado(s),
+            <strong>{{ result.creados }}</strong> creado(s),
+            <strong>{{ result.actualizados }}</strong> actualizado(s)
+            @if (result.errores) {
+              y <strong>{{ result.errores }}</strong> error(es).
+            } @else {
+              sin errores.
+            }
+          </p>
+          @if (result.detalleErrores.length) {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of result.detalleErrores; track item.codigo + item.mensaje) {
+                  <tr>
+                    <td class="cell-mono">{{ item.codigo }}</td>
+                    <td class="cell-secondary">{{ item.mensaje }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      }
+
+      <p class="ciiu-siigo-modal__hint">
+        Marque las categorías de producto de Siigo que desea registrar en Shalom. Si el nombre
+        viene como "código - nombre", se separa al guardar.
+      </p>
+
+      <div class="ciiu-siigo-modal__toolbar">
+        <label class="ciiu-siigo-modal__check-all">
+          <input
+            type="checkbox"
+            [checked]="siigoTodosVisiblesSeleccionados()"
+            [indeterminate]="siigoAlgunoVisibleSeleccionado()"
+            [disabled]="loadingSiigoCatalogo() || syncingSiigo() || !siigoCatalogoFiltrado().length"
+            (change)="toggleSiigoVisibles($any($event.target).checked)"
+          />
+          Seleccionar visibles
+        </label>
+        <input
+          type="search"
+          class="ciiu-siigo-modal__search"
+          placeholder="Buscar por código o nombre..."
+          [value]="siigoBusqueda()"
+          (input)="onSiigoBusquedaChange($any($event.target).value)"
+          [disabled]="loadingSiigoCatalogo() || syncingSiigo()"
+        />
+        <span class="ciiu-siigo-modal__count">
+          {{ siigoSeleccionCount() }} seleccionados · {{ siigoCatalogo().length }} en Siigo
+        </span>
+      </div>
+
+      @if (loadingSiigoCatalogo()) {
+        <p class="rp-loading">Consultando categorías en Siigo Nube...</p>
+      } @else if (!siigoCatalogo().length && !siigoCatalogoError()) {
+        <p class="rp-loading">Siigo no devolvió categorías de producto.</p>
+      } @else {
+        <div class="ciiu-siigo-modal__table">
+          <table class="rp-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Shalom</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of siigoCatalogoFiltrado(); track item.id) {
+                <tr>
+                  <td>
+                    <input
+                      type="checkbox"
+                      [checked]="siigoSeleccionado(item.id)"
+                      [disabled]="syncingSiigo()"
+                      (change)="toggleSiigoItem(item.id, $any($event.target).checked)"
+                    />
+                  </td>
+                  <td class="cell-mono">{{ item.codigo || '—' }}</td>
+                  <td class="cell-primary">{{ item.nombre || '—' }}</td>
+                  <td class="cell-secondary">{{ item.activo ? 'Activo' : 'Inactivo' }}</td>
+                  <td>
+                    @if (item.yaSincronizado) {
+                      <span class="rp-badge rp-badge--success">Shalom</span>
+                    } @else {
+                      <span class="cell-secondary">Nuevo</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <div class="rp-form-actions">
+        <button
+          type="button"
+          class="rp-btn rp-btn--ghost"
+          (click)="closeSiigoModal()"
+          [disabled]="syncingSiigo()"
+        >
+          Cerrar
+        </button>
+        <button
+          type="button"
+          class="rp-btn rp-btn--primary"
+          (click)="confirmarSincronizarSiigo()"
+          [disabled]="syncingSiigo() || loadingSiigoCatalogo() || !siigoSeleccionCount()"
+        >
+          {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar seleccionados' }}
+        </button>
+      </div>
+    </div>
+  </app-rp-modal>
+}

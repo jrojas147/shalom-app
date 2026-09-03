@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
-import { CodigoCiiu, CodigoCiiuRequest } from '../models/codigo-ciiu.model';
+import {
+  CodigoCiiu,
+  CodigoCiiuRequest,
+  CodigoCiiuSiigoItem,
+  CodigoCiiuSiigoSyncResult,
+} from '../models/codigo-ciiu.model';
 
 @Injectable({ providedIn: 'root' })
 export class CodigosCiiuService {
@@ -27,5 +32,13 @@ export class CodigosCiiuService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  listarSiigo(): Observable<CodigoCiiuSiigoItem[]> {
+    return this.http.get<CodigoCiiuSiigoItem[]>(`${this.baseUrl}/siigo`);
+  }
+
+  sincronizarSiigo(ids: number[]): Observable<CodigoCiiuSiigoSyncResult> {
+    return this.http.post<CodigoCiiuSiigoSyncResult>(`${this.baseUrl}/sincronizar-siigo`, { ids });
   }
 }

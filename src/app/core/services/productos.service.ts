@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
-import { Producto, ProductoExcelImportResult, ProductoPrecioHistorial, ProductoRequest, ProductoSiigoCatalogo, ProductoSiigoSyncResult } from '../models/producto.model';
+import { Producto, ProductoExcelImportResult, ProductoPrecioHistorial, ProductoRequest, ProductoSiigoCatalogo, ProductoSiigoCodigo, ProductoSiigoSyncResult } from '../models/producto.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
@@ -47,6 +47,11 @@ export class ProductosService {
   listarSiigo(page = 1): Observable<ProductoSiigoCatalogo> {
     const params = new HttpParams().set('page', String(page));
     return this.http.get<ProductoSiigoCatalogo>(`${this.baseUrl}/siigo`, { params });
+  }
+
+  consultarCodigoSiigo(code: string): Observable<ProductoSiigoCodigo> {
+    const params = new HttpParams().set('code', code);
+    return this.http.get<ProductoSiigoCodigo>(`${this.baseUrl}/siigo/codigo`, { params });
   }
 
   sincronizarSiigo(ids: string[]): Observable<ProductoSiigoSyncResult> {

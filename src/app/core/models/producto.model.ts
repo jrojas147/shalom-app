@@ -66,6 +66,13 @@ export interface ProductoSiigoCatalogo {
   items: ProductoSiigoItem[];
 }
 
+export interface ProductoSiigoCodigo {
+  existe: boolean;
+  codigo?: string | null;
+  nombre?: string | null;
+  siigoId?: string | null;
+}
+
 export interface ProductoSiigoSyncError {
   codigo: string;
   mensaje: string;
