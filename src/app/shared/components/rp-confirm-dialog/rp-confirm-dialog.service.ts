@@ -18,18 +18,20 @@ export class RpConfirmDialogService {
       this.close(false);
     }
 
-    return new Observable<boolean>((subscriber) => {
+    const result$ = new Observable<boolean>((subscriber) => {
       this.resolve = (value: boolean) => {
         subscriber.next(value);
         subscriber.complete();
         this.resolve = null;
       };
-
-      this._state.set({
-        ...RP_CONFIRM_DEFAULTS,
-        ...options,
-      });
     });
+
+    this._state.set({
+      ...RP_CONFIRM_DEFAULTS,
+      ...options,
+    });
+
+    return result$;
   }
 
   accept(): void {

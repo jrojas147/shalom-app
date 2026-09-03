@@ -593,13 +593,18 @@ export class ProductosComponent implements OnInit, OnDestroy {
         if (res.existe) {
           this.saving.set(false);
           const nombre = res.nombre?.trim() || res.codigo || request.idInterno;
-          this.confirmDialog.confirm({
-            title: 'El ID ya existe en Siigo',
-            message: `El ID "${request.idInterno}" ya existe en Siigo y corresponde al producto "${nombre}". No se puede crear el producto.`,
-            confirmLabel: 'Entendido',
-            cancelLabel: '',
-            confirmVariant: 'danger',
-          });
+          const message =
+            `El ID "${request.idInterno}" ya existe en Siigo y corresponde al producto "${nombre}". No se puede crear el producto.`;
+          this.error.set(message);
+          this.confirmDialog
+            .confirm({
+              title: 'El ID ya existe en Siigo',
+              message,
+              confirmLabel: 'Entendido',
+              cancelLabel: '',
+              confirmVariant: 'danger',
+            })
+            .subscribe();
           return;
         }
         this.persistirProducto(null, request, imagen);
