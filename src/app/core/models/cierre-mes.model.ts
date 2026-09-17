@@ -40,6 +40,7 @@ export interface CierreMesResumen {
   id: number;
   periodoAnio: number;
   periodoMes: number;
+  periodoClave?: string | null;
   periodoLabel: string;
   periodoDesde: string;
   periodoHasta: string;
@@ -56,6 +57,7 @@ export interface CierreMesPreview {
   cierreId?: number | null;
   periodoAnio: number;
   periodoMes: number;
+  periodoClave?: string | null;
   periodoLabel: string;
   periodoDesde: string;
   periodoHasta: string;

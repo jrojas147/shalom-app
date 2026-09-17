@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Inventario</h1>
-      <p>Consulta de existencias por producto, consolidado SUI, movimientos y cierre de mes.</p>
+      <p>Consulta de existencias por producto, consolidado SUI, movimientos y cierre de inventario.</p>
     </div>
   </header>
 
@@ -52,7 +52,7 @@
           [class.active]="vista() === 'cierre'"
           (click)="setVista('cierre')"
         >
-          Cierre mes
+          Cierre
         </button>
         <button
           type="button"
@@ -175,7 +175,7 @@
             Saldo del cierre {{ data.ultimoCierreLabel }}. Compra y venta desde
             {{ data.periodoDesde | date: 'dd/MM/yyyy HH:mm' }} (sin nuevo cierre). Stock actual disponible.
           } @else {
-            Aún no hay cierre de mes. Saldo en 0. Compra y venta del mes en curso. Stock actual disponible.
+            Aún no hay cierre. Saldo en 0. Compra y venta del mes en curso. Stock actual disponible.
           }
         </p>
       }

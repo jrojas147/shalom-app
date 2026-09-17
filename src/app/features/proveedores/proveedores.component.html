@@ -83,6 +83,9 @@
                 <td>
                   <span class="row-icon">👤</span>
                   <span class="cell-primary">{{ proveedor.nombre }}</span>
+                  @if (proveedor.siigoId) {
+                    <span class="rp-badge rp-badge--success">Siigo</span>
+                  }
                 </td>
                 <td class="cell-secondary cell-mono">{{ formatDocumento(proveedor) }}</td>
                 <td class="cell-secondary">{{ proveedor.telefono ?? '—' }}</td>
@@ -189,6 +192,9 @@
                 <td>
                   <span class="row-icon">👤</span>
                   <span class="cell-primary">{{ proveedor.nombre }}</span>
+                  @if (proveedor.siigoId) {
+                    <span class="rp-badge rp-badge--success">Siigo</span>
+                  }
                 </td>
                 <td class="cell-secondary cell-mono">{{ formatDocumento(proveedor) }}</td>
                 <td class="cell-secondary">{{ proveedor.email ?? '—' }}</td>
@@ -264,6 +270,9 @@
                 <td>
                   <span class="row-icon">🏢</span>
                   <span class="cell-primary">{{ empresa.razonSocial }}</span>
+                  @if (empresa.siigoId) {
+                    <span class="rp-badge rp-badge--success">Siigo</span>
+                  }
                 </td>
                 <td class="cell-secondary cell-mono">{{ empresa.nit }}</td>
                 <td class="cell-secondary">{{ empresa.personaContacto ?? '—' }}</td>
@@ -371,7 +380,7 @@
           </div>
 
           <div class="rp-field">
-            <label for="empDepartamentoId">Departamento</label>
+            <label for="empDepartamentoId">Departamento{{ siigoActivo() ? ' *' : '' }}</label>
             <select
               id="empDepartamentoId"
               formControlName="departamentoId"
@@ -385,7 +394,7 @@
           </div>
 
           <div class="rp-field">
-            <label for="empMunicipioId">Municipio</label>
+            <label for="empMunicipioId">Municipio{{ siigoActivo() ? ' *' : '' }}</label>
             <select id="empMunicipioId" formControlName="municipioId">
               <option [ngValue]="null">Seleccione municipio</option>
               @for (mun of empresaMunicipios(); track mun.id) {
@@ -395,8 +404,16 @@
           </div>
 
           <div class="rp-field rp-field--full">
-            <label for="empDireccion">Dirección</label>
+            <label for="empDireccion">Dirección{{ siigoActivo() ? ' *' : '' }}</label>
             <input id="empDireccion" type="text" formControlName="direccion" maxlength="255" />
+            @if (siigoActivo() && empresaForm.controls.direccion.touched && empresaForm.controls.direccion.invalid) {
+              <span class="rp-hint err">La dirección es obligatoria para crear el proveedor en Siigo Nube.</span>
+            }
+            @if (siigoActivo()) {
+              <span class="rp-hint">
+                Siigo está activo: al guardar se crea o actualiza el proveedor en Nube.
+              </span>
+            }
           </div>
 
           <div class="rp-field">
@@ -556,6 +573,43 @@
             <input id="extTelefonoContacto" type="text" formControlName="telefonoContacto" maxlength="30" />
           </div>
 
+          <div class="rp-field">
+            <label for="extDepartamentoId">Departamento{{ siigoActivo() ? ' *' : '' }}</label>
+            <select
+              id="extDepartamentoId"
+              formControlName="departamentoId"
+              (change)="onExternoDepartamentoChange()"
+            >
+              <option [ngValue]="null">Seleccione departamento</option>
+              @for (dep of departamentos(); track dep.id) {
+                <option [ngValue]="dep.id">{{ dep.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field">
+            <label for="extMunicipioId">Municipio{{ siigoActivo() ? ' *' : '' }}</label>
+            <select id="extMunicipioId" formControlName="municipioId">
+              <option [ngValue]="null">Seleccione municipio</option>
+              @for (mun of externoMunicipios(); track mun.id) {
+                <option [ngValue]="mun.id">{{ mun.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="rp-field rp-field--full">
+            <label for="extDireccion">Dirección{{ siigoActivo() ? ' *' : '' }}</label>
+            <input id="extDireccion" type="text" formControlName="direccion" maxlength="255" />
+            @if (siigoActivo() && externoForm.controls.direccion.touched && externoForm.controls.direccion.invalid) {
+              <span class="rp-hint err">La dirección es obligatoria para crear el proveedor en Siigo Nube.</span>
+            }
+            @if (siigoActivo()) {
+              <span class="rp-hint">
+                Siigo está activo: al guardar se crea o actualiza el proveedor en Nube.
+              </span>
+            }
+          </div>
+
           <div class="rp-field proveedores-estado-field">
             <label for="externoActivo">Estado</label>
             <label class="proveedores-estado-field__control" for="externoActivo">
@@ -655,12 +709,28 @@
 
         <div class="rp-field">
           <label for="arl">ARL</label>
-          <input id="arl" type="text" formControlName="arl" maxlength="100" />
+          <select id="arl" formControlName="arl">
+            <option value="">Seleccione ARL</option>
+            @if (arlFueraDeCatalogo(); as extra) {
+              <option [value]="extra">{{ extra }}</option>
+            }
+            @for (item of arls(); track item.id) {
+              <option [value]="item.nombre">{{ item.nombre }}</option>
+            }
+          </select>
         </div>
 
         <div class="rp-field">
           <label for="eps">EPS</label>
-          <input id="eps" type="text" formControlName="eps" maxlength="100" />
+          <select id="eps" formControlName="eps">
+            <option value="">Seleccione EPS</option>
+            @if (epsFueraDeCatalogo(); as extra) {
+              <option [value]="extra">{{ extra }}</option>
+            }
+            @for (item of epsList(); track item.id) {
+              <option [value]="item.nombre">{{ item.nombre }}</option>
+            }
+          </select>
         </div>
 
         <div class="rp-field proveedores-estado-field">
@@ -672,12 +742,15 @@
         </div>
 
         <div class="rp-field rp-field--full">
-          <label for="direccion">Dirección</label>
+          <label for="direccion">Dirección{{ siigoActivo() ? ' *' : '' }}</label>
           <input id="direccion" type="text" formControlName="direccion" maxlength="255" />
+          @if (siigoActivo() && internoForm.controls.direccion.touched && internoForm.controls.direccion.invalid) {
+            <span class="rp-hint err">La dirección es obligatoria para crear el proveedor en Siigo Nube.</span>
+          }
         </div>
 
         <div class="rp-field">
-          <label for="departamentoId">Departamento</label>
+          <label for="departamentoId">Departamento{{ siigoActivo() ? ' *' : '' }}</label>
           <select
             id="departamentoId"
             formControlName="departamentoId"
@@ -691,13 +764,18 @@
         </div>
 
         <div class="rp-field">
-          <label for="municipioId">Municipio</label>
+          <label for="municipioId">Municipio{{ siigoActivo() ? ' *' : '' }}</label>
           <select id="municipioId" formControlName="municipioId">
             <option [ngValue]="null">Seleccione municipio</option>
             @for (mun of municipios(); track mun.id) {
               <option [ngValue]="mun.id">{{ mun.nombre }}</option>
             }
           </select>
+          @if (siigoActivo()) {
+            <span class="rp-hint">
+              Siigo está activo: al guardar se crea o actualiza el proveedor en Nube.
+            </span>
+          }
         </div>
 
         <div class="rp-field">

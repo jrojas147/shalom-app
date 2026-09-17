@@ -27,7 +27,6 @@ import { ProveedoresInternosService } from '../../core/services/proveedores-inte
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
-import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
 import {
   precioSufijo,
   productoEsUnidad,
@@ -115,10 +114,6 @@ export class ComprasComponent implements OnInit {
   );
 
   readonly netoAPagar = computed(() => Math.max(0, this.subtotal() - this.anticipoAplicable()));
-
-  readonly pesoBrutoTotal = computed(() =>
-    this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
-  );
 
   readonly pesoNetoTotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.pesoNetoItem(item), 0)
@@ -326,18 +321,9 @@ export class ComprasComponent implements OnInit {
     this.cargarSaldoAFavor(proveedor);
   }
 
-  pesoEmpaqueItem(item: CompraDetalleItem): number {
-    return pesoEmpaqueKg(this.tiposEmpaque(), item.empaque);
-  }
-
-  /** Peso del producto (sin empaque). */
+  /** Peso del producto, sin tara de empaque. */
   pesoNetoItem(item: CompraDetalleItem): number {
     return Math.max(0, Number(item.pesoKg) || 0);
-  }
-
-  /** Peso bruto = producto + tara del empaque. */
-  pesoBrutoItem(item: CompraDetalleItem): number {
-    return pesoBrutoFromNetoKg(this.pesoNetoItem(item), this.pesoEmpaqueItem(item));
   }
 
   itemTotal(item: CompraDetalleItem): number {

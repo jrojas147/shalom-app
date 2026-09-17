@@ -64,22 +64,17 @@ export class InventarioCierreMesComponent {
 
   readonly totalProductos = computed(() => this.productos().length);
 
-  readonly totalValidados = computed(() => {
-    if (this.preview()?.yaCerrado) {
-      return this.totalProductos();
-    }
-    return this.validados().size;
-  });
+  readonly totalValidados = computed(() => this.validados().size);
 
   readonly todosValidados = computed(() => {
     const total = this.totalProductos();
-    return this.totalValidados() === total;
+    return total > 0 && this.totalValidados() === total;
   });
 
   readonly cajaAbierta = computed(() => this.preview()?.cajaAbierta === true);
 
   readonly puedeEjecutar = computed(
-    () => !this.preview()?.yaCerrado && this.todosValidados() && !this.cajaAbierta() && !this.saving()
+    () => this.todosValidados() && !this.cajaAbierta() && !this.saving()
   );
 
   constructor() {
@@ -108,7 +103,7 @@ export class InventarioCierreMesComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.extractErrorMessage(err, 'No se pudo cargar el cierre de mes.'));
+        this.error.set(this.extractErrorMessage(err, 'No se pudo cargar el cierre.'));
       },
     });
   }
@@ -122,13 +117,10 @@ export class InventarioCierreMesComponent {
   }
 
   productoValidado(productoId: number): boolean {
-    return this.preview()?.yaCerrado === true || this.validados().has(productoId);
+    return this.validados().has(productoId);
   }
 
   toggleProducto(productoId: number, checked: boolean): void {
-    if (this.preview()?.yaCerrado) {
-      return;
-    }
     const next = new Set(this.validados());
     if (checked) {
       next.add(productoId);
@@ -148,9 +140,6 @@ export class InventarioCierreMesComponent {
   }
 
   toggleCategoria(categoria: CierreMesCategoria, checked: boolean): void {
-    if (this.preview()?.yaCerrado) {
-      return;
-    }
     const next = new Set(this.validados());
     for (const item of categoria.items) {
       if (checked) {
@@ -163,9 +152,6 @@ export class InventarioCierreMesComponent {
   }
 
   toggleTodos(checked: boolean): void {
-    if (this.preview()?.yaCerrado) {
-      return;
-    }
     if (!checked) {
       this.validados.set(new Set());
       return;
@@ -175,21 +161,21 @@ export class InventarioCierreMesComponent {
 
   ejecutar(): void {
     const preview = this.preview();
-    if (!preview || preview.yaCerrado || this.saving()) {
+    if (!preview || this.saving()) {
       return;
     }
     if (preview.cajaAbierta) {
-      this.error.set('Debe cerrar la caja antes de ejecutar el cierre de mes.');
+      this.error.set('Debe cerrar la caja antes de ejecutar el cierre.');
       return;
     }
     if (!this.todosValidados()) {
-      this.error.set('Marque todos los productos para validar el cierre de mes.');
+      this.error.set('Marque todos los productos para validar el cierre.');
       return;
     }
 
     this.confirmDialog
       .confirm({
-        title: 'Ejecutar cierre de mes',
+        title: 'Ejecutar cierre',
         message: `Se registrará el cierre de ${preview.periodoLabel} con ${this.totalProductos()} productos. Esta acción no se puede deshacer.`,
         confirmLabel: 'Ejecutar cierre',
       })
@@ -248,29 +234,20 @@ export class InventarioCierreMesComponent {
       })
       .subscribe({
         next: (preview) => {
-          this.preview.set(preview);
-          this.syncValidados(preview);
+          this.validados.set(new Set());
           this.observacion.set('');
-          this.saving.set(false);
           this.mensaje.set(`Cierre de ${preview.periodoLabel} registrado.`);
-          this.cierreMesService.historial().subscribe({
-            next: (historial) => this.historial.set(historial ?? []),
-          });
+          this.saving.set(false);
+          this.load();
         },
         error: (err) => {
           this.saving.set(false);
-          this.error.set(this.extractErrorMessage(err, 'No se pudo ejecutar el cierre de mes.'));
+          this.error.set(this.extractErrorMessage(err, 'No se pudo ejecutar el cierre.'));
         },
       });
   }
 
-  private syncValidados(preview: CierreMesPreview): void {
-    if (preview.yaCerrado) {
-      this.validados.set(
-        new Set(preview.categorias.flatMap((categoria) => categoria.items.map((item) => item.productoId)))
-      );
-      return;
-    }
+  private syncValidados(_preview: CierreMesPreview): void {
     this.validados.set(new Set());
   }
 

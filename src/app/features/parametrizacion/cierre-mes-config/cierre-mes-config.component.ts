@@ -60,7 +60,7 @@ export class CierreMesConfigComponent implements OnInit {
       next: (data) => {
         this.form.reset({ diaCierre: data.diaCierre });
         this.saving.set(false);
-        this.mensaje.set('Día de cierre de mes guardado.');
+        this.mensaje.set('Día sugerido de cierre guardado.');
       },
       error: (err) => {
         this.saving.set(false);

@@ -7,6 +7,7 @@ import {
   ConfiguracionSiigoRequest,
   SiigoCatalogoItem,
   SiigoPrueba,
+  SiigoTerceroIdentificacion,
 } from '../models/configuracion-siigo.model';
 
 @Injectable({ providedIn: 'root' })
@@ -48,5 +49,10 @@ export class ConfiguracionSiigoService {
         error: (err) => console.error('[Siigo] GET grupos productos error', err),
       })
     );
+  }
+
+  consultarIdentificacion(identification: string): Observable<SiigoTerceroIdentificacion> {
+    const params = new HttpParams().set('identification', identification);
+    return this.http.get<SiigoTerceroIdentificacion>(`${this.baseUrl}/terceros`, { params });
   }
 }

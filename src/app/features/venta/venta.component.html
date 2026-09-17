@@ -176,7 +176,7 @@
                 [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
                 [readonly]="!permiteManual()"
                 (ngModelChange)="onPesoInput(item.productoId, $event)"
-                [title]="permiteManual() ? 'Peso del producto (neto). Puede editarlo a mano.' : 'Peso del producto (neto) leído desde la báscula.'"
+                [title]="permiteManual() ? 'Peso del producto, sin empaque. Puede editarlo a mano.' : 'Peso del producto leído desde la báscula, sin empaque.'"
               />
               @if (permiteManual()) {
                 <button
@@ -201,7 +201,7 @@
             </div>
             <div class="item-pricing">
               <span class="price-kg">
-                Bruto {{ formatPeso(pesoBrutoItem(item)) }} KG
+                Sin empaque {{ formatPeso(pesoNetoItem(item)) }} KG
                 @if (productoEsUnidad(item.producto)) {
                   · {{ unidadesItem(item.unidades) }} und ·
                   {{ formatPrecioKg(precioVentaKg(item.producto)) }} /und
@@ -226,11 +226,7 @@
         <span>{{ formatCurrency(subtotal()) }}</span>
       </div>
       <div class="summary-row">
-        <span>Peso bruto total</span>
-        <span>{{ formatPeso(pesoBrutoTotal()) }} KG</span>
-      </div>
-      <div class="summary-row">
-        <span>Peso neto total</span>
+        <span>Peso total (sin empaque)</span>
         <span>{{ formatPeso(pesoNetoTotal()) }} KG</span>
       </div>
       <div class="summary-total">

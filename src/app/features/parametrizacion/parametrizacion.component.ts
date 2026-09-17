@@ -69,7 +69,7 @@ export class ParametrizacionComponent {
     {
       id: 'cierre-mes',
       titulo: 'Cierre de mes',
-      descripcion: 'Día del mes para cerrar inventario, compras y ventas de material.',
+      descripcion: 'Día sugerido para revisar inventario. El cierre se puede ejecutar en cualquier momento.',
     },
     {
       id: 'siigo',

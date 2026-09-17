@@ -35,6 +35,8 @@ import { TIPOS_CUENTA, TipoCuenta } from '../../core/models/sucursal.model';
 import { Departamento, Municipio } from '../../core/models/ubicacion.model';
 import { AuthService } from '../../core/services/auth.service';
 import { EntidadesBancariasService } from '../../core/services/entidades-bancarias.service';
+import { EntidadesArlService } from '../../core/services/entidades-arl.service';
+import { EntidadesEpsService } from '../../core/services/entidades-eps.service';
 import { ProveedoresEmpresasService } from '../../core/services/proveedores-empresas.service';
 import { ProveedoresExternosService } from '../../core/services/proveedores-externos.service';
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
@@ -43,8 +45,11 @@ import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { AnticipoProveedorInterno } from '../../core/models/anticipo.model';
 import { CajaSaldo } from '../../core/models/caja.model';
 import { EntidadBancaria } from '../../core/models/entidad-bancaria.model';
+import { EntidadArl } from '../../core/models/entidad-arl.model';
+import { EntidadEps } from '../../core/models/entidad-eps.model';
 import { Sucursal } from '../../core/models/sucursal.model';
 import { CajaService } from '../../core/services/caja.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import {
   formatCurrencyCo,
   parseCurrencyCo,
@@ -68,8 +73,11 @@ export class ProveedoresComponent implements OnInit {
   private readonly proveedoresEmpresasService = inject(ProveedoresEmpresasService);
   private readonly ubicacionesService = inject(UbicacionesService);
   private readonly entidadesBancariasService = inject(EntidadesBancariasService);
+  private readonly entidadesArlService = inject(EntidadesArlService);
+  private readonly entidadesEpsService = inject(EntidadesEpsService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly cajaService = inject(CajaService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tabs = PROVEEDOR_TABS;
@@ -83,6 +91,8 @@ export class ProveedoresComponent implements OnInit {
   readonly externos = signal<ProveedorExterno[]>([]);
   readonly empresas = signal<ProveedorEmpresa[]>([]);
   readonly entidadesBancarias = signal<EntidadBancaria[]>([]);
+  readonly arls = signal<EntidadArl[]>([]);
+  readonly epsList = signal<EntidadEps[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
   readonly selectedRecicladorIds = signal<number[]>([]);
   readonly selectedSucursalIds = signal<number[]>([]);
@@ -120,6 +130,8 @@ export class ProveedoresComponent implements OnInit {
   readonly departamentos = signal<Departamento[]>([]);
   readonly municipios = signal<Municipio[]>([]);
   readonly empresaMunicipios = signal<Municipio[]>([]);
+  readonly externoMunicipios = signal<Municipio[]>([]);
+  readonly siigoActivo = signal(false);
 
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
@@ -248,6 +260,9 @@ export class ProveedoresComponent implements OnInit {
     email: ['', Validators.email],
     nombreContacto: [''],
     telefonoContacto: [''],
+    direccion: [''],
+    departamentoId: [null as number | null],
+    municipioId: [null as number | null],
     activo: [true],
   });
 
@@ -270,8 +285,12 @@ export class ProveedoresComponent implements OnInit {
     this.loadInternos();
     this.loadDepartamentos();
     this.loadEntidadesBancarias();
+    this.loadArls();
+    this.loadEps();
     this.loadSucursales();
+    this.loadSiigo();
     this.empresaForm.controls.municipioId.disable();
+    this.externoForm.controls.municipioId.disable();
   }
 
   get hijosArray(): FormArray<FormGroup> {
@@ -333,6 +352,39 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
+  loadArls(): void {
+    this.entidadesArlService.getAll().subscribe({
+      next: (data) => this.arls.set(data),
+      error: () => this.arls.set([]),
+    });
+  }
+
+  loadEps(): void {
+    this.entidadesEpsService.getAll().subscribe({
+      next: (data) => this.epsList.set(data),
+      error: () => this.epsList.set([]),
+    });
+  }
+
+  arlFueraDeCatalogo(): string | null {
+    return this.valorFueraDeCatalogo(this.internoForm.controls.arl.value, this.arls());
+  }
+
+  epsFueraDeCatalogo(): string | null {
+    return this.valorFueraDeCatalogo(this.internoForm.controls.eps.value, this.epsList());
+  }
+
+  private valorFueraDeCatalogo(
+    valor: string | null | undefined,
+    catalogo: { nombre: string }[]
+  ): string | null {
+    const actual = valor?.trim();
+    if (!actual) {
+      return null;
+    }
+    return catalogo.some((item) => item.nombre === actual) ? null : actual;
+  }
+
   loadSucursales(): void {
     this.sucursalesService.getAll(true).subscribe({
       next: (data) => this.sucursales.set(data),
@@ -378,6 +430,23 @@ export class ProveedoresComponent implements OnInit {
     this.ubicacionesService.getMunicipiosByDepartamento(departamentoId).subscribe({
       next: (municipios) => this.empresaMunicipios.set(municipios),
       error: () => this.empresaMunicipios.set([]),
+    });
+  }
+
+  onExternoDepartamentoChange(): void {
+    const departamentoId = this.externoForm.controls.departamentoId.value;
+    this.externoForm.patchValue({ municipioId: null });
+    this.externoMunicipios.set([]);
+
+    if (!departamentoId) {
+      this.externoForm.controls.municipioId.disable();
+      return;
+    }
+
+    this.externoForm.controls.municipioId.enable();
+    this.ubicacionesService.getMunicipiosByDepartamento(departamentoId).subscribe({
+      next: (municipios) => this.externoMunicipios.set(municipios),
+      error: () => this.externoMunicipios.set([]),
     });
   }
 
@@ -798,6 +867,9 @@ export class ProveedoresComponent implements OnInit {
     }
 
     const raw = this.internoForm.getRawValue();
+    if (!this.validarUbicacionSiigo(raw.direccion, raw.departamentoId, raw.municipioId)) {
+      return;
+    }
     const departamento = this.departamentos().find((d) => d.id === raw.departamentoId);
     const municipio = this.municipios().find((m) => m.id === raw.municipioId);
 
@@ -823,9 +895,14 @@ export class ProveedoresComponent implements OnInit {
       sucursalIds: this.selectedSucursalIds(),
     };
 
+    this.verificarDocumentoSiigoYGuardar(request.documento, 'el proveedor', () =>
+      this.persistirInterno(request)
+    );
+  }
+
+  private persistirInterno(request: ProveedorInternoRequest): void {
     this.saving.set(true);
     this.error.set(null);
-
     const id = this.editingId();
     const op$ = id
       ? this.proveedoresInternosService.update(id, request)
@@ -857,6 +934,12 @@ export class ProveedoresComponent implements OnInit {
     }
 
     const raw = this.externoForm.getRawValue();
+    if (!this.validarUbicacionSiigo(raw.direccion, raw.departamentoId, raw.municipioId)) {
+      return;
+    }
+    const departamento = this.departamentos().find((d) => d.id === raw.departamentoId);
+    const municipio = this.externoMunicipios().find((m) => m.id === raw.municipioId);
+
     const request: ProveedorExternoRequest = {
       nombre: raw.nombre.trim(),
       tipoDocumento: raw.tipoDocumento,
@@ -864,12 +947,20 @@ export class ProveedoresComponent implements OnInit {
       email: raw.email.trim() || undefined,
       nombreContacto: raw.nombreContacto.trim() || undefined,
       telefonoContacto: raw.telefonoContacto.trim() || undefined,
+      direccion: raw.direccion.trim() || undefined,
+      departamento: departamento?.nombre,
+      municipio: municipio?.nombre,
       activo: raw.activo,
     };
 
+    this.verificarDocumentoSiigoYGuardar(request.documento, 'el proveedor', () =>
+      this.persistirExterno(request)
+    );
+  }
+
+  private persistirExterno(request: ProveedorExternoRequest): void {
     this.saving.set(true);
     this.error.set(null);
-
     const id = this.editingId();
     const op$ = id
       ? this.proveedoresExternosService.update(id, request)
@@ -901,6 +992,9 @@ export class ProveedoresComponent implements OnInit {
     }
 
     const raw = this.empresaForm.getRawValue();
+    if (!this.validarUbicacionSiigo(raw.direccion, raw.departamentoId, raw.municipioId)) {
+      return;
+    }
     const departamento = this.departamentos().find((d) => d.id === raw.departamentoId);
     const municipio = this.empresaMunicipios().find((m) => m.id === raw.municipioId);
 
@@ -920,9 +1014,14 @@ export class ProveedoresComponent implements OnInit {
       recicladorIds: this.selectedRecicladorIds(),
     };
 
+    this.verificarDocumentoSiigoYGuardar(request.nit, 'la empresa', () =>
+      this.persistirEmpresa(request)
+    );
+  }
+
+  private persistirEmpresa(request: ProveedorEmpresaRequest): void {
     this.saving.set(true);
     this.error.set(null);
-
     const id = this.editingId();
     const op$ = id
       ? this.proveedoresEmpresasService.update(id, request)
@@ -1068,6 +1167,7 @@ export class ProveedoresComponent implements OnInit {
       if (!this.internoForm.controls.departamentoId.value) {
         this.internoForm.controls.municipioId.disable();
       }
+      this.actualizarValidacionSiigo();
     }
 
     this.showForm.set(true);
@@ -1085,13 +1185,19 @@ export class ProveedoresComponent implements OnInit {
       email: proveedor.email ?? '',
       nombreContacto: proveedor.nombreContacto ?? '',
       telefonoContacto: proveedor.telefonoContacto ?? '',
+      direccion: proveedor.direccion ?? '',
       activo: proveedor.activo,
     });
+    this.patchExternoUbicacion(proveedor.departamento, proveedor.municipio);
 
     if (readOnly) {
       this.externoForm.disable();
     } else {
       this.externoForm.enable();
+      if (!this.externoForm.controls.departamentoId.value) {
+        this.externoForm.controls.municipioId.disable();
+      }
+      this.actualizarValidacionSiigo();
     }
 
     this.showForm.set(true);
@@ -1127,6 +1233,7 @@ export class ProveedoresComponent implements OnInit {
       if (!this.empresaForm.controls.departamentoId.value) {
         this.empresaForm.controls.municipioId.disable();
       }
+      this.actualizarValidacionSiigo();
     }
 
     this.showForm.set(true);
@@ -1152,9 +1259,11 @@ export class ProveedoresComponent implements OnInit {
       activo: true,
     });
     this.empresaForm.controls.municipioId.disable();
+    this.actualizarValidacionSiigo();
   }
 
   private resetExternoForm(): void {
+    this.externoMunicipios.set([]);
     this.externoForm.enable();
     this.externoForm.reset({
       nombre: '',
@@ -1163,8 +1272,13 @@ export class ProveedoresComponent implements OnInit {
       email: '',
       nombreContacto: '',
       telefonoContacto: '',
+      direccion: '',
+      departamentoId: null,
+      municipioId: null,
       activo: true,
     });
+    this.externoForm.controls.municipioId.disable();
+    this.actualizarValidacionSiigo();
   }
 
   private resetInternoForm(): void {
@@ -1192,6 +1306,7 @@ export class ProveedoresComponent implements OnInit {
       activo: true,
     });
     this.internoForm.controls.municipioId.disable();
+    this.actualizarValidacionSiigo();
   }
 
   private createHijoGroup(hijo?: {
@@ -1280,6 +1395,99 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
+  private patchExternoUbicacion(departamentoNombre?: string, municipioNombre?: string): void {
+    if (!departamentoNombre) {
+      return;
+    }
+
+    const departamento = this.departamentos().find(
+      (d) => d.nombre.toLowerCase() === departamentoNombre.toLowerCase()
+    );
+    if (!departamento) {
+      return;
+    }
+
+    this.externoForm.patchValue({ departamentoId: departamento.id });
+    if (!this.soloLectura()) {
+      this.externoForm.controls.municipioId.enable();
+    }
+    this.ubicacionesService.getMunicipiosByDepartamento(departamento.id).subscribe({
+      next: (municipios) => {
+        this.externoMunicipios.set(municipios);
+        const municipio = municipios.find(
+          (m) => m.nombre.toLowerCase() === (municipioNombre ?? '').toLowerCase()
+        );
+        this.externoForm.patchValue({ municipioId: municipio?.id ?? null });
+        if (this.soloLectura()) {
+          this.externoForm.disable();
+        }
+      },
+    });
+  }
+
+  private loadSiigo(): void {
+    this.configuracionSiigoService.get().subscribe({
+      next: (config) => {
+        this.siigoActivo.set(!!config.activo);
+        this.actualizarValidacionSiigo();
+      },
+      error: () => {
+        this.siigoActivo.set(false);
+        this.actualizarValidacionSiigo();
+      },
+    });
+  }
+
+  private actualizarValidacionSiigo(): void {
+    const required = this.siigoActivo();
+    this.setUbicacionSiigoValidators(
+      this.internoForm.controls.direccion,
+      this.internoForm.controls.departamentoId,
+      this.internoForm.controls.municipioId,
+      required
+    );
+    this.setUbicacionSiigoValidators(
+      this.externoForm.controls.direccion,
+      this.externoForm.controls.departamentoId,
+      this.externoForm.controls.municipioId,
+      required
+    );
+    this.setUbicacionSiigoValidators(
+      this.empresaForm.controls.direccion,
+      this.empresaForm.controls.departamentoId,
+      this.empresaForm.controls.municipioId,
+      required
+    );
+  }
+
+  private setUbicacionSiigoValidators(
+    direccion: FormGroup['controls'][string],
+    departamento: FormGroup['controls'][string],
+    municipio: FormGroup['controls'][string],
+    required: boolean
+  ): void {
+    direccion.setValidators(
+      required ? [Validators.required, Validators.maxLength(255)] : [Validators.maxLength(255)]
+    );
+    departamento.setValidators(required ? [Validators.required] : []);
+    municipio.setValidators(required ? [Validators.required] : []);
+    direccion.updateValueAndValidity({ emitEvent: false });
+    departamento.updateValueAndValidity({ emitEvent: false });
+    municipio.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private validarUbicacionSiigo(
+    direccion: string,
+    departamentoId: number | null,
+    municipioId: number | null
+  ): boolean {
+    if (this.siigoActivo() && (!direccion.trim() || !departamentoId || !municipioId)) {
+      this.error.set('Con Siigo activo debe indicar dirección, departamento y ciudad.');
+      return false;
+    }
+    return true;
+  }
+
   private ensureInternosLoaded(onLoaded?: () => void): void {
     if (this.internos().length > 0) {
       onLoaded?.();
@@ -1292,6 +1500,45 @@ export class ProveedoresComponent implements OnInit {
         onLoaded?.();
       },
       error: () => this.internos.set([]),
+    });
+  }
+
+  private verificarDocumentoSiigoYGuardar(
+    documento: string,
+    recurso: string,
+    persistir: () => void
+  ): void {
+    if (this.editingId() || !this.siigoActivo()) {
+      persistir();
+      return;
+    }
+    this.saving.set(true);
+    this.error.set(null);
+    this.configuracionSiigoService.consultarIdentificacion(documento).subscribe({
+      next: (res) => {
+        if (res.existe) {
+          this.saving.set(false);
+          const nombre = res.nombre?.trim() || res.identificacion || documento;
+          const message =
+            `El documento "${documento}" ya existe en Siigo y corresponde a "${nombre}". No se puede crear ${recurso}.`;
+          this.error.set(message);
+          this.confirmDialog
+            .confirm({
+              title: 'El documento ya existe en Siigo',
+              message,
+              confirmLabel: 'Entendido',
+              cancelLabel: '',
+              confirmVariant: 'danger',
+            })
+            .subscribe();
+          return;
+        }
+        persistir();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
     });
   }
 

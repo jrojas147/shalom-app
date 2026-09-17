@@ -32,3 +32,11 @@ export interface SiigoCatalogoItem {
   nombre: string;
   activo: boolean;
 }
+
+export interface SiigoTerceroIdentificacion {
+  existe: boolean;
+  identificacion?: string | null;
+  nombre?: string | null;
+  siigoId?: string | null;
+  tipo?: string | null;
+}

@@ -19,6 +19,11 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly mostrarPassword = signal(false);
+
+  togglePassword(): void {
+    this.mostrarPassword.update((visible) => !visible);
+  }
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
@@ -38,6 +43,10 @@ export class LoginComponent {
     this.auth.login({ username, password }).subscribe({
       next: () => {
         this.loading.set(false);
+        if (!this.auth.isLoggedIn()) {
+          this.error.set('No se pudo guardar la sesión. Intente nuevamente.');
+          return;
+        }
         const user = this.auth.currentUser();
         void this.router.navigateByUrl(getDefaultAppRoute(user?.rol));
       },
@@ -51,6 +60,8 @@ export class LoginComponent {
       this.error.set('La cuenta está inactiva.');
     } else if (err.status === 401) {
       this.error.set('Credenciales inválidas.');
+    } else if (err.status === 0) {
+      this.error.set('No se pudo conectar con el servicio de autenticación.');
     } else {
       this.error.set('No se pudo iniciar sesión. Intente nuevamente.');
     }

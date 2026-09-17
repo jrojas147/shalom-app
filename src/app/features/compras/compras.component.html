@@ -170,7 +170,7 @@
                 [value]="formatPeso(item.pesoKg)"
                 [readonly]="!permiteManual()"
                 (change)="onPesoInput(item.productoId, $any($event.target).value)"
-                [title]="permiteManual() ? 'Peso del producto. El empaque se suma al bruto.' : 'Peso del producto leído desde la báscula.'"
+                [title]="permiteManual() ? 'Peso del producto, sin empaque.' : 'Peso del producto leído desde la báscula, sin empaque.'"
               />
               @if (permiteManual()) {
                 <button type="button" (click)="ajustarPeso(item.productoId, 0.5)" aria-label="Más peso">+</button>
@@ -190,7 +190,7 @@
             </div>
             <div class="item-pricing">
               <span class="price-kg">
-                Bruto {{ formatPeso(pesoBrutoItem(item)) }} KG
+                Sin empaque {{ formatPeso(pesoNetoItem(item)) }} KG
                 @if (productoEsUnidad(item.producto)) {
                   · {{ unidadesItem(item.unidades) }} und ·
                   {{ formatPrecioKg(productoPrecioKg(item.producto)) }} /und
@@ -215,11 +215,7 @@
         <span>{{ formatCurrency(subtotal()) }}</span>
       </div>
       <div class="summary-row">
-        <span>Peso bruto total</span>
-        <span>{{ formatPeso(pesoBrutoTotal()) }} KG</span>
-      </div>
-      <div class="summary-row">
-        <span>Peso neto total</span>
+        <span>Peso total (sin empaque)</span>
         <span>{{ formatPeso(pesoNetoTotal()) }} KG</span>
       </div>
       @if (anticipoAplicable() > 0) {

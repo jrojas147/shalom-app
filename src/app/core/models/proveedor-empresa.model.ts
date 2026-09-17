@@ -27,6 +27,7 @@ export interface ProveedorEmpresa {
   departamento?: string;
   municipio?: string;
   direccion?: string;
+  siigoId?: string | null;
   tipoPago?: TipoPago;
   entidadBancariaId?: number;
   entidadBancaria?: EntidadBancaria;

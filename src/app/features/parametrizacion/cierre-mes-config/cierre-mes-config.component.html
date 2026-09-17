@@ -1,9 +1,10 @@
 <section class="param-block">
   <h2 class="param-block__title">Cierre de mes</h2>
   <p class="param-block__desc">
-    Defina el día del mes (1 a 28) en que se cierra el inventario, las compras y las ventas de
-    material. Desde esa fecha se puede ejecutar el cierre del mes en curso; antes de ese día se
-    cierra el mes anterior.
+    Defina un día sugerido (1 a 28) para revisar inventario, compras y ventas. El cierre se puede
+    ejecutar cuando se requiera (semanal, quincenal o en cualquier momento); cada corte cubre desde
+    el último cierre hasta ahora. Se limita a 28 para que el recordatorio exista todos los meses,
+    incluido febrero.
   </p>
 
   @if (error()) {
@@ -19,7 +20,7 @@
   } @else {
     <form class="cierre-mes-form" [formGroup]="form" (ngSubmit)="save()">
       <label class="cierre-mes-field">
-        <span>Día de cierre</span>
+        <span>Día sugerido</span>
         <select formControlName="diaCierre">
           @for (dia of dias; track dia) {
             <option [ngValue]="dia">Día {{ dia }}</option>
@@ -28,7 +29,8 @@
       </label>
 
       <p class="cierre-mes-hint">
-        Se limita a 28 para que el cierre exista todos los meses, incluido febrero.
+        Este día no bloquea el cierre: es un recordatorio. Puede ejecutar varios cortes en el mismo
+        mes.
       </p>
 
       <div class="cierre-mes-actions">

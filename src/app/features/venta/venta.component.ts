@@ -26,7 +26,6 @@ import {
   permiteLecturaBascula,
   TipoLecturaPeso,
 } from '../../core/models/configuracion-lectura-peso.model';
-import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
 import {
   precioSufijo,
   productoEsUnidad,
@@ -130,10 +129,6 @@ export class VentaComponent implements OnInit {
 
   readonly subtotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.itemTotal(item), 0)
-  );
-
-  readonly pesoBrutoTotal = computed(() =>
-    this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
   );
 
   readonly pesoNetoTotal = computed(() =>
@@ -450,17 +445,9 @@ export class VentaComponent implements OnInit {
     this.error.set(null);
   }
 
-  /** Peso del producto (sin empaque). */
+  /** Peso del producto, sin tara de empaque. */
   pesoNetoItem(item: CompraDetalleItem): number {
     return Math.max(0, Number(item.pesoKg) || 0);
-  }
-
-  /** Peso bruto = producto + tara del empaque. */
-  pesoBrutoItem(item: CompraDetalleItem): number {
-    return pesoBrutoFromNetoKg(
-      this.pesoNetoItem(item),
-      pesoEmpaqueKg(this.tiposEmpaque(), item.empaque)
-    );
   }
 
   itemTotal(item: CompraDetalleItem): number {

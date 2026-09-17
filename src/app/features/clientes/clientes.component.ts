@@ -202,9 +202,47 @@ export class ClientesComponent implements OnInit {
     }
 
     const id = this.editingId();
+    if (!id && this.siigoActivo()) {
+      this.verificarDocumentoSiigoYGuardar(request.documento, request);
+      return;
+    }
+    this.persistirCliente(id, request);
+  }
+
+  private verificarDocumentoSiigoYGuardar(documento: string, request: ClienteRequest): void {
     this.saving.set(true);
     this.error.set(null);
+    this.configuracionSiigoService.consultarIdentificacion(documento).subscribe({
+      next: (res) => {
+        if (res.existe) {
+          this.saving.set(false);
+          const nombre = res.nombre?.trim() || res.identificacion || documento;
+          const message =
+            `El documento "${documento}" ya existe en Siigo y corresponde a "${nombre}". No se puede crear el cliente.`;
+          this.error.set(message);
+          this.confirmDialog
+            .confirm({
+              title: 'El documento ya existe en Siigo',
+              message,
+              confirmLabel: 'Entendido',
+              cancelLabel: '',
+              confirmVariant: 'danger',
+            })
+            .subscribe();
+          return;
+        }
+        this.persistirCliente(null, request);
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
+    });
+  }
 
+  private persistirCliente(id: number | null, request: ClienteRequest): void {
+    this.saving.set(true);
+    this.error.set(null);
     const op$ = id
       ? this.clientesService.update(id, request)
       : this.clientesService.create(request);

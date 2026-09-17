@@ -763,28 +763,30 @@
       @if (siigoBuscarLocalProducto(); as local) {
         @if (siigoBuscarLocalLoading()) {
           <p class="rp-loading">Buscando "{{ local.nombreInterno }}" en Siigo Nube...</p>
-        } @else if (siigoBuscarLocalResult(); as remoto) {
-          <div class="productos-siigo-local-result">
-            <div class="productos-siigo-local-card">
-              <span class="productos-siigo-local-card__label">En Shalom</span>
-              <strong>{{ local.nombreInterno }}</strong>
-              <span class="cell-mono">ID {{ local.idInterno || '—' }}</span>
-              @if (local.siigoId) {
-                <span class="rp-badge rp-badge--success">Ya vinculado</span>
+        } @else if (siigoBuscarLocalResult()) {
+          @if (siigoBuscarLocalResult(); as remoto) {
+            <div class="productos-siigo-local-result">
+              <div class="productos-siigo-local-card">
+                <span class="productos-siigo-local-card__label">En Shalom</span>
+                <strong>{{ local.nombreInterno }}</strong>
+                <span class="cell-mono">ID {{ local.idInterno || '—' }}</span>
+                @if (local.siigoId) {
+                  <span class="rp-badge rp-badge--success">Ya vinculado</span>
+                }
+              </div>
+              @if (remoto.existe) {
+                <div class="productos-siigo-local-card productos-siigo-local-card--siigo">
+                  <span class="productos-siigo-local-card__label">En Siigo</span>
+                  <strong>{{ remoto.nombre || '—' }}</strong>
+                  <span class="cell-mono">Código {{ remoto.codigo || local.idInterno }}</span>
+                </div>
+              } @else {
+                <div class="rp-alert rp-alert--error">
+                  No se encontró en Siigo un producto con el código "{{ local.idInterno }}".
+                </div>
               }
             </div>
-            @if (remoto.existe) {
-              <div class="productos-siigo-local-card productos-siigo-local-card--siigo">
-                <span class="productos-siigo-local-card__label">En Siigo</span>
-                <strong>{{ remoto.nombre || '—' }}</strong>
-                <span class="cell-mono">Código {{ remoto.codigo || local.idInterno }}</span>
-              </div>
-            } @else {
-              <div class="rp-alert rp-alert--error">
-                No se encontró en Siigo un producto con el código "{{ local.idInterno }}".
-              </div>
-            }
-          </div>
+          }
         }
         <div class="rp-form-actions productos-modal-actions">
           <button

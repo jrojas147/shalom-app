@@ -9,6 +9,10 @@ export interface ProveedorExterno {
   email?: string;
   nombreContacto?: string;
   telefonoContacto?: string;
+  direccion?: string;
+  departamento?: string;
+  municipio?: string;
+  siigoId?: string | null;
   activo: boolean;
 }
 
@@ -19,5 +23,8 @@ export interface ProveedorExternoRequest {
   email?: string;
   nombreContacto?: string;
   telefonoContacto?: string;
+  direccion?: string;
+  departamento?: string;
+  municipio?: string;
   activo?: boolean;
 }

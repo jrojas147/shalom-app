@@ -242,8 +242,7 @@
       </div>
 
       <div class="gestion-compras-modal__totals">
-        <div><span>Peso bruto</span><strong>{{ formatPeso(pesoBrutoTotalEdit()) }} KG</strong></div>
-        <div><span>Peso neto</span><strong>{{ formatPeso(pesoNetoTotalEdit()) }} KG</strong></div>
+        <div><span>Peso (sin empaque)</span><strong>{{ formatPeso(pesoNetoTotalEdit()) }} KG</strong></div>
         <div><span>Total</span><strong>{{ formatCurrency(subtotalEdit()) }}</strong></div>
       </div>
 
@@ -261,8 +260,13 @@
             {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
           </button>
         } @else {
-          <button type="button" class="rp-btn rp-btn--ghost" [disabled]="saving()" (click)="activarEdicion()">
-            Editar
+          <button
+            type="button"
+            class="rp-btn rp-btn--ghost"
+            [disabled]="saving() || loadingEdicion()"
+            (click)="activarEdicion()"
+          >
+            {{ loadingEdicion() ? 'Cargando...' : 'Editar' }}
           </button>
         }
         <button type="button" class="rp-btn rp-btn--primary" [disabled]="saving()" (click)="confirmarCompra()">

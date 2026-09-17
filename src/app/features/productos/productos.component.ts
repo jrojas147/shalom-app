@@ -769,7 +769,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
           this.saving.set(false);
           const nombre = res.nombre?.trim() || res.codigo || request.idInterno;
           const message =
-            `El ID "${request.idInterno}" ya existe en Siigo y corresponde al producto "${nombre}". No se puede crear el producto.`;
+            `El ID "${request.idInterno}" ya existe en Siigo y corresponde al producto "${nombre}". Cambia el ID del producto o editalo en Siggo.`;
           this.error.set(message);
           this.confirmDialog
             .confirm({

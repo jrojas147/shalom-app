@@ -17,8 +17,9 @@ export class AuthService {
   private readonly router = inject(Router);
 
   private readonly currentUserSignal = signal<User | null>(this.loadUser());
+  private readonly tokenSignal = signal<string | null>(this.readStoredToken());
   readonly currentUser = this.currentUserSignal.asReadonly();
-  readonly isLoggedIn = computed(() => !!this.getToken() && !!this.currentUserSignal());
+  readonly isLoggedIn = computed(() => !!this.tokenSignal() && !!this.currentUserSignal());
 
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http
@@ -49,7 +50,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    return this.tokenSignal() ?? this.readStoredToken();
   }
 
   hasRole(...roles: UserRole[]): boolean {
@@ -84,10 +85,15 @@ export class AuthService {
   }
 
   private persistSession(response: LoginResponse): void {
+    if (!response?.accessToken || !response.refreshToken || !response.user) {
+      throw new Error('Respuesta de autenticación incompleta');
+    }
+
     const user = this.normalizeUser(response.user);
     localStorage.setItem(TOKEN_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
+    this.tokenSignal.set(response.accessToken);
     this.currentUserSignal.set(user);
   }
 
@@ -95,7 +101,12 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
+    this.tokenSignal.set(null);
     this.currentUserSignal.set(null);
+  }
+
+  private readStoredToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
   }
 
   private loadUser(): User | null {

@@ -13,7 +13,17 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
         req.url.includes('/api/auth/refresh') ||
         req.url.includes('/api/auth/logout');
 
-      if (error.status === 401 && !isAuthEndpoint && auth.isLoggedIn()) {
+      const requestToken = req.headers.get('Authorization');
+      const currentToken = auth.getToken();
+      const usedCurrentSession =
+        !!currentToken && requestToken === `Bearer ${currentToken}`;
+
+      if (
+        error.status === 401 &&
+        !isAuthEndpoint &&
+        usedCurrentSession &&
+        auth.isLoggedIn()
+      ) {
         auth.forceLogout();
       }
 

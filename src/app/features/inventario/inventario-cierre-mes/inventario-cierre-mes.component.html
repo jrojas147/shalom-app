@@ -8,17 +8,17 @@
   }
 
   @if (loading() && !preview()) {
-    <p class="rp-loading">Cargando cierre de mes...</p>
+    <p class="rp-loading">Cargando cierre de inventario...</p>
   }
 
   @if (preview(); as data) {
     <section class="cierre-mes__meta">
       <article>
-        <span>Periodo</span>
+        <span>Corte hasta</span>
         <strong>{{ data.periodoLabel }}</strong>
       </article>
       <article>
-        <span>Día de cierre</span>
+        <span>Día sugerido</span>
         <strong>{{ data.diaCierre }}</strong>
       </article>
       <article>
@@ -37,22 +37,15 @@
       }
     </section>
 
-    @if (data.yaCerrado) {
-      <div class="rp-alert rp-alert--warning">
-        El periodo {{ data.periodoLabel }} ya está cerrado. El registro queda como consulta.
-        @if (data.observacion) {
-          Observación: {{ data.observacion }}
-        }
-      </div>
-    } @else if (data.cajaAbierta) {
+    @if (data.cajaAbierta) {
       <div class="rp-alert rp-alert--error">
-        Debe cerrar la caja antes de ejecutar el cierre de mes.
+        Debe cerrar la caja antes de ejecutar el cierre.
         <a class="cierre-mes__link" routerLink="/app/caja">Ir a Caja</a>
       </div>
     } @else {
       <p class="cierre-mes__hint">
-        Marque cada producto para confirmar stock, compras y ventas. El cierre se ejecuta cuando
-        todos estén validados.
+        Marque cada producto para confirmar stock, compras y ventas. Puede ejecutar un nuevo cierre
+        cuando lo necesite; el corte cubre desde el último registro hasta ahora.
       </p>
     }
 
@@ -80,7 +73,7 @@
         <input
           type="checkbox"
           [checked]="todosValidados()"
-          [disabled]="data.yaCerrado || totalProductos() === 0"
+          [disabled]="totalProductos() === 0"
           (change)="toggleTodos($any($event.target).checked)"
         />
         Marcar todos
@@ -105,7 +98,6 @@
               type="checkbox"
               [checked]="categoriaCompleta(categoria)"
               [indeterminate]="categoriaParcial(categoria)"
-              [disabled]="data.yaCerrado"
               (change)="toggleCategoria(categoria, $any($event.target).checked)"
             />
             <span>
@@ -141,7 +133,6 @@
                   <input
                     type="checkbox"
                     [checked]="productoValidado(item.productoId)"
-                    [disabled]="data.yaCerrado"
                     (change)="toggleProducto(item.productoId, $any($event.target).checked)"
                   />
                 </td>
@@ -170,8 +161,7 @@
       </p>
     }
 
-    @if (!data.yaCerrado) {
-      <div class="cierre-mes__footer">
+    <div class="cierre-mes__footer">
         <label class="cierre-mes__obs">
           <span>Observación (opcional)</span>
           <textarea
@@ -191,7 +181,6 @@
           {{ saving() ? 'Registrando...' : 'Ejecutar cierre' }}
         </button>
       </div>
-    }
   }
 
   <section class="cierre-mes__historial">
@@ -199,9 +188,8 @@
     <table class="rp-table">
       <thead>
         <tr>
-          <th>Periodo</th>
+          <th>Corte</th>
           <th>Rango</th>
-          <th>Día cierre</th>
           <th>Usuario</th>
           <th>Registrado</th>
           <th></th>
@@ -212,11 +200,10 @@
           <tr>
             <td class="cell-primary">{{ item.periodoLabel }}</td>
             <td class="cell-secondary">
-              {{ item.periodoDesde | date: 'dd/MM/yyyy' }}
+              {{ item.periodoDesde | date: 'dd/MM/yyyy HH:mm' }}
               —
-              {{ item.periodoHasta | date: 'dd/MM/yyyy' }}
+              {{ item.periodoHasta | date: 'dd/MM/yyyy HH:mm' }}
             </td>
-            <td>{{ item.diaCierre }}</td>
             <td class="cell-secondary">{{ item.usuarioNombre || '—' }}</td>
             <td class="cell-secondary">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td class="cell-actions">
@@ -227,7 +214,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="cell-empty">Aún no hay cierres registrados.</td>
+            <td colspan="5" class="cell-empty">Aún no hay cierres registrados.</td>
           </tr>
         }
       </tbody>
@@ -241,7 +228,6 @@
       {{ cierre.periodoDesde | date: 'dd/MM/yyyy HH:mm' }}
       —
       {{ cierre.periodoHasta | date: 'dd/MM/yyyy HH:mm' }}
-      · Día {{ cierre.diaCierre }}
       @if (cierre.usuarioNombre) {
         · {{ cierre.usuarioNombre }}
       }

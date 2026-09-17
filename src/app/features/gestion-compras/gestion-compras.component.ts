@@ -1,8 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import {
   Compra,
+  CompraDetalleLinea,
   compraProveedorFromCompra,
 } from '../../core/models/compra-registro.model';
 import {
@@ -21,9 +23,7 @@ import {
 import { BasculaService } from '../../core/services/bascula.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
-import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
-import { pesoBrutoFromNetoKg, pesoEmpaqueKg } from '../../core/utils/empaque-peso.util';
 import {
   precioSufijo,
   productoEsUnidad,
@@ -48,7 +48,6 @@ import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal
 })
 export class GestionComprasComponent implements OnInit {
   private readonly comprasService = inject(ComprasService);
-  private readonly productosService = inject(ProductosService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
   private readonly basculaService = inject(BasculaService);
@@ -62,10 +61,11 @@ export class GestionComprasComponent implements OnInit {
   readonly unidadesItem = unidadesItem;
 
   readonly compras = signal<Compra[]>([]);
-  readonly productos = signal<Producto[]>([]);
   readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
   readonly loading = signal(false);
+  readonly loadingEdicion = signal(false);
   readonly saving = signal(false);
+  private readonly parametrizacionEdicionCargada = signal(false);
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
   readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
@@ -86,28 +86,12 @@ export class GestionComprasComponent implements OnInit {
     this.itemsEdit().reduce((sum, item) => sum + this.itemTotal(item), 0)
   );
 
-  readonly pesoBrutoTotalEdit = computed(() =>
-    this.itemsEdit().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
-  );
-
   readonly pesoNetoTotalEdit = computed(() =>
     this.itemsEdit().reduce((sum, item) => sum + this.pesoNetoItem(item), 0)
   );
 
   ngOnInit(): void {
     this.loadCompras();
-    this.productosService.getActivos().subscribe({
-      next: (data) => this.productos.set(data),
-      error: () => this.productos.set([]),
-    });
-    this.tiposEmpaqueService.getAll().subscribe({
-      next: (data) => this.tiposEmpaque.set(data),
-      error: () => this.tiposEmpaque.set([]),
-    });
-    this.configuracionLecturaPesoService.get().subscribe({
-      next: (data) => this.lecturaPeso.set(data.preCompra),
-      error: () => this.lecturaPeso.set('MANUAL'),
-    });
   }
 
   loadCompras(): void {
@@ -146,9 +130,35 @@ export class GestionComprasComponent implements OnInit {
 
   activarEdicion(): void {
     const compra = this.compraSeleccionada();
-    if (!compra) return;
-    this.syncEditState(compra);
-    this.editMode.set(true);
+    if (!compra || this.loadingEdicion()) {
+      return;
+    }
+
+    if (this.parametrizacionEdicionCargada()) {
+      this.entrarEdicion(compra);
+      return;
+    }
+
+    this.loadingEdicion.set(true);
+    this.error.set(null);
+    forkJoin({
+      tipos: this.tiposEmpaqueService.getAll(),
+      lectura: this.configuracionLecturaPesoService.get(),
+    }).subscribe({
+      next: ({ tipos, lectura }) => {
+        this.tiposEmpaque.set(tipos);
+        this.lecturaPeso.set(lectura.preCompra);
+        this.parametrizacionEdicionCargada.set(true);
+        this.loadingEdicion.set(false);
+        this.entrarEdicion(compra);
+      },
+      error: (err) => {
+        this.loadingEdicion.set(false);
+        this.error.set(
+          this.extractErrorMessage(err, 'No se pudo cargar la parametrización para editar.')
+        );
+      },
+    });
   }
 
   cancelarEdicion(): void {
@@ -157,6 +167,11 @@ export class GestionComprasComponent implements OnInit {
       this.syncEditState(compra);
     }
     this.editMode.set(false);
+  }
+
+  private entrarEdicion(compra: Compra): void {
+    this.syncEditState(compra);
+    this.editMode.set(true);
   }
 
   abrirModalProveedor(): void {
@@ -412,15 +427,9 @@ export class GestionComprasComponent implements OnInit {
     });
   }
 
+  /** Peso del producto, sin tara de empaque. */
   pesoNetoItem(item: CompraDetalleItem): number {
     return Math.max(0, Number(item.pesoKg) || 0);
-  }
-
-  pesoBrutoItem(item: CompraDetalleItem): number {
-    return pesoBrutoFromNetoKg(
-      this.pesoNetoItem(item),
-      pesoEmpaqueKg(this.tiposEmpaque(), item.empaque)
-    );
   }
 
   itemTotal(item: CompraDetalleItem): number {
@@ -452,27 +461,26 @@ export class GestionComprasComponent implements OnInit {
     this.itemsEdit.set(this.mapDetalleToItems(compra));
   }
 
+  private productoDesdeLinea(linea: CompraDetalleLinea): Producto {
+    const porUnidad = !!linea.unidades && linea.unidades > 0;
+    return {
+      id: linea.productoId,
+      comercioId: 0,
+      nombreInterno: linea.productoNombre ?? `Producto ${linea.productoId}`,
+      activo: true,
+      estado: 'ACTIVO',
+      fechaEstado: new Date(0).toISOString(),
+      precioCompra: porUnidad
+        ? (Number(linea.subtotal) || 0) / linea.unidades!
+        : linea.precioUnitario ?? null,
+      precioVenta: null,
+      tipoMedida: porUnidad ? 'UNIDAD' : 'PESO',
+    };
+  }
+
   private mapDetalleToItems(compra: Compra): CompraDetalleItem[] {
-    const productosMap = new Map(this.productos().map((p) => [p.id, p]));
-
     return compra.detalle.map((linea) => {
-      const producto =
-        productosMap.get(linea.productoId) ??
-        ({
-          id: linea.productoId,
-          comercioId: 0,
-          nombreInterno: linea.productoNombre ?? `Producto ${linea.productoId}`,
-          activo: true,
-          estado: 'ACTIVO',
-          fechaEstado: new Date(0).toISOString(),
-          precioCompra:
-            linea.unidades && linea.unidades > 0
-              ? (Number(linea.subtotal) || 0) / linea.unidades
-              : linea.precioUnitario ?? null,
-          precioVenta: null,
-          tipoMedida: linea.unidades && linea.unidades > 0 ? 'UNIDAD' : 'PESO',
-        } satisfies Producto);
-
+      const producto = this.productoDesdeLinea(linea);
       const empaque = linea.empaque?.trim() || this.empaquePorDefecto();
 
       return {

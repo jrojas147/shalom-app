@@ -58,6 +58,7 @@ export interface ProveedorInterno {
   municipio?: string;
   nombreContacto?: string;
   telefonoContacto?: string;
+  siigoId?: string | null;
   activo: boolean;
   hijos: ProveedorInternoHijo[];
   sucursalesAsociadas: ProveedorInternoSucursal[];
