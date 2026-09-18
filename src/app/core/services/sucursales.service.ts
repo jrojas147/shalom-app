@@ -14,6 +14,10 @@ export class SucursalesService {
     return this.http.get<Sucursal[]>(this.baseUrl, { params });
   }
 
+  getSiguienteId(): Observable<{ idSucursal: number }> {
+    return this.http.get<{ idSucursal: number }>(`${this.baseUrl}/siguiente-id`);
+  }
+
   getById(id: number): Observable<Sucursal> {
     return this.http.get<Sucursal>(`${this.baseUrl}/${id}`);
   }

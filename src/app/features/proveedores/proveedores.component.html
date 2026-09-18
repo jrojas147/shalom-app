@@ -821,7 +821,7 @@
                 <div class="proveedores-hijos-list__info">
                   <span class="proveedores-hijos-list__nombre">{{ sucursal.nombre }}</span>
                   <span class="proveedores-hijos-list__meta">
-                    NIT {{ sucursal.nit }} · {{ sucursal.municipio }}
+                    Id {{ sucursal.idSucursal }} · NIT {{ sucursal.nit }} · {{ sucursal.municipio }}
                   </span>
                 </div>
                 @if (puedeGestionar() && !soloLectura()) {
@@ -1059,7 +1059,7 @@
               <span class="proveedores-hijos-list__info">
                 <span class="proveedores-hijos-list__nombre">{{ sucursal.nombre }}</span>
                 <span class="proveedores-hijos-list__meta">
-                  NIT {{ sucursal.nit }} · {{ sucursal.municipio }}
+                  Id {{ sucursal.idSucursal }} · NIT {{ sucursal.nit }} · {{ sucursal.municipio }}
                   @if (sucursal.direccion) {
                     · {{ sucursal.direccion }}
                   }
@@ -1093,7 +1093,7 @@
             <div class="proveedores-hijos-list__info">
               <span class="proveedores-hijos-list__nombre">{{ sucursal.nombre }}</span>
               <span class="proveedores-hijos-list__meta">
-                NIT {{ sucursal.nit }}
+                Id {{ sucursal.idSucursal }} · NIT {{ sucursal.nit }}
                 @if (sucursal.municipio) {
                   · {{ sucursal.municipio }}
                 }

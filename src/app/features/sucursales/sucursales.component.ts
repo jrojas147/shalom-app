@@ -84,6 +84,7 @@ export class SucursalesComponent implements OnInit {
   readonly fechaAltaEdicion = signal<string | null>(null);
 
   private bancoPendienteEdicion?: string;
+  private readonly idsSucursalOcupados = signal<Set<number>>(new Set());
 
   readonly administradoresActivos = computed(() =>
     this.administradores().filter((a) => a.activo)
@@ -116,6 +117,15 @@ export class SucursalesComponent implements OnInit {
   readonly conjuntoForm = this.fb.nonNullable.group({
     administradorId: [null as number | null, Validators.required],
     nit: ['', Validators.required],
+    idSucursal: [
+      null as number | null,
+      [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(999999999),
+        (control: AbstractControl) => this.idSucursalDuplicadoError(control),
+      ],
+    ],
     nombre: ['', [Validators.required, Validators.maxLength(50)]],
     numApartamentos: [
       null as number | null,
@@ -225,23 +235,25 @@ export class SucursalesComponent implements OnInit {
     this.fechaAltaEdicion.set(null);
     this.bancoPendienteEdicion = undefined;
     this.municipios.set([]);
-    this.conjuntoForm.reset({
-      administradorId: this.administradoresActivos()[0]?.id ?? null,
-      nit: '',
-      nombre: '',
-      numApartamentos: null,
-      email: '',
-      departamentoId: null,
-      municipioId: null,
-      direccion: '',
-      entidadBancariaId: null,
-      numeroCuenta: '',
-      tipoCuenta: '',
-      activo: true,
-    });
-    this.conjuntoForm.controls.municipioId.disable();
-    this.showForm.set(true);
+    this.idsSucursalOcupados.set(new Set());
     this.error.set(null);
+
+    forkJoin({
+      siguiente: this.sucursalesService.getSiguienteId(),
+      todas: this.sucursalesService.getAll(false),
+    }).subscribe({
+      next: ({ siguiente, todas }) => {
+        this.actualizarIdsOcupados(todas, null);
+        this.resetConjuntoForm(this.idSucursalSugerido(siguiente.idSucursal, todas));
+        this.showForm.set(true);
+      },
+      error: (err) => {
+        this.actualizarIdsOcupados(this.sucursales(), null);
+        this.resetConjuntoForm(this.idSucursalSugerido(null, this.sucursales()));
+        this.showForm.set(true);
+        this.error.set(err.error?.message ?? 'No se pudo consultar el siguiente id sucursal.');
+      },
+    });
   }
 
   openEditConjunto(sucursal: Sucursal): void {
@@ -252,6 +264,7 @@ export class SucursalesComponent implements OnInit {
     this.conjuntoForm.reset({
       administradorId: sucursal.administradorId,
       nit: sucursal.nit,
+      idSucursal: sucursal.idSucursal,
       nombre: sucursal.nombre,
       numApartamentos: sucursal.numApartamentos,
       email: sucursal.email ?? '',
@@ -268,6 +281,10 @@ export class SucursalesComponent implements OnInit {
     this.patchConjuntoBanco(sucursal.banco);
     this.showForm.set(true);
     this.error.set(null);
+    this.sucursalesService.getAll(false).subscribe({
+      next: (todas) => this.actualizarIdsOcupados(todas, sucursal.id),
+      error: () => this.actualizarIdsOcupados(this.sucursales(), sucursal.id),
+    });
   }
 
   irACrearAdministrador(): void {
@@ -335,6 +352,7 @@ export class SucursalesComponent implements OnInit {
     const request: SucursalRequest = {
       administradorId: raw.administradorId!,
       nit: raw.nit.trim(),
+      idSucursal: raw.idSucursal!,
       nombre: raw.nombre.trim().toUpperCase(),
       numApartamentos: raw.numApartamentos!,
       email: raw.email.trim() || undefined,
@@ -350,6 +368,22 @@ export class SucursalesComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
 
+    this.sucursalesService.getAll(false).subscribe({
+      next: (todas) => {
+        this.actualizarIdsOcupados(todas, this.editingId());
+        if (this.conjuntoForm.controls.idSucursal.hasError('idSucursalDuplicado')) {
+          this.saving.set(false);
+          this.conjuntoForm.controls.idSucursal.markAsTouched();
+          this.error.set('Ya existe un conjunto con ese id sucursal');
+          return;
+        }
+        this.persistirConjunto(request);
+      },
+      error: () => this.persistirConjunto(request),
+    });
+  }
+
+  private persistirConjunto(request: SucursalRequest): void {
     const id = this.editingId();
     const op$ = id
       ? this.sucursalesService.update(id, request)
@@ -426,6 +460,17 @@ export class SucursalesComponent implements OnInit {
     if (normalizado !== control.value) {
       control.setValue(normalizado);
     }
+  }
+
+  limitarIdSucursal(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const soloDigitos = input.value.replace(/\D/g, '').slice(0, 9);
+    if (soloDigitos !== input.value) {
+      input.value = soloDigitos;
+    }
+    this.conjuntoForm.controls.idSucursal.setValue(
+      soloDigitos === '' ? null : Number(soloDigitos)
+    );
   }
 
   limitarNumApartamentos(event: Event): void {
@@ -571,6 +616,7 @@ export class SucursalesComponent implements OnInit {
   private matchesConjuntoSearch(s: Sucursal, q: string): boolean {
     return (
       s.nombre.toLowerCase().includes(q) ||
+      String(s.idSucursal ?? '').includes(q) ||
       s.nit.toLowerCase().includes(q) ||
       s.municipio.toLowerCase().includes(q) ||
       s.departamento.toLowerCase().includes(q) ||
@@ -589,5 +635,58 @@ export class SucursalesComponent implements OnInit {
       a.telefono?.toLowerCase().includes(q) ||
       false
     );
+  }
+
+  private resetConjuntoForm(idSucursal: number | null): void {
+    this.conjuntoForm.reset({
+      administradorId: this.administradoresActivos()[0]?.id ?? null,
+      nit: '',
+      idSucursal,
+      nombre: '',
+      numApartamentos: null,
+      email: '',
+      departamentoId: null,
+      municipioId: null,
+      direccion: '',
+      entidadBancariaId: null,
+      numeroCuenta: '',
+      tipoCuenta: '',
+      activo: true,
+    });
+    this.conjuntoForm.controls.municipioId.disable();
+    this.conjuntoForm.controls.idSucursal.updateValueAndValidity();
+  }
+
+  private actualizarIdsOcupados(sucursales: Sucursal[], excludeId: number | null): void {
+    this.idsSucursalOcupados.set(
+      new Set(
+        sucursales
+          .filter((s) => s.id !== excludeId && s.idSucursal != null)
+          .map((s) => s.idSucursal)
+      )
+    );
+    this.conjuntoForm.controls.idSucursal.updateValueAndValidity();
+  }
+
+  private idSucursalSugerido(siguienteApi: number | null | undefined, sucursales: Sucursal[]): number {
+    const desdeLista = sucursales.reduce((max, sucursal) => {
+      const actual = Number(sucursal.idSucursal);
+      return Number.isFinite(actual) ? Math.max(max, actual) : max;
+    }, 0);
+    const candidato = Number(siguienteApi);
+    const siguiente = Number.isFinite(candidato) && candidato > 0 ? candidato : desdeLista + 1;
+    return Math.min(999999999, Math.max(1, siguiente));
+  }
+
+  private idSucursalDuplicadoError(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    const id = Number(value);
+    if (!Number.isFinite(id)) {
+      return null;
+    }
+    return this.idsSucursalOcupados().has(id) ? { idSucursalDuplicado: true } : null;
   }
 }

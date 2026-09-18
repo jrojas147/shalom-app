@@ -23,6 +23,7 @@ export const RH_VALUES: { value: Rh; label: string }[] = [
 export interface ProveedorInternoSucursal {
   id: number;
   sucursalId: number;
+  idSucursal?: number;
   nombre: string;
   nit: string;
   municipio?: string;

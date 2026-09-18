@@ -52,7 +52,7 @@
         <input
           type="search"
           class="sucursales__search"
-          placeholder="Buscar por nombre, NIT, ubicación o administrador..."
+          placeholder="Buscar por id sucursal, nombre, NIT, ubicación o administrador..."
           [value]="busqueda()"
           (input)="onBusquedaChange($any($event.target).value)"
         />
@@ -64,6 +64,7 @@
         <table class="rp-table">
           <thead>
             <tr>
+              <th>Id sucursal</th>
               <th>Conjunto</th>
               <th>Municipio</th>
               <th>Administrador</th>
@@ -75,6 +76,7 @@
           <tbody>
             @for (sucursal of sucursalesFiltradas(); track sucursal.id) {
               <tr>
+                <td class="cell-secondary">{{ sucursal.idSucursal }}</td>
                 <td>
                   <span class="row-icon">🏢</span>
                   <span class="cell-primary">{{ sucursal.nombre }}</span>
@@ -264,6 +266,29 @@
           <input id="nit" type="text" formControlName="nit" maxlength="20" />
           @if (conjuntoForm.controls.nit.touched && conjuntoForm.controls.nit.invalid) {
             <span class="rp-hint err">El NIT es obligatorio</span>
+          }
+        </div>
+        <div class="rp-field">
+          <label for="idSucursal">Id sucursal</label>
+          <input
+            id="idSucursal"
+            type="text"
+            formControlName="idSucursal"
+            maxlength="9"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            (input)="limitarIdSucursal($event)"
+          />
+          @if (conjuntoForm.controls.idSucursal.touched && conjuntoForm.controls.idSucursal.invalid) {
+            @if (conjuntoForm.controls.idSucursal.hasError('required')) {
+              <span class="rp-hint err">El id sucursal es obligatorio</span>
+            } @else if (conjuntoForm.controls.idSucursal.hasError('idSucursalDuplicado')) {
+              <span class="rp-hint err">Ya existe un conjunto con ese id sucursal</span>
+            } @else {
+              <span class="rp-hint err">Ingrese un número válido</span>
+            }
+          } @else if (!editingId()) {
+            <span class="rp-hint">ID Sugerido. Puede cambiarlo.</span>
           }
         </div>
         <div class="rp-field">

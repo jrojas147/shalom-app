@@ -13,6 +13,7 @@ export interface Sucursal {
   administradorId: number;
   administrador?: AdministradorConjunto;
   nit: string;
+  idSucursal: number;
   nombre: string;
   numApartamentos: number;
   email?: string;
@@ -29,6 +30,7 @@ export interface Sucursal {
 export interface SucursalRequest {
   administradorId: number;
   nit: string;
+  idSucursal: number;
   nombre: string;
   numApartamentos: number;
   email?: string;

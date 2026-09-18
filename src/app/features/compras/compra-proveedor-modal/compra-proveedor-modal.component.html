@@ -82,7 +82,7 @@
                   >
                     <span class="proveedor-modal-item__body">
                       <strong>{{ sucursal.nombre }}</strong>
-                      <span>{{ sucursal.nit }}@if (sucursal.municipio) { · {{ sucursal.municipio }} }</span>
+                      <span>Id {{ sucursal.idSucursal }} · {{ sucursal.nit }}@if (sucursal.municipio) { · {{ sucursal.municipio }} }</span>
                     </span>
                     @if (esSucursalSeleccionada(sucursal.sucursalId)) {
                       <span class="proveedor-modal-item__check">✓</span>
