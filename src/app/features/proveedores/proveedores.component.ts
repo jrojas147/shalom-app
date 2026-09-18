@@ -938,7 +938,7 @@ export class ProveedoresComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        this.error.set(this.extractErrorMessage(err));
+        this.mostrarErrorGuardado(err);
       },
     });
   }
@@ -996,7 +996,7 @@ export class ProveedoresComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        this.error.set(this.extractErrorMessage(err));
+        this.mostrarErrorGuardado(err);
       },
     });
   }
@@ -1057,7 +1057,7 @@ export class ProveedoresComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        this.error.set(this.extractErrorMessage(err));
+        this.mostrarErrorGuardado(err);
       },
     });
   }
@@ -1623,9 +1623,28 @@ export class ProveedoresComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        this.error.set(this.extractErrorMessage(err));
+        this.mostrarErrorGuardado(err);
       },
     });
+  }
+
+  private mostrarErrorGuardado(
+    err: { error?: { message?: string; errors?: Record<string, string> } },
+    fallback = 'No se pudo completar la operación.'
+  ): void {
+    const message = this.extractErrorMessage(err, fallback);
+    this.error.set(message);
+    this.confirmDialog
+      .confirm({
+        title: message.includes('recicladores asociados')
+          ? 'Sucursal no disponible'
+          : 'No se pudo guardar',
+        message,
+        confirmLabel: 'Entendido',
+        cancelLabel: '',
+        confirmVariant: 'danger',
+      })
+      .subscribe();
   }
 
   private extractErrorMessage(
