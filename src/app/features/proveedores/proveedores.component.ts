@@ -98,6 +98,7 @@ export class ProveedoresComponent implements OnInit {
   readonly selectedSucursalIds = signal<number[]>([]);
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
   readonly busqueda = signal('');
+  readonly mostrarInactivos = signal(false);
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -146,6 +147,16 @@ export class ProveedoresComponent implements OnInit {
 
   readonly internosActivos = computed(() => this.internos().filter((p) => p.activo));
 
+  readonly inactivosCount = computed(() => {
+    if (this.esTabInterna()) {
+      return this.internos().filter((p) => !p.activo).length;
+    }
+    if (this.esTabExterna()) {
+      return this.externos().filter((p) => !p.activo).length;
+    }
+    return this.empresas().filter((e) => !e.activo).length;
+  });
+
   readonly sucursalesActivas = computed(() => this.sucursales().filter((s) => s.activo));
 
   readonly sucursalesSeleccionadas = computed(() => {
@@ -179,10 +190,11 @@ export class ProveedoresComponent implements OnInit {
 
   readonly internosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
+    const list = this.internos().filter((p) => p.activo !== this.mostrarInactivos());
     if (!q) {
-      return this.internos();
+      return list;
     }
-    return this.internos().filter(
+    return list.filter(
       (p) =>
         p.nombre.toLowerCase().includes(q) ||
         p.documento.toLowerCase().includes(q) ||
@@ -195,10 +207,11 @@ export class ProveedoresComponent implements OnInit {
 
   readonly externosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
+    const list = this.externos().filter((p) => p.activo !== this.mostrarInactivos());
     if (!q) {
-      return this.externos();
+      return list;
     }
-    return this.externos().filter(
+    return list.filter(
       (p) =>
         p.nombre.toLowerCase().includes(q) ||
         p.documento.toLowerCase().includes(q) ||
@@ -211,10 +224,11 @@ export class ProveedoresComponent implements OnInit {
 
   readonly empresasFiltradas = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
+    const list = this.empresas().filter((e) => e.activo !== this.mostrarInactivos());
     if (!q) {
-      return this.empresas();
+      return list;
     }
-    return this.empresas().filter(
+    return list.filter(
       (e) =>
         e.razonSocial.toLowerCase().includes(q) ||
         e.nit.toLowerCase().includes(q) ||
@@ -301,7 +315,7 @@ export class ProveedoresComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.proveedoresInternosService.getAll(true).subscribe({
+    this.proveedoresInternosService.getAll(false).subscribe({
       next: (data) => {
         this.internos.set(data);
         this.loading.set(false);
@@ -317,7 +331,7 @@ export class ProveedoresComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.proveedoresExternosService.getAll(true).subscribe({
+    this.proveedoresExternosService.getAll(false).subscribe({
       next: (data) => {
         this.externos.set(data);
         this.loading.set(false);
@@ -333,7 +347,7 @@ export class ProveedoresComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.proveedoresEmpresasService.getAll(true).subscribe({
+    this.proveedoresEmpresasService.getAll(false).subscribe({
       next: (data) => {
         this.empresas.set(data);
         this.loading.set(false);
@@ -456,6 +470,7 @@ export class ProveedoresComponent implements OnInit {
     }
     this.tabActiva.set(tab.id);
     this.busqueda.set('');
+    this.mostrarInactivos.set(false);
     this.cancelForm();
     if (tab.id === 'INTERNO') {
       this.loadInternos();
@@ -465,7 +480,7 @@ export class ProveedoresComponent implements OnInit {
     } else if (tab.id === 'EMPRESA') {
       this.loadEmpresas();
       if (this.internos().length === 0) {
-        this.proveedoresInternosService.getAll(true).subscribe({
+        this.proveedoresInternosService.getAll(false).subscribe({
           next: (data) => this.internos.set(data),
           error: () => this.internos.set([]),
         });
@@ -475,6 +490,11 @@ export class ProveedoresComponent implements OnInit {
 
   onBusquedaChange(value: string): void {
     this.busqueda.set(value);
+  }
+
+  toggleInactivos(): void {
+    this.mostrarInactivos.update((value) => !value);
+    this.busqueda.set('');
   }
 
   toggleHijosSection(): void {
@@ -1070,6 +1090,28 @@ export class ProveedoresComponent implements OnInit {
       });
   }
 
+  activarEmpresa(empresa: ProveedorEmpresa): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
+
+    this.confirmDialog
+      .confirm({
+        title: 'Activar empresa',
+        message: `¿Activar de nuevo la empresa "${empresa.razonSocial}"?`,
+        confirmLabel: 'Activar',
+        cancelLabel: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.proveedoresEmpresasService.activar(empresa.id).subscribe({
+          next: () => this.loadEmpresas(),
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
+  }
+
   deleteExterno(proveedor: ProveedorExterno): void {
     if (!this.puedeGestionar()) {
       return;
@@ -1098,6 +1140,28 @@ export class ProveedoresComponent implements OnInit {
       });
   }
 
+  activarExterno(proveedor: ProveedorExterno): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
+
+    this.confirmDialog
+      .confirm({
+        title: 'Activar proveedor externo',
+        message: `¿Activar de nuevo al proveedor externo "${proveedor.nombre}"?`,
+        confirmLabel: 'Activar',
+        cancelLabel: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.proveedoresExternosService.activar(proveedor.id).subscribe({
+          next: () => this.loadExternos(),
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
+  }
+
   deleteInterno(proveedor: ProveedorInterno): void {
     if (!this.puedeGestionar()) {
       return;
@@ -1121,6 +1185,28 @@ export class ProveedoresComponent implements OnInit {
             }
             this.loadInternos();
           },
+          error: (err) => this.error.set(this.extractErrorMessage(err)),
+        });
+      });
+  }
+
+  activarInterno(proveedor: ProveedorInterno): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
+
+    this.confirmDialog
+      .confirm({
+        title: 'Activar proveedor interno',
+        message: `¿Activar de nuevo al proveedor interno "${proveedor.nombre}"?`,
+        confirmLabel: 'Activar',
+        cancelLabel: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.proveedoresInternosService.activar(proveedor.id).subscribe({
+          next: () => this.loadInternos(),
           error: (err) => this.error.set(this.extractErrorMessage(err)),
         });
       });
@@ -1494,7 +1580,7 @@ export class ProveedoresComponent implements OnInit {
       return;
     }
 
-    this.proveedoresInternosService.getAll(true).subscribe({
+    this.proveedoresInternosService.getAll(false).subscribe({
       next: (data) => {
         this.internos.set(data);
         onLoaded?.();

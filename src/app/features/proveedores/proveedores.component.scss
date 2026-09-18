@@ -51,6 +51,13 @@
   align-items: flex-start;
 }
 
+.proveedores__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
 .proveedores__search-row {
   margin-bottom: var(--spacing-md);
 }

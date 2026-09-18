@@ -29,4 +29,8 @@ export class ProveedoresExternosService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  activar(id: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/activar`, {});
+  }
 }

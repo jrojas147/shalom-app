@@ -40,6 +40,10 @@ export class ProveedoresInternosService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  activar(id: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/activar`, {});
+  }
+
   getHijos(proveedorId: number): Observable<ProveedorInternoHijo[]> {
     return this.http.get<ProveedorInternoHijo[]>(`${this.baseUrl}/${proveedorId}/hijos`);
   }

@@ -37,10 +37,24 @@
         <h2>{{ tabConfig().label }}</h2>
         <p class="proveedores-panel__desc">{{ tabConfig().descripcion }}</p>
       </div>
-      @if (esTabIntegrada() && puedeGestionar()) {
-        <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
-          {{ esTabEmpresa() ? '+ Nueva empresa' : '+ Nuevo proveedor' }}
-        </button>
+      @if (esTabIntegrada()) {
+        <div class="proveedores__toolbar-actions">
+          <button type="button" class="rp-btn rp-btn--secondary" (click)="toggleInactivos()">
+            @if (mostrarInactivos()) {
+              Ver activos
+            } @else {
+              Ver inactivos
+              @if (inactivosCount() > 0) {
+                ({{ inactivosCount() }})
+              }
+            }
+          </button>
+          @if (puedeGestionar()) {
+            <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
+              {{ esTabEmpresa() ? '+ Nueva empresa' : '+ Nuevo proveedor' }}
+            </button>
+          }
+        </div>
       }
     </div>
 
@@ -124,14 +138,16 @@
                   >
                     🏢
                   </button>
-                  <button
-                    type="button"
-                    class="rp-btn rp-btn--icon"
-                    (click)="openAnticipos(proveedor)"
-                    title="Anticipos"
-                  >
-                    💵
-                  </button>
+                  @if (proveedor.activo) {
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn--icon"
+                      (click)="openAnticipos(proveedor)"
+                      title="Anticipos"
+                    >
+                      💵
+                    </button>
+                  }
                   @if (puedeGestionar()) {
                     <button
                       type="button"
@@ -141,14 +157,25 @@
                     >
                       ✎
                     </button>
-                    <button
-                      type="button"
-                      class="rp-btn rp-btn--icon danger"
-                      (click)="deleteInterno(proveedor)"
-                      title="Eliminar"
-                    >
-                      🗑
-                    </button>
+                    @if (proveedor.activo) {
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--icon danger"
+                        (click)="deleteInterno(proveedor)"
+                        title="Eliminar"
+                      >
+                        🗑
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--secondary"
+                        (click)="activarInterno(proveedor)"
+                        title="Activar"
+                      >
+                        Activar
+                      </button>
+                    }
                   } @else {
                     <button
                       type="button"
@@ -166,7 +193,9 @@
                   {{
                     busqueda()
                       ? 'No hay proveedores que coincidan con la búsqueda'
-                      : 'No hay proveedores internos registrados'
+                      : mostrarInactivos()
+                        ? 'No hay proveedores internos inactivos'
+                        : 'No hay proveedores internos registrados'
                   }}
                 </td>
               </tr>
@@ -219,14 +248,25 @@
                     >
                       ✎
                     </button>
-                    <button
-                      type="button"
-                      class="rp-btn rp-btn--icon danger"
-                      (click)="deleteExterno(proveedor)"
-                      title="Eliminar"
-                    >
-                      🗑
-                    </button>
+                    @if (proveedor.activo) {
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--icon danger"
+                        (click)="deleteExterno(proveedor)"
+                        title="Eliminar"
+                      >
+                        🗑
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--secondary"
+                        (click)="activarExterno(proveedor)"
+                        title="Activar"
+                      >
+                        Activar
+                      </button>
+                    }
                   } @else {
                     <button
                       type="button"
@@ -244,7 +284,9 @@
                   {{
                     busqueda()
                       ? 'No hay proveedores que coincidan con la búsqueda'
-                      : 'No hay proveedores externos registrados'
+                      : mostrarInactivos()
+                        ? 'No hay proveedores externos inactivos'
+                        : 'No hay proveedores externos registrados'
                   }}
                 </td>
               </tr>
@@ -305,14 +347,25 @@
                     >
                       ✎
                     </button>
-                    <button
-                      type="button"
-                      class="rp-btn rp-btn--icon danger"
-                      (click)="deleteEmpresa(empresa)"
-                      title="Eliminar"
-                    >
-                      🗑
-                    </button>
+                    @if (empresa.activo) {
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--icon danger"
+                        (click)="deleteEmpresa(empresa)"
+                        title="Eliminar"
+                      >
+                        🗑
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn--secondary"
+                        (click)="activarEmpresa(empresa)"
+                        title="Activar"
+                      >
+                        Activar
+                      </button>
+                    }
                   } @else {
                     <button
                       type="button"
@@ -330,7 +383,9 @@
                   {{
                     busqueda()
                       ? 'No hay empresas que coincidan con la búsqueda'
-                      : 'No hay empresas proveedoras registradas'
+                      : mostrarInactivos()
+                        ? 'No hay empresas proveedoras inactivas'
+                        : 'No hay empresas proveedoras registradas'
                   }}
                 </td>
               </tr>
