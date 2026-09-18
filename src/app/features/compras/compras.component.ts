@@ -28,6 +28,12 @@ import { ConfiguracionLecturaPesoService } from '../../core/services/configuraci
 import { ProductosService } from '../../core/services/productos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import {
+  EMPAQUE_SIN_NOMBRE,
+  esSinEmpaque,
+  pesoBrutoFromNetoKg,
+  pesoEmpaqueKg,
+} from '../../core/utils/empaque-peso.util';
+import {
   precioSufijo,
   productoEsUnidad,
   totalLineaMedida,
@@ -60,6 +66,8 @@ export class ComprasComponent implements OnInit {
   readonly productoEsUnidad = productoEsUnidad;
   readonly precioSufijo = precioSufijo;
   readonly unidadesItem = unidadesItem;
+  readonly empaqueSinNombre = EMPAQUE_SIN_NOMBRE;
+  readonly esSinEmpaque = esSinEmpaque;
 
   readonly productos = signal<Producto[]>([]);
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
@@ -114,6 +122,10 @@ export class ComprasComponent implements OnInit {
   );
 
   readonly netoAPagar = computed(() => Math.max(0, this.subtotal() - this.anticipoAplicable()));
+
+  readonly pesoBrutoTotal = computed(() =>
+    this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
+  );
 
   readonly pesoNetoTotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.pesoNetoItem(item), 0)
@@ -180,7 +192,7 @@ export class ComprasComponent implements OnInit {
       pesoKg: 0.5,
       empaque,
       unidades: productoEsUnidad(producto) ? 1 : undefined,
-      cantidadEmpaques: 1,
+      cantidadEmpaques: esSinEmpaque(empaque) ? 0 : 1,
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);
@@ -286,7 +298,12 @@ export class ComprasComponent implements OnInit {
     this.items.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
-        return { ...item, empaque };
+        const sin = esSinEmpaque(empaque);
+        return {
+          ...item,
+          empaque,
+          cantidadEmpaques: sin ? 0 : Math.max(1, item.cantidadEmpaques || 1),
+        };
       })
     );
   }
@@ -321,9 +338,18 @@ export class ComprasComponent implements OnInit {
     this.cargarSaldoAFavor(proveedor);
   }
 
-  /** Peso del producto, sin tara de empaque. */
+  pesoEmpaqueItem(item: CompraDetalleItem): number {
+    return pesoEmpaqueKg(this.tiposEmpaque(), item.empaque);
+  }
+
+  /** Peso del producto (sin tara). */
   pesoNetoItem(item: CompraDetalleItem): number {
     return Math.max(0, Number(item.pesoKg) || 0);
+  }
+
+  /** Peso bruto = producto + tara. Cero tara si es Sin empaque. */
+  pesoBrutoItem(item: CompraDetalleItem): number {
+    return pesoBrutoFromNetoKg(this.pesoNetoItem(item), this.pesoEmpaqueItem(item));
   }
 
   itemTotal(item: CompraDetalleItem): number {
@@ -354,6 +380,9 @@ export class ComprasComponent implements OnInit {
   }
 
   empaqueLabel(empaque: EmpaqueTipo): string {
+    if (esSinEmpaque(empaque)) {
+      return 'Sin empaque';
+    }
     const tipo = this.tiposEmpaque().find((t) => t.nombre === empaque);
     if (!tipo) {
       return empaque || '—';
@@ -362,7 +391,7 @@ export class ComprasComponent implements OnInit {
   }
 
   private empaquePorDefecto(): string {
-    return this.tiposEmpaque()[0]?.nombre ?? '';
+    return this.tiposEmpaque()[0]?.nombre ?? EMPAQUE_SIN_NOMBRE;
   }
 
   productoIcono(): string {

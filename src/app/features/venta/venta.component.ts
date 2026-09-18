@@ -27,6 +27,12 @@ import {
   TipoLecturaPeso,
 } from '../../core/models/configuracion-lectura-peso.model';
 import {
+  EMPAQUE_SIN_NOMBRE,
+  esSinEmpaque,
+  pesoBrutoFromNetoKg,
+  pesoEmpaqueKg,
+} from '../../core/utils/empaque-peso.util';
+import {
   precioSufijo,
   productoEsUnidad,
   totalLineaMedida,
@@ -69,6 +75,8 @@ export class VentaComponent implements OnInit {
   readonly productoEsUnidad = productoEsUnidad;
   readonly precioSufijo = precioSufijo;
   readonly unidadesItem = unidadesItem;
+  readonly empaqueSinNombre = EMPAQUE_SIN_NOMBRE;
+  readonly esSinEmpaque = esSinEmpaque;
 
   readonly productos = signal<Producto[]>([]);
   readonly existencias = signal<Map<number, number>>(new Map());
@@ -129,6 +137,10 @@ export class VentaComponent implements OnInit {
 
   readonly subtotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.itemTotal(item), 0)
+  );
+
+  readonly pesoBrutoTotal = computed(() =>
+    this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
   );
 
   readonly pesoNetoTotal = computed(() =>
@@ -195,13 +207,6 @@ export class VentaComponent implements OnInit {
   }
 
   agregarProducto(producto: Producto): void {
-    if (this.tiposEmpaque().length === 0) {
-      this.error.set(
-        'No hay tipos de empaque parametrizados. Configure al menos uno en Parametrización.'
-      );
-      return;
-    }
-
     const catalogo = this.productos().find((p) => p.id === producto.id) ?? producto;
     const stock = this.stockProducto(catalogo.id);
     if (stock <= 0) {
@@ -236,7 +241,7 @@ export class VentaComponent implements OnInit {
       return;
     }
 
-    const empaque = this.tiposEmpaque()[0]?.nombre ?? '';
+    const empaque = this.tiposEmpaque()[0]?.nombre ?? EMPAQUE_SIN_NOMBRE;
     const netoInicial = 0.5;
     if (netoInicial > stock) {
       this.error.set(
@@ -252,7 +257,7 @@ export class VentaComponent implements OnInit {
       pesoKg: netoInicial,
       empaque,
       unidades: productoEsUnidad(catalogo) ? 1 : undefined,
-      cantidadEmpaques: 1,
+      cantidadEmpaques: esSinEmpaque(empaque) ? 0 : 1,
     };
     this.items.update((list) => [...list, nuevo]);
     this.mensaje.set(null);
@@ -408,10 +413,13 @@ export class VentaComponent implements OnInit {
     this.items.update((list) =>
       list.map((item) => {
         if (item.productoId !== productoId) return item;
-        // Al cambiar empaque se conserva el peso del producto (neto);
-        // el bruto se recalcula solo con la tara del nuevo empaque.
+        const sin = esSinEmpaque(empaque);
         this.error.set(null);
-        return { ...item, empaque };
+        return {
+          ...item,
+          empaque,
+          cantidadEmpaques: sin ? 0 : Math.max(1, item.cantidadEmpaques || 1),
+        };
       })
     );
   }
@@ -445,9 +453,17 @@ export class VentaComponent implements OnInit {
     this.error.set(null);
   }
 
-  /** Peso del producto, sin tara de empaque. */
+  /** Peso del producto (sin tara). */
   pesoNetoItem(item: CompraDetalleItem): number {
     return Math.max(0, Number(item.pesoKg) || 0);
+  }
+
+  /** Peso bruto = producto + tara. Cero tara si es Sin empaque. */
+  pesoBrutoItem(item: CompraDetalleItem): number {
+    return pesoBrutoFromNetoKg(
+      this.pesoNetoItem(item),
+      pesoEmpaqueKg(this.tiposEmpaque(), item.empaque)
+    );
   }
 
   itemTotal(item: CompraDetalleItem): number {

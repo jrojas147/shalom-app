@@ -25,6 +25,12 @@ import { ComprasService } from '../../core/services/compras.service';
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import {
+  EMPAQUE_SIN_NOMBRE,
+  esSinEmpaque,
+  pesoBrutoFromNetoKg,
+  pesoEmpaqueKg,
+} from '../../core/utils/empaque-peso.util';
+import {
   precioSufijo,
   productoEsUnidad,
   totalLineaMedida,
@@ -59,6 +65,8 @@ export class GestionComprasComponent implements OnInit {
   readonly productoEsUnidad = productoEsUnidad;
   readonly precioSufijo = precioSufijo;
   readonly unidadesItem = unidadesItem;
+  readonly empaqueSinNombre = EMPAQUE_SIN_NOMBRE;
+  readonly esSinEmpaque = esSinEmpaque;
 
   readonly compras = signal<Compra[]>([]);
   readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
@@ -84,6 +92,10 @@ export class GestionComprasComponent implements OnInit {
 
   readonly subtotalEdit = computed(() =>
     this.itemsEdit().reduce((sum, item) => sum + this.itemTotal(item), 0)
+  );
+
+  readonly pesoBrutoTotalEdit = computed(() =>
+    this.itemsEdit().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
   );
 
   readonly pesoNetoTotalEdit = computed(() =>
@@ -276,7 +288,15 @@ export class GestionComprasComponent implements OnInit {
 
   setEmpaque(productoId: number, empaque: EmpaqueTipo): void {
     this.itemsEdit.update((list) =>
-      list.map((item) => (item.productoId === productoId ? { ...item, empaque } : item))
+      list.map((item) => {
+        if (item.productoId !== productoId) return item;
+        const sin = esSinEmpaque(empaque);
+        return {
+          ...item,
+          empaque,
+          cantidadEmpaques: sin ? 0 : Math.max(1, item.cantidadEmpaques || 1),
+        };
+      })
     );
   }
 
@@ -427,9 +447,17 @@ export class GestionComprasComponent implements OnInit {
     });
   }
 
-  /** Peso del producto, sin tara de empaque. */
+  /** Peso del producto (sin tara). */
   pesoNetoItem(item: CompraDetalleItem): number {
     return Math.max(0, Number(item.pesoKg) || 0);
+  }
+
+  /** Peso bruto = producto + tara. Cero tara si es Sin empaque. */
+  pesoBrutoItem(item: CompraDetalleItem): number {
+    return pesoBrutoFromNetoKg(
+      this.pesoNetoItem(item),
+      pesoEmpaqueKg(this.tiposEmpaque(), item.empaque)
+    );
   }
 
   itemTotal(item: CompraDetalleItem): number {
@@ -437,6 +465,9 @@ export class GestionComprasComponent implements OnInit {
   }
 
   empaqueLabel(empaque?: EmpaqueTipo | string | null): string {
+    if (esSinEmpaque(empaque)) {
+      return 'Sin empaque';
+    }
     if (!empaque) return '—';
     const tipo = this.tiposEmpaque().find((t) => t.nombre === empaque);
     if (!tipo) {
@@ -446,6 +477,9 @@ export class GestionComprasComponent implements OnInit {
   }
 
   esEmpaqueFueraDeCatalogo(empaque?: string | null): boolean {
+    if (esSinEmpaque(empaque)) {
+      return false;
+    }
     if (!empaque?.trim()) {
       return false;
     }
@@ -453,7 +487,7 @@ export class GestionComprasComponent implements OnInit {
   }
 
   private empaquePorDefecto(): string {
-    return this.tiposEmpaque()[0]?.nombre ?? '';
+    return this.tiposEmpaque()[0]?.nombre ?? EMPAQUE_SIN_NOMBRE;
   }
 
   private syncEditState(compra: Compra): void {
@@ -481,7 +515,8 @@ export class GestionComprasComponent implements OnInit {
   private mapDetalleToItems(compra: Compra): CompraDetalleItem[] {
     return compra.detalle.map((linea) => {
       const producto = this.productoDesdeLinea(linea);
-      const empaque = linea.empaque?.trim() || this.empaquePorDefecto();
+      const raw = linea.empaque?.trim() ?? '';
+      const empaque = esSinEmpaque(raw) ? EMPAQUE_SIN_NOMBRE : raw;
 
       return {
         productoId: linea.productoId,
@@ -489,7 +524,11 @@ export class GestionComprasComponent implements OnInit {
         pesoKg: Number(linea.pesoKg) || 0,
         empaque,
         unidades: productoEsUnidad(producto) ? unidadesItem(linea.unidades) : undefined,
-        cantidadEmpaques: linea.cantidadEmpaques != null ? Number(linea.cantidadEmpaques) : 1,
+        cantidadEmpaques: esSinEmpaque(empaque)
+          ? 0
+          : linea.cantidadEmpaques != null
+            ? Number(linea.cantidadEmpaques)
+            : 1,
       };
     });
   }

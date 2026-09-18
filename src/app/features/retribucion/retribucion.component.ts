@@ -16,6 +16,7 @@ import { ComprasService } from '../../core/services/compras.service';
 import { PagoComprobantePrintService } from '../../core/services/pago-comprobante-print.service';
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
+import { esSinEmpaque } from '../../core/utils/empaque-peso.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -444,6 +445,9 @@ export class RetribucionComponent implements OnInit {
   }
 
   empaqueLabel(empaque?: string | null): string {
+    if (esSinEmpaque(empaque)) {
+      return 'Sin empaque';
+    }
     return empaque?.trim() || '—';
   }
 

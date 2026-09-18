@@ -149,7 +149,7 @@ export class PagoComprobantePrintService {
     </table>
 
     <div class="ticket__divider"></div>
-    <div class="ticket__row"><span>Peso total</span><strong>${this.formatPeso(data.pesoTotal)} KG</strong></div>
+    <div class="ticket__row"><span>Peso bruto total</span><strong>${this.formatPeso(data.pesoTotal)} KG</strong></div>
     ${
       data.anticipoAplicado && data.anticipoAplicado > 0
         ? `<div class="ticket__row"><span>Total compra</span><strong>${this.formatMoney(

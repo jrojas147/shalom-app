@@ -136,7 +136,7 @@ export class CompraFacturaPrintService {
     </table>
 
     <div class="ticket__divider"></div>
-    <div class="ticket__row"><span>Peso total</span><strong>${this.formatPeso(data.pesoTotal)} KG</strong></div>
+    <div class="ticket__row"><span>Peso bruto total</span><strong>${this.formatPeso(data.pesoTotal)} KG</strong></div>
     ${this.buildTotalesHtml(data)}
 
     <div class="ticket__divider"></div>

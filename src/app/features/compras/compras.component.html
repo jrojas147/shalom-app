@@ -125,10 +125,13 @@
               [ngModel]="item.empaque"
               (ngModelChange)="setEmpaque(item.productoId, $event)"
             >
+              <option [value]="empaqueSinNombre">Sin empaque</option>
               @for (tipo of tiposEmpaque(); track tipo.id) {
-                <option [value]="tipo.nombre">
-                  {{ tipo.nombre }} ({{ formatPeso(tipo.peso) }} KG)
-                </option>
+                @if (!esSinEmpaque(tipo.nombre)) {
+                  <option [value]="tipo.nombre">
+                    {{ tipo.nombre }} ({{ formatPeso(tipo.peso) }} KG)
+                  </option>
+                }
               }
             </select>
             <label class="item-empaque-label" [for]="'empaque-cant-' + item.productoId">Cant.</label>
@@ -139,6 +142,7 @@
               class="item-empaque-cant"
               [ngModel]="item.cantidadEmpaques ?? 1"
               (ngModelChange)="setCantidadEmpaques(item.productoId, $event)"
+              [disabled]="esSinEmpaque(item.empaque)"
               title="Cantidad de empaques recibidos"
             />
           </div>
@@ -170,7 +174,7 @@
                 [value]="formatPeso(item.pesoKg)"
                 [readonly]="!permiteManual()"
                 (change)="onPesoInput(item.productoId, $any($event.target).value)"
-                [title]="permiteManual() ? 'Peso del producto, sin empaque.' : 'Peso del producto leído desde la báscula, sin empaque.'"
+                [title]="permiteManual() ? 'Peso del producto. Si hay empaque, la tara se suma al bruto.' : 'Peso del producto leído desde la báscula.'"
               />
               @if (permiteManual()) {
                 <button type="button" (click)="ajustarPeso(item.productoId, 0.5)" aria-label="Más peso">+</button>
@@ -190,7 +194,7 @@
             </div>
             <div class="item-pricing">
               <span class="price-kg">
-                Sin empaque {{ formatPeso(pesoNetoItem(item)) }} KG
+                Bruto {{ formatPeso(pesoBrutoItem(item)) }} KG
                 @if (productoEsUnidad(item.producto)) {
                   · {{ unidadesItem(item.unidades) }} und ·
                   {{ formatPrecioKg(productoPrecioKg(item.producto)) }} /und
@@ -215,7 +219,11 @@
         <span>{{ formatCurrency(subtotal()) }}</span>
       </div>
       <div class="summary-row">
-        <span>Peso total (sin empaque)</span>
+        <span>Peso bruto total</span>
+        <span>{{ formatPeso(pesoBrutoTotal()) }} KG</span>
+      </div>
+      <div class="summary-row">
+        <span>Peso neto total</span>
         <span>{{ formatPeso(pesoNetoTotal()) }} KG</span>
       </div>
       @if (anticipoAplicable() > 0) {

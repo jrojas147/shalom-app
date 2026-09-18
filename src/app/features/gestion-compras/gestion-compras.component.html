@@ -207,10 +207,13 @@
                       @if (esEmpaqueFueraDeCatalogo(item.empaque)) {
                         <option [value]="item.empaque">{{ item.empaque }}</option>
                       }
+                      <option [value]="empaqueSinNombre">Sin empaque</option>
                       @for (tipo of tiposEmpaque(); track tipo.id) {
-                        <option [value]="tipo.nombre">
-                          {{ tipo.nombre }} ({{ formatPeso(tipo.peso) }} KG)
-                        </option>
+                        @if (!esSinEmpaque(tipo.nombre)) {
+                          <option [value]="tipo.nombre">
+                            {{ tipo.nombre }} ({{ formatPeso(tipo.peso) }} KG)
+                          </option>
+                        }
                       }
                     </select>
                   } @else {
@@ -225,6 +228,7 @@
                       class="gestion-compras-modal__cant"
                       [ngModel]="item.cantidadEmpaques ?? 1"
                       (ngModelChange)="setCantidadEmpaques(item.productoId, $event)"
+                      [disabled]="esSinEmpaque(item.empaque)"
                     />
                   } @else {
                     {{ item.cantidadEmpaques ?? 0 }}
@@ -242,7 +246,8 @@
       </div>
 
       <div class="gestion-compras-modal__totals">
-        <div><span>Peso (sin empaque)</span><strong>{{ formatPeso(pesoNetoTotalEdit()) }} KG</strong></div>
+        <div><span>Peso bruto</span><strong>{{ formatPeso(pesoBrutoTotalEdit()) }} KG</strong></div>
+        <div><span>Peso neto</span><strong>{{ formatPeso(pesoNetoTotalEdit()) }} KG</strong></div>
         <div><span>Total</span><strong>{{ formatCurrency(subtotalEdit()) }}</strong></div>
       </div>
 
