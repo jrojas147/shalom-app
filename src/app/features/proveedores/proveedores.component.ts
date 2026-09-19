@@ -55,6 +55,7 @@ import {
   parseCurrencyCo,
   resolveCurrencyCoCursor,
 } from '../../core/utils/currency.util';
+import { forkJoin } from 'rxjs';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -915,8 +916,10 @@ export class ProveedoresComponent implements OnInit {
       sucursalIds: this.selectedSucursalIds(),
     };
 
-    this.verificarDocumentoSiigoYGuardar(this.identificacionSiigoInterno(request.documento), 'el proveedor', () =>
-      this.persistirInterno(request)
+    this.verificarIdentificacionesSiigoYGuardar(
+      this.identificacionesSiigoInterno(request.documento),
+      'el proveedor',
+      () => this.persistirInterno(request)
     );
   }
 
@@ -1589,15 +1592,64 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
-  private identificacionSiigoInterno(documento: string): string {
+  tieneSiigoInterno(proveedor: ProveedorInterno): boolean {
+    return !!(
+      proveedor.siigoId?.trim() ||
+      proveedor.sucursalesAsociadas.some((sucursal) => !!sucursal.siigoId?.trim())
+    );
+  }
+
+  private identificacionesSiigoInterno(documento: string): string[] {
     const doc = documento.trim();
-    const seleccionada = this.selectedSucursalIds()
+    const ids = this.selectedSucursalIds()
       .map((id) => this.sucursales().find((sucursal) => sucursal.id === id))
-      .find((sucursal) => sucursal != null);
-    if (seleccionada?.idSucursal == null) {
-      return doc;
+      .filter((sucursal): sucursal is Sucursal => sucursal?.idSucursal != null)
+      .map((sucursal) => `${doc}${String(sucursal.idSucursal).padStart(2, '0')}`);
+    return [...new Set(ids)];
+  }
+
+  private verificarIdentificacionesSiigoYGuardar(
+    identificaciones: string[],
+    recurso: string,
+    persistir: () => void
+  ): void {
+    const unicas = identificaciones.filter((id) => !!id.trim());
+    if (this.editingId() || !this.siigoActivo() || unicas.length === 0) {
+      persistir();
+      return;
     }
-    return `${doc}${String(seleccionada.idSucursal).padStart(2, '0')}`;
+    this.saving.set(true);
+    this.error.set(null);
+    forkJoin(
+      unicas.map((id) => this.configuracionSiigoService.consultarIdentificacion(id))
+    ).subscribe({
+      next: (respuestas) => {
+        const choque = respuestas.find((res) => res.existe);
+        if (choque) {
+          this.saving.set(false);
+          const identificacion = choque.identificacion || unicas[0];
+          const nombre = choque.nombre?.trim() || identificacion;
+          const message =
+            `El documento "${identificacion}" ya existe en Siigo y corresponde a "${nombre}". No se puede crear ${recurso}.`;
+          this.error.set(message);
+          this.confirmDialog
+            .confirm({
+              title: 'El documento ya existe en Siigo',
+              message,
+              confirmLabel: 'Entendido',
+              cancelLabel: '',
+              confirmVariant: 'danger',
+            })
+            .subscribe();
+          return;
+        }
+        persistir();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.mostrarErrorGuardado(err);
+      },
+    });
   }
 
   private verificarDocumentoSiigoYGuardar(

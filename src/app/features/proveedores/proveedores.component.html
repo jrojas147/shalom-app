@@ -97,7 +97,7 @@
                 <td>
                   <span class="row-icon">👤</span>
                   <span class="cell-primary">{{ proveedor.nombre }}</span>
-                  @if (proveedor.siigoId) {
+                  @if (tieneSiigoInterno(proveedor)) {
                     <span class="rp-badge rp-badge--success">Siigo</span>
                   }
                 </td>
@@ -1146,7 +1146,12 @@
         @for (sucursal of proveedor.sucursalesAsociadas; track sucursal.id) {
           <li class="proveedores-hijos-list__item">
             <div class="proveedores-hijos-list__info">
-              <span class="proveedores-hijos-list__nombre">{{ sucursal.nombre }}</span>
+              <span class="proveedores-hijos-list__nombre">
+                {{ sucursal.nombre }}
+                @if (sucursal.siigoId) {
+                  <span class="rp-badge rp-badge--success">Siigo</span>
+                }
+              </span>
               <span class="proveedores-hijos-list__meta">
                 Id {{ sucursal.idSucursal }} · NIT {{ sucursal.nit }}
                 @if (sucursal.municipio) {

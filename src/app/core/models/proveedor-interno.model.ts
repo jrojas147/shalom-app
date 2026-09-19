@@ -24,6 +24,7 @@ export interface ProveedorInternoSucursal {
   id: number;
   sucursalId: number;
   idSucursal?: number;
+  siigoId?: string | null;
   nombre: string;
   nit: string;
   municipio?: string;
