@@ -915,7 +915,7 @@ export class ProveedoresComponent implements OnInit {
       sucursalIds: this.selectedSucursalIds(),
     };
 
-    this.verificarDocumentoSiigoYGuardar(request.documento, 'el proveedor', () =>
+    this.verificarDocumentoSiigoYGuardar(this.identificacionSiigoInterno(request.documento), 'el proveedor', () =>
       this.persistirInterno(request)
     );
   }
@@ -1587,6 +1587,17 @@ export class ProveedoresComponent implements OnInit {
       },
       error: () => this.internos.set([]),
     });
+  }
+
+  private identificacionSiigoInterno(documento: string): string {
+    const doc = documento.trim();
+    const seleccionada = this.selectedSucursalIds()
+      .map((id) => this.sucursales().find((sucursal) => sucursal.id === id))
+      .find((sucursal) => sucursal != null);
+    if (seleccionada?.idSucursal == null) {
+      return doc;
+    }
+    return `${doc}${String(seleccionada.idSucursal).padStart(2, '0')}`;
   }
 
   private verificarDocumentoSiigoYGuardar(
