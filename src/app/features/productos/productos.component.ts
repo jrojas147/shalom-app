@@ -245,9 +245,10 @@ export class ProductosComponent implements OnInit, OnDestroy {
     return this.codigosCiiu().find((item) => item.id === id) ?? null;
   });
 
-  readonly codigoCiiuEnSiigo = computed(
-    () => this.codigoCiiuSeleccionado()?.siigoAccountGroupId != null
-  );
+  readonly codigoCiiuEnSiigo = computed(() => {
+    const ciiu = this.codigoCiiuSeleccionado();
+    return !!(ciiu?.siigoId?.trim() || ciiu?.siigoAccountGroupId != null);
+  });
 
   readonly idInternoMaxLength = computed(() => (this.codigoCiiuEnSiigo() ? 30 : 50));
 

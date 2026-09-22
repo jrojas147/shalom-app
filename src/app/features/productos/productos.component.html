@@ -292,12 +292,12 @@
             <option [ngValue]="null">Sin código SUI</option>
             @for (ciiu of codigosCiiu(); track ciiu.id) {
               <option [ngValue]="ciiu.id">
-                {{ ciiu.codigo }} — {{ ciiu.nombre }}{{ ciiu.siigoAccountGroupId ? ' · Siigo' : '' }}
+                {{ ciiu.codigo }} — {{ ciiu.nombre }}{{ ciiu.siigoId || ciiu.siigoAccountGroupId ? ' · Siigo' : '' }}
               </option>
             }
           </select>
           @if (codigoCiiuSeleccionado(); as ciiu) {
-            @if (ciiu.siigoAccountGroupId) {
+            @if (ciiu.siigoId || ciiu.siigoAccountGroupId) {
               <span class="productos-siigo-hint">
                 Esta categoría está en Siigo. Al guardar, el producto se crea o actualiza en Nube.
               </span>
