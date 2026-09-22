@@ -294,6 +294,11 @@
     color: var(--rp-danger);
   }
 
+  &--success {
+    background: var(--rp-success-bg);
+    color: var(--rp-success);
+  }
+
   &--warning {
     background: var(--rp-warning-bg);
     color: var(--rp-warning);

@@ -3,6 +3,7 @@ export interface CarteraVenta {
   numeroFactura: string;
   createdAt: string;
   total: number;
+  abonos: number;
   saldoPendiente: number;
 }
 
@@ -15,7 +16,21 @@ export interface CarteraCliente {
   tipoCliente?: string | null;
   cantidadVentas: number;
   totalVentas: number;
+  totalAbonos?: number;
   saldoPendiente: number;
   ultimaVentaAt?: string | null;
   ventas: CarteraVenta[];
+}
+
+export interface RegistrarPagoCarteraPayload {
+  medioCajaId: number;
+  monto: number;
+}
+
+export interface CarteraPagoResponse {
+  ventaId: number;
+  numeroFactura: string;
+  montoPagado: number;
+  saldoPendiente: number;
+  mensaje: string;
 }

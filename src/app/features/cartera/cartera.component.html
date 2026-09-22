@@ -50,6 +50,7 @@
             <th>Tipo</th>
             <th>Ventas</th>
             <th>Última venta</th>
+            <th>Abonos</th>
             <th>Saldo pendiente</th>
             <th></th>
           </tr>
@@ -63,6 +64,7 @@
               <td class="cell-secondary">{{ tipoLabel(item.tipoCliente) }}</td>
               <td class="cell-secondary">{{ item.cantidadVentas }}</td>
               <td class="cell-secondary">{{ formatFecha(item.ultimaVentaAt) }}</td>
+              <td class="cell-secondary">{{ formatCurrency(abonosCliente(item)) }}</td>
               <td class="cell-secondary">{{ formatCurrency(item.saldoPendiente) }}</td>
               <td class="cell-actions">
                 <button
@@ -76,7 +78,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="rp-empty">
+              <td colspan="9" class="rp-empty">
                 No hay clientes con ventas pendientes por pagar
               </td>
             </tr>
@@ -93,8 +95,12 @@
     [wide]="true"
     (closed)="cerrarDetalle()"
   >
+    @if (mensaje()) {
+      <div class="rp-alert rp-alert--success">{{ mensaje() }}</div>
+    }
     <p class="cartera-detalle__hint">
       Saldo pendiente: <strong>{{ formatCurrency(detalle.saldoPendiente) }}</strong>
+      · Abonos: <strong>{{ formatCurrency(abonosCliente(detalle)) }}</strong>
       · {{ detalle.cantidadVentas }} venta(s)
     </p>
     <table class="rp-table">
@@ -103,7 +109,9 @@
           <th>Factura</th>
           <th>Fecha</th>
           <th>Total</th>
+          <th>Abonos</th>
           <th>Saldo pendiente</th>
+          <th class="cell-actions">Registrar Pago</th>
         </tr>
       </thead>
       <tbody>
@@ -112,17 +120,114 @@
             <td class="cell-mono">{{ venta.numeroFactura }}</td>
             <td class="cell-secondary">{{ formatFecha(venta.createdAt) }}</td>
             <td class="cell-secondary">{{ formatCurrency(venta.total) }}</td>
+            <td class="cell-secondary">{{ formatCurrency(abonosDe(venta)) }}</td>
             <td class="cell-secondary">{{ formatCurrency(venta.saldoPendiente) }}</td>
+            <td class="cell-actions">
+              <button
+                type="button"
+                class="cartera-icon-btn"
+                title="Registrar pago"
+                aria-label="Registrar pago"
+                (click)="abrirPago(venta)"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect
+                    x="3"
+                    y="6"
+                    width="18"
+                    height="12"
+                    rx="2"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                  />
+                  <path d="M3 10h18" stroke="currentColor" stroke-width="1.75" />
+                  <circle cx="8" cy="14" r="1.25" fill="currentColor" />
+                </svg>
+              </button>
+            </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="4" class="rp-empty">Este cliente no tiene ventas pendientes</td>
+            <td colspan="6" class="rp-empty">Este cliente no tiene ventas pendientes</td>
           </tr>
         }
       </tbody>
     </table>
     <div class="rp-form-actions">
       <button type="button" class="rp-btn rp-btn--ghost" (click)="cerrarDetalle()">Cerrar</button>
+    </div>
+  </app-rp-modal>
+}
+
+@if (ventaPago(); as venta) {
+  <app-rp-modal
+    [title]="'Registrar pago — ' + venta.numeroFactura"
+    [stacked]="true"
+    (closed)="cancelarPago()"
+  >
+    @if (errorPago()) {
+      <div class="rp-alert rp-alert--error">{{ errorPago() }}</div>
+    }
+    <p class="cartera-pago__desc">
+      Total: <strong>{{ formatCurrency(venta.total) }}</strong>
+      · Abonos: <strong>{{ formatCurrency(abonosDe(venta)) }}</strong>
+      · Saldo pendiente: <strong>{{ formatCurrency(venta.saldoPendiente) }}</strong>
+    </p>
+    <p class="cartera-pago__desc">El pago ingresa a la caja abierta.</p>
+
+    <label class="cartera-pago__label" for="carteraMontoPago">Monto a pagar</label>
+    <input
+      id="carteraMontoPago"
+      type="text"
+      inputmode="numeric"
+      class="cartera-pago__monto"
+      [value]="montoPagoDisplay()"
+      (input)="onMontoPagoInput($event)"
+      [disabled]="savingPago() || loadingMedios()"
+    />
+
+    @if (loadingMedios()) {
+      <p class="rp-loading">Cargando medios de caja...</p>
+    } @else {
+      <div class="cartera-pago__list" role="radiogroup" aria-label="Medio de caja">
+        @for (saldo of mediosPago(); track saldo.medioCajaId) {
+          <button
+            type="button"
+            class="cartera-pago__opcion"
+            [class.cartera-pago__opcion--activa]="medioPagoId() === saldo.medioCajaId"
+            (click)="seleccionarMedioPago(saldo.medioCajaId)"
+          >
+            <span class="cartera-pago__radio" aria-hidden="true"></span>
+            <span>
+              <strong>{{ saldo.medioNombre }}</strong>
+              @if (saldo.detalle) {
+                <em>{{ saldo.detalle }}</em>
+              }
+            </span>
+          </button>
+        } @empty {
+          <p class="rp-empty">No hay medios de pago en la caja abierta</p>
+        }
+      </div>
+    }
+
+    <div class="rp-form-actions">
+      <button
+        type="button"
+        class="rp-btn rp-btn--ghost"
+        (click)="cancelarPago()"
+        [disabled]="savingPago()"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="rp-btn rp-btn--primary"
+        [disabled]="!puedeConfirmarPago()"
+        (click)="confirmarPago()"
+      >
+        {{ savingPago() ? 'Registrando...' : 'Registrar pago' }}
+      </button>
     </div>
   </app-rp-modal>
 }
