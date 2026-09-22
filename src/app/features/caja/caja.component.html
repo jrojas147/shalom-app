@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Caja</h1>
-      <p>Apertura, movimientos y cierre de caja del comercio</p>
+      <p>Apertura, movimientos y cierre de caja.</p>
     </div>
   </header>
 
@@ -81,7 +81,23 @@
         <div class="caja__abono">
           <h3 class="caja__abono-title">Abono a caja</h3>
           <p class="caja__desc">Registre un ingreso a medio de pago que corresponda.</p>
+          @if (!tiposAbono().length) {
+            <p class="caja__desc">
+              No hay tipos de abono activos. Configúrelos en Parametrización.
+            </p>
+          }
           <div class="caja__form">
+            <label>
+              <span>Tipo de abono</span>
+              <select [value]="tipoAbonoId() ?? ''" (change)="onTipoAbonoChange($event)">
+                @if (!tiposAbono().length) {
+                  <option value="">Sin tipos configurados</option>
+                }
+                @for (tipo of tiposAbono(); track tipo.id) {
+                  <option [value]="tipo.id">{{ tipo.nombre }}</option>
+                }
+              </select>
+            </label>
             <label>
               <span>Medio de pago</span>
               <select [value]="medioAbonoId() ?? ''" (change)="onMedioAbonoChange($event)">
@@ -114,7 +130,7 @@
               <button
                 type="button"
                 class="rp-btn rp-btn--primary"
-                [disabled]="saving() || montoAbono() <= 0"
+                [disabled]="saving() || montoAbono() <= 0 || !tipoAbonoId()"
                 (click)="registrarAbono()"
               >
                 {{ saving() ? 'Registrando...' : 'Registrar abono' }}
@@ -190,7 +206,7 @@
                       {{ mov.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
                     </span>
                   </td>
-                  <td class="cell-secondary">{{ conceptoLabel(mov.concepto) }}</td>
+                  <td class="cell-secondary">{{ conceptoDisplay(mov.concepto, mov.tipoAbonoNombre) }}</td>
                   <td class="cell-secondary">{{ mov.medioCajaNombre || '—' }}</td>
                   <td class="cell-secondary">{{ formatCurrency(mov.monto) }}</td>
                   <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>

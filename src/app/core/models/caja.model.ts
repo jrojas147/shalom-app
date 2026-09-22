@@ -25,6 +25,8 @@ export interface CajaMovimiento {
   usuarioRegistroNombre?: string;
   medioCajaId?: number | null;
   medioCajaNombre?: string | null;
+  tipoAbonoId?: number | null;
+  tipoAbonoNombre?: string | null;
   observacion?: string | null;
   createdAt: string;
 }
@@ -88,6 +90,7 @@ export interface CerrarCajaRequest {
 
 export interface AbonoCajaRequest {
   monto: number;
+  tipoAbonoId: number;
   medioCajaId?: number;
   observacion?: string;
 }

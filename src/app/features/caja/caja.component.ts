@@ -12,6 +12,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { CajaCierrePrintService } from '../../core/services/caja-cierre-print.service';
 import { CajaService } from '../../core/services/caja.service';
 import { MediosCajaService } from '../../core/services/medios-caja.service';
+import { TiposAbonoService } from '../../core/services/tipos-abono.service';
+import { TipoAbono } from '../../core/models/tipo-abono.model';
 import {
   formatCurrencyCo,
   parseCurrencyCo,
@@ -42,6 +44,7 @@ interface SaldoCierreFila {
 export class CajaComponent implements OnInit {
   private readonly cajaService = inject(CajaService);
   private readonly mediosCajaService = inject(MediosCajaService);
+  private readonly tiposAbonoService = inject(TiposAbonoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
   private readonly auth = inject(AuthService);
   private readonly cierrePrintService = inject(CajaCierrePrintService);
@@ -75,6 +78,8 @@ export class CajaComponent implements OnInit {
   readonly montoAbonoDisplay = signal(formatCurrencyCo(0));
   readonly observacionAbono = signal('');
   readonly medioAbonoId = signal<number | null>(null);
+  readonly tipoAbonoId = signal<number | null>(null);
+  readonly tiposAbono = signal<TipoAbono[]>([]);
 
   observacionApertura = '';
 
@@ -99,6 +104,7 @@ export class CajaComponent implements OnInit {
   ngOnInit(): void {
     this.cargarCaja();
     this.cargarHistorial();
+    this.cargarTiposAbono();
   }
 
   setTab(tabId: 'movimientos' | 'historial'): void {
@@ -139,6 +145,20 @@ export class CajaComponent implements OnInit {
       error: () => {
         this.historial.set([]);
         this.loadingHistorial.set(false);
+      },
+    });
+  }
+
+  cargarTiposAbono(): void {
+    this.tiposAbonoService.getAll(true).subscribe({
+      next: (data) => {
+        const vigentes = (data ?? []).filter((tipo) => tipo.activo);
+        this.tiposAbono.set(vigentes);
+        this.syncTipoAbono(vigentes);
+      },
+      error: () => {
+        this.tiposAbono.set([]);
+        this.tipoAbonoId.set(null);
       },
     });
   }
@@ -219,6 +239,12 @@ export class CajaComponent implements OnInit {
       return;
     }
 
+    const tipoAbonoId = this.tipoAbonoId();
+    if (!tipoAbonoId) {
+      this.error.set('Seleccione el tipo de abono.');
+      return;
+    }
+
     this.saving.set(true);
     this.error.set(null);
     this.mensaje.set(null);
@@ -226,6 +252,7 @@ export class CajaComponent implements OnInit {
     this.cajaService
       .abono({
         monto: this.montoAbono(),
+        tipoAbonoId,
         medioCajaId: this.medioAbonoId() ?? undefined,
         observacion: this.observacionAbono().trim() || undefined,
       })
@@ -332,6 +359,7 @@ export class CajaComponent implements OnInit {
               this.filasCierre.set([]);
               this.observacionCierre.set('');
               this.medioAbonoId.set(null);
+              this.tipoAbonoId.set(null);
               this.mensaje.set('Caja cerrada correctamente. Se generó el comprobante de cierre.');
               this.cargarHistorial();
             },
@@ -384,8 +412,18 @@ export class CajaComponent implements OnInit {
     this.medioAbonoId.set(value ? Number(value) : null);
   }
 
+  onTipoAbonoChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.tipoAbonoId.set(value ? Number(value) : null);
+  }
+
   conceptoLabel(concepto: CajaMovimientoConcepto): string {
     return CAJA_CONCEPTO_LABEL[concepto] ?? concepto;
+  }
+
+  conceptoDisplay(concepto: CajaMovimientoConcepto, tipoAbonoNombre?: string | null): string {
+    const label = this.conceptoLabel(concepto);
+    return tipoAbonoNombre?.trim() ? `${label} · ${tipoAbonoNombre}` : label;
   }
 
   formatCurrency(value: number | null | undefined): string {
@@ -427,6 +465,14 @@ export class CajaComponent implements OnInit {
     }
     const efectivo = saldos.find((saldo) => saldo.medioTipo === 'EFECTIVO');
     this.medioAbonoId.set(efectivo?.medioCajaId ?? saldos[0]?.medioCajaId ?? null);
+  }
+
+  private syncTipoAbono(tipos: TipoAbono[] = this.tiposAbono()): void {
+    const actual = this.tipoAbonoId();
+    if (actual && tipos.some((tipo) => tipo.id === actual)) {
+      return;
+    }
+    this.tipoAbonoId.set(tipos[0]?.id ?? null);
   }
 
   diferenciaLabel(value: number | null | undefined): string {

@@ -4,6 +4,7 @@ import { CierreMesConfigComponent } from './cierre-mes-config/cierre-mes-config.
 import { LecturaPesoConfigComponent } from './lectura-peso-config/lectura-peso-config.component';
 import { MediosCajaConfigComponent } from './medios-caja-config/medios-caja-config.component';
 import { SiigoConfigComponent } from './siigo-config/siigo-config.component';
+import { TiposAbonoConfigComponent } from './tipos-abono-config/tipos-abono-config.component';
 import { TiposEmpaqueConfigComponent } from './tipos-empaque-config/tipos-empaque-config.component';
 import { TiposGastoConfigComponent } from './tipos-gasto-config/tipos-gasto-config.component';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
@@ -12,6 +13,7 @@ export type CatalogoParamId =
   | 'ciiu'
   | 'empaque'
   | 'gasto'
+  | 'abono'
   | 'medios'
   | 'lectura-peso'
   | 'cierre-mes'
@@ -31,6 +33,7 @@ interface CatalogoParam {
     TiposEmpaqueConfigComponent,
     MediosCajaConfigComponent,
     TiposGastoConfigComponent,
+    TiposAbonoConfigComponent,
     LecturaPesoConfigComponent,
     CierreMesConfigComponent,
     SiigoConfigComponent,
@@ -55,6 +58,11 @@ export class ParametrizacionComponent {
       id: 'gasto',
       titulo: 'Tipos de gasto',
       descripcion: 'Categorías para registrar gastos operativos.',
+    },
+    {
+      id: 'abono',
+      titulo: 'Tipos de abono',
+      descripcion: 'Categorías para registrar abonos a caja.',
     },
     {
       id: 'medios',
