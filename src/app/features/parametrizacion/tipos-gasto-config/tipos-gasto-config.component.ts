@@ -48,6 +48,9 @@ export class TiposGastoConfigComponent implements OnInit {
   }
 
   startEdit(tipo: TipoGasto): void {
+    if (tipo.sistema) {
+      return;
+    }
     this.editingId.set(tipo.id);
     this.form.reset({ nombre: tipo.nombre, activo: tipo.activo });
     this.error.set(null);
@@ -93,7 +96,7 @@ export class TiposGastoConfigComponent implements OnInit {
   }
 
   deleteTipo(tipo: TipoGasto): void {
-    if (!tipo.activo) {
+    if (!tipo.activo || tipo.sistema) {
       return;
     }
 

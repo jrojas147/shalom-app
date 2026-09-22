@@ -82,7 +82,15 @@ export class GastosComponent implements OnInit {
     this.error.set(null);
 
     this.tiposGastoService.getAll(true).subscribe({
-      next: (data) => this.tiposGasto.set((data ?? []).filter((tipo) => tipo.activo)),
+      next: (data) => {
+        const vigentes = (data ?? []).filter((tipo) => tipo.activo);
+        this.tiposGasto.set(vigentes);
+        const actual = this.form.controls.tipoGastoId.value;
+        if (!actual || !vigentes.some((tipo) => tipo.id === actual)) {
+          const general = vigentes.find((tipo) => tipo.sistema) ?? vigentes[0];
+          this.form.controls.tipoGastoId.setValue(general?.id ?? null);
+        }
+      },
       error: (err) =>
         this.error.set(err.error?.message ?? 'No se pudieron cargar los tipos de gasto.'),
     });

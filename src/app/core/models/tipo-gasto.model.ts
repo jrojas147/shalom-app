@@ -2,6 +2,7 @@ export interface TipoGasto {
   id: number;
   comercioId: number;
   nombre: string;
+  sistema: boolean;
   activo: boolean;
 }
 
