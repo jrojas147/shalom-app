@@ -82,6 +82,27 @@
   }
 }
 
+.cartera-table {
+  border-collapse: separate;
+  border-spacing: 0 0.35rem;
+}
+
+.cartera-row--compromiso td {
+  border-top: 2px solid var(--rp-danger);
+  border-bottom: 2px solid var(--rp-danger);
+  background: var(--rp-danger-bg);
+}
+
+.cartera-row--compromiso td:first-child {
+  border-left: 2px solid var(--rp-danger);
+  border-radius: 5px 0 0 5px;
+}
+
+.cartera-row--compromiso td:last-child {
+  border-right: 2px solid var(--rp-danger);
+  border-radius: 0 5px 5px 0;
+}
+
 .cell-actions {
   width: 1%;
   white-space: nowrap;
@@ -91,6 +112,14 @@
 .rp-table thead th.cell-actions,
 .rp-table tbody td.cell-actions {
   text-align: center;
+}
+
+.rp-table thead th.cell-pagar,
+.rp-table tbody td.cell-pagar {
+  width: 4.5rem;
+  max-width: 4.5rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
 }
 
 .cartera-icon-btn {

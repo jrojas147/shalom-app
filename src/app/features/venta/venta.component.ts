@@ -98,6 +98,7 @@ export class VentaComponent implements OnInit {
   readonly mediosPago = signal<MedioPagoOpcion[]>([]);
   readonly medioPagoId = signal<number | null>(null);
   readonly pagoCredito = signal(false);
+  readonly fechaProyectadaPago = signal('');
   readonly leyendoPesoId = signal<number | null>(null);
   readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
 
@@ -513,6 +514,7 @@ export class VentaComponent implements OnInit {
     this.error.set(null);
     this.mensaje.set(null);
     this.pagoCredito.set(false);
+    this.fechaProyectadaPago.set('');
     this.medioPagoId.set(null);
     this.showPagoModal.set(true);
     this.loadingMediosPago.set(true);
@@ -542,20 +544,46 @@ export class VentaComponent implements OnInit {
   cancelarPagoModal(): void {
     this.showPagoModal.set(false);
     this.pagoCredito.set(false);
+    this.fechaProyectadaPago.set('');
   }
 
   seleccionarMedioPago(id: number): void {
     this.pagoCredito.set(false);
+    this.fechaProyectadaPago.set('');
     this.medioPagoId.set(id);
   }
 
   seleccionarPagoCredito(): void {
     this.pagoCredito.set(true);
     this.medioPagoId.set(null);
+    if (!this.fechaProyectadaPago()) {
+      this.fechaProyectadaPago.set(this.hoyIso());
+    }
+  }
+
+  onFechaProyectadaPago(value: string): void {
+    this.fechaProyectadaPago.set(value);
+  }
+
+  hoyIso(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   confirmarPagoYRegistrar(): void {
     if (this.pagoCredito()) {
+      const fecha = this.fechaProyectadaPago().trim();
+      if (!fecha) {
+        this.error.set('Indique la fecha proyectada de pago.');
+        return;
+      }
+      if (fecha < this.hoyIso()) {
+        this.error.set('La fecha proyectada de pago no puede ser anterior a hoy.');
+        return;
+      }
       this.ejecutarRegistroVenta(null, true);
       return;
     }
@@ -664,6 +692,7 @@ export class VentaComponent implements OnInit {
             pesoTotal: this.pesoNetoTotal(),
             medioCajaId,
             pagoCredito,
+            fechaProyectadaPago: pagoCredito ? this.fechaProyectadaPago().trim() : null,
           })
           .subscribe({
             next: (res) => {
@@ -675,6 +704,7 @@ export class VentaComponent implements OnInit {
               this.clienteSeleccionado.set(null);
               this.medioPagoId.set(null);
               this.pagoCredito.set(false);
+              this.fechaProyectadaPago.set('');
               this.recargarExistencias();
             },
             error: (err) => {

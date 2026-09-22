@@ -5,6 +5,7 @@ export interface CarteraVenta {
   total: number;
   abonos: number;
   saldoPendiente: number;
+  fechaProyectadaPago?: string | null;
 }
 
 export interface CarteraCliente {
@@ -19,6 +20,7 @@ export interface CarteraCliente {
   totalAbonos?: number;
   saldoPendiente: number;
   ultimaVentaAt?: string | null;
+  fechaProyectadaPago?: string | null;
   ventas: CarteraVenta[];
 }
 

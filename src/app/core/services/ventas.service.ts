@@ -25,6 +25,7 @@ export class VentasService {
       pesoTotal: payload.pesoTotal,
       medioCajaId: payload.pagoCredito ? null : payload.medioCajaId,
       pagoCredito: !!payload.pagoCredito,
+      fechaProyectadaPago: payload.pagoCredito ? payload.fechaProyectadaPago : null,
     });
   }
 }

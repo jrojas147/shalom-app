@@ -15,6 +15,7 @@ export interface RegistrarVentaPayload {
   pesoTotal: number;
   medioCajaId?: number | null;
   pagoCredito?: boolean;
+  fechaProyectadaPago?: string | null;
 }
 
 export interface VentaResumen {

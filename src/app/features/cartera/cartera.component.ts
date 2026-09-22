@@ -209,6 +209,43 @@ export class CarteraComponent implements OnInit {
     });
   }
 
+  formatFechaDia(value?: string | null): string {
+    if (!value) {
+      return '—';
+    }
+    const datePart = value.slice(0, 10);
+    const [year, month, day] = datePart.split('-').map(Number);
+    if (!year || !month || !day) {
+      return '—';
+    }
+    return new Date(year, month - 1, day).toLocaleDateString('es-CO');
+  }
+
+  compromisoVencido(item: CarteraCliente): boolean {
+    const fechas = [
+      item.fechaProyectadaPago,
+      ...(item.ventas ?? []).map((venta) => venta.fechaProyectadaPago),
+    ];
+    return fechas.some((fecha) => this.fechaCompromisoVencida(fecha));
+  }
+
+  ventaCompromisoVencida(venta: CarteraVenta): boolean {
+    return this.fechaCompromisoVencida(venta.fechaProyectadaPago);
+  }
+
+  private fechaCompromisoVencida(fecha?: string | null): boolean {
+    const dia = fecha?.slice(0, 10);
+    return !!dia && dia <= this.hoyIso();
+  }
+
+  private hoyIso(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   documento(item: CarteraCliente): string {
     if (!item.documento) {
       return '—';

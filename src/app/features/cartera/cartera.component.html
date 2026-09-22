@@ -41,7 +41,7 @@
     @if (loading()) {
       <p class="rp-loading">Cargando cartera...</p>
     } @else {
-      <table class="rp-table">
+      <table class="rp-table cartera-table">
         <thead>
           <tr>
             <th>Cliente</th>
@@ -50,6 +50,7 @@
             <th>Tipo</th>
             <th>Ventas</th>
             <th>Última venta</th>
+            <th>Pago proyectado</th>
             <th>Abonos</th>
             <th>Saldo pendiente</th>
             <th></th>
@@ -57,13 +58,14 @@
         </thead>
         <tbody>
           @for (item of clientesFiltrados(); track item.clienteId) {
-            <tr>
+            <tr [class.cartera-row--compromiso]="compromisoVencido(item)">
               <td class="cell-primary">{{ item.nombre }}</td>
               <td class="cell-secondary">{{ documento(item) }}</td>
               <td class="cell-secondary">{{ item.telefono || '—' }}</td>
               <td class="cell-secondary">{{ tipoLabel(item.tipoCliente) }}</td>
               <td class="cell-secondary">{{ item.cantidadVentas }}</td>
               <td class="cell-secondary">{{ formatFecha(item.ultimaVentaAt) }}</td>
+              <td class="cell-secondary">{{ formatFechaDia(item.fechaProyectadaPago) }}</td>
               <td class="cell-secondary">{{ formatCurrency(abonosCliente(item)) }}</td>
               <td class="cell-secondary">{{ formatCurrency(item.saldoPendiente) }}</td>
               <td class="cell-actions">
@@ -78,7 +80,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="9" class="rp-empty">
+              <td colspan="10" class="rp-empty">
                 No hay clientes con ventas pendientes por pagar
               </td>
             </tr>
@@ -103,31 +105,33 @@
       · Abonos: <strong>{{ formatCurrency(abonosCliente(detalle)) }}</strong>
       · {{ detalle.cantidadVentas }} venta(s)
     </p>
-    <table class="rp-table">
+    <table class="rp-table cartera-table">
       <thead>
         <tr>
           <th>Factura</th>
           <th>Fecha</th>
+          <th>Pago proyectado</th>
           <th>Total</th>
           <th>Abonos</th>
           <th>Saldo pendiente</th>
-          <th class="cell-actions">Registrar Pago</th>
+          <th class="cell-actions cell-pagar">Pagar</th>
         </tr>
       </thead>
       <tbody>
         @for (venta of ventasDe(detalle); track venta.ventaId) {
-          <tr>
+          <tr [class.cartera-row--compromiso]="ventaCompromisoVencida(venta)">
             <td class="cell-mono">{{ venta.numeroFactura }}</td>
             <td class="cell-secondary">{{ formatFecha(venta.createdAt) }}</td>
+            <td class="cell-secondary">{{ formatFechaDia(venta.fechaProyectadaPago) }}</td>
             <td class="cell-secondary">{{ formatCurrency(venta.total) }}</td>
             <td class="cell-secondary">{{ formatCurrency(abonosDe(venta)) }}</td>
             <td class="cell-secondary">{{ formatCurrency(venta.saldoPendiente) }}</td>
-            <td class="cell-actions">
+            <td class="cell-actions cell-pagar">
               <button
                 type="button"
                 class="cartera-icon-btn"
-                title="Registrar pago"
-                aria-label="Registrar pago"
+                title="Pagar"
+                aria-label="Pagar"
                 (click)="abrirPago(venta)"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -148,7 +152,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="rp-empty">Este cliente no tiene ventas pendientes</td>
+            <td colspan="7" class="rp-empty">Este cliente no tiene ventas pendientes</td>
           </tr>
         }
       </tbody>

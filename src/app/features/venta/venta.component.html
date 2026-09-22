@@ -311,6 +311,19 @@
         }
       </div>
 
+      @if (pagoCredito()) {
+        <label class="venta-pago__label" for="fechaProyectadaPago">Fecha proyectada de pago</label>
+        <input
+          id="fechaProyectadaPago"
+          type="date"
+          class="venta-pago__fecha"
+          [min]="hoyIso()"
+          [value]="fechaProyectadaPago()"
+          (input)="onFechaProyectadaPago($any($event.target).value)"
+          required
+        />
+      }
+
       <div class="venta-pago__actions">
         <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelarPagoModal()">
           Cancelar
@@ -318,7 +331,7 @@
         <button
           type="button"
           class="rp-btn rp-btn--primary"
-          [disabled]="procesando() || (!pagoCredito() && medioPagoId() == null)"
+          [disabled]="procesando() || (!pagoCredito() && medioPagoId() == null) || (pagoCredito() && !fechaProyectadaPago())"
           (click)="confirmarPagoYRegistrar()"
         >
           {{ procesando() ? 'Registrando...' : 'Confirmar venta' }}
