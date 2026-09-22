@@ -82,7 +82,7 @@ export class ParametrizacionComponent {
     {
       id: 'siigo',
       titulo: 'Siigo Nube',
-      descripcion: 'Credenciales API para facturar y sincronizar con Siigo.',
+      descripcion: 'Activación y catálogos de Siigo. Usuario y clave van en el servidor.',
     },
   ];
 

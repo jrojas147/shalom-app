@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { SiigoCatalogoItem } from '../../../core/models/configuracion-siigo.model';
 import { ConfiguracionSiigoService } from '../../../core/services/configuracion-siigo.service';
 
@@ -21,15 +21,14 @@ export class SiigoConfigComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
   readonly partnerId = signal('ShalomApp');
-  readonly accessKeyConfigured = signal(false);
+  readonly username = signal<string | null>(null);
+  readonly credentialsConfigured = signal(false);
   readonly documentos = signal<SiigoCatalogoItem[]>([]);
   readonly mediosPago = signal<SiigoCatalogoItem[]>([]);
   readonly vendedores = signal<SiigoCatalogoItem[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     activo: [false],
-    username: ['', [Validators.maxLength(200)]],
-    accessKey: [''],
     documentTypeId: [null as number | null],
     paymentTypeId: [null as number | null],
     sellerId: [null as number | null],
@@ -46,11 +45,10 @@ export class SiigoConfigComponent implements OnInit {
     this.configuracionService.get().subscribe({
       next: (data) => {
         this.partnerId.set(data.partnerId || 'ShalomApp');
-        this.accessKeyConfigured.set(data.accessKeyConfigured);
+        this.username.set(data.username ?? null);
+        this.credentialsConfigured.set(data.accessKeyConfigured);
         this.form.reset({
           activo: data.activo,
-          username: data.username ?? '',
-          accessKey: '',
           documentTypeId: data.documentTypeId ?? null,
           paymentTypeId: data.paymentTypeId ?? null,
           sellerId: data.sellerId ?? null,
@@ -74,6 +72,13 @@ export class SiigoConfigComponent implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    if (raw.activo && !this.credentialsConfigured()) {
+      this.error.set(
+        'No se puede activar Siigo: defina SIIGO_USERNAME y SIIGO_ACCESS_KEY en el .env del servidor.'
+      );
+      return;
+    }
+
     this.saving.set(true);
     this.error.set(null);
     this.mensaje.set(null);
@@ -81,8 +86,6 @@ export class SiigoConfigComponent implements OnInit {
     this.configuracionService
       .update({
         activo: raw.activo,
-        username: raw.username.trim() || null,
-        accessKey: raw.accessKey.trim() || null,
         documentTypeId: raw.documentTypeId,
         paymentTypeId: raw.paymentTypeId,
         sellerId: raw.sellerId,
@@ -90,8 +93,8 @@ export class SiigoConfigComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.saving.set(false);
-          this.accessKeyConfigured.set(data.accessKeyConfigured);
-          this.form.patchValue({ accessKey: '' });
+          this.credentialsConfigured.set(data.accessKeyConfigured);
+          this.username.set(data.username ?? null);
           this.form.markAsPristine();
           this.mensaje.set('Configuración de Siigo guardada.');
           if (data.accessKeyConfigured) {

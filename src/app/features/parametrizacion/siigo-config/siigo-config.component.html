@@ -5,8 +5,9 @@
     <a href="https://developers.siigolatam.com/docs/siigoapi/" target="_blank" rel="noopener">
       Siigo API
     </a>
-    para facturación y contabilidad. Las credenciales se generan en Siigo Nube, menú
-    <strong>Alianzas → Mi Credencial API</strong>.
+    para facturación y contabilidad. El usuario y el access key se definen en el servidor
+    (<code>SIIGO_USERNAME</code> y <code>SIIGO_ACCESS_KEY</code> en <code>.env</code>), no en esta
+    pantalla.
   </p>
 
   @if (error()) {
@@ -25,25 +26,17 @@
         Activar integración
       </label>
 
-      <label class="siigo-field">
-        <span>Usuario API (correo)</span>
-        <input type="email" formControlName="username" autocomplete="off" maxlength="200" />
-      </label>
-
-      <label class="siigo-field">
-        <span>Access key</span>
-        <input
-          type="password"
-          formControlName="accessKey"
-          autocomplete="new-password"
-          maxlength="500"
-          [placeholder]="accessKeyConfigured() ? 'Dejar vacío para conservar la clave actual' : ''"
-        />
-      </label>
-
       <p class="siigo-hint">
-        Partner-Id enviado a Siigo: <strong>{{ partnerId() }}</strong>. El token dura 24 horas y
-        Siigo solo permite generar uno por día; se guarda para reutilizarlo.
+        @if (credentialsConfigured()) {
+          Credenciales del servidor:
+          <strong>{{ username() }}</strong>
+          · Partner-Id: <strong>{{ partnerId() }}</strong>.
+        } @else {
+          No hay credenciales en el entorno. Copie
+          <code>shalom-core/.env.example</code> a <code>shalom-core/.env</code>, complete
+          <code>SIIGO_USERNAME</code> y <code>SIIGO_ACCESS_KEY</code> y reinicie el backend.
+        }
+        El token dura 24 horas y Siigo solo permite generar uno por día; se guarda para reutilizarlo.
       </p>
 
       @if (loadingCatalogos()) {
@@ -87,7 +80,12 @@
       }
 
       <div class="siigo-actions">
-        <button type="button" class="rp-btn rp-btn--secondary" (click)="probar()" [disabled]="testing() || saving()">
+        <button
+          type="button"
+          class="rp-btn rp-btn--secondary"
+          (click)="probar()"
+          [disabled]="testing() || saving() || !credentialsConfigured()"
+        >
           {{ testing() ? 'Probando...' : 'Probar conexión' }}
         </button>
         <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">

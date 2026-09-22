@@ -13,8 +13,6 @@ export interface ConfiguracionSiigo {
 
 export interface ConfiguracionSiigoRequest {
   activo: boolean;
-  username?: string | null;
-  accessKey?: string | null;
   documentTypeId?: number | null;
   paymentTypeId?: number | null;
   sellerId?: number | null;
