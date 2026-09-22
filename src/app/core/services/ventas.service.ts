@@ -23,7 +23,8 @@ export class VentasService {
       })),
       total: payload.total,
       pesoTotal: payload.pesoTotal,
-      medioCajaId: payload.medioCajaId,
+      medioCajaId: payload.pagoCredito ? null : payload.medioCajaId,
+      pagoCredito: !!payload.pagoCredito,
     });
   }
 }

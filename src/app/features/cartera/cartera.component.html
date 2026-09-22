@@ -1,0 +1,128 @@
+<div class="cartera">
+  <header class="rp-page-header cartera-header">
+    <div>
+      <h1>Cartera</h1>
+      <p>Clientes con ventas pendientes por pagar</p>
+    </div>
+    <div class="cartera-total">
+      <span class="meta-label">Saldo por cobrar</span>
+      <strong>{{ formatCurrency(totalCartera()) }}</strong>
+      <span class="cell-secondary">{{ clientes().length }} cliente(s)</span>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <section class="rp-panel">
+    <div class="panel-header cartera__toolbar">
+      <div>
+        <h2>Pendientes de cobro</h2>
+        <p class="cartera__desc">
+          Solo aparecen clientes con ventas registradas a crédito y saldo pendiente.
+        </p>
+      </div>
+      <button type="button" class="rp-btn rp-btn--secondary" (click)="loadCartera()">
+        Actualizar
+      </button>
+    </div>
+
+    <div class="cartera__search-row">
+      <input
+        type="search"
+        class="cartera__search"
+        placeholder="Buscar por nombre, documento o teléfono..."
+        [value]="busqueda()"
+        (input)="onBusquedaChange($any($event.target).value)"
+      />
+    </div>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando cartera...</p>
+    } @else {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Documento</th>
+            <th>Teléfono</th>
+            <th>Tipo</th>
+            <th>Ventas</th>
+            <th>Última venta</th>
+            <th>Saldo pendiente</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of clientesFiltrados(); track item.clienteId) {
+            <tr>
+              <td class="cell-primary">{{ item.nombre }}</td>
+              <td class="cell-secondary">{{ documento(item) }}</td>
+              <td class="cell-secondary">{{ item.telefono || '—' }}</td>
+              <td class="cell-secondary">{{ tipoLabel(item.tipoCliente) }}</td>
+              <td class="cell-secondary">{{ item.cantidadVentas }}</td>
+              <td class="cell-secondary">{{ formatFecha(item.ultimaVentaAt) }}</td>
+              <td class="cell-secondary">{{ formatCurrency(item.saldoPendiente) }}</td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="rp-btn rp-btn--secondary"
+                  (click)="abrirDetalle(item)"
+                >
+                  Ver ventas
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="rp-empty">
+                No hay clientes con ventas pendientes por pagar
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
+
+@if (clienteDetalle(); as detalle) {
+  <app-rp-modal
+    [title]="'Ventas pendientes — ' + detalle.nombre"
+    [wide]="true"
+    (closed)="cerrarDetalle()"
+  >
+    <p class="cartera-detalle__hint">
+      Saldo pendiente: <strong>{{ formatCurrency(detalle.saldoPendiente) }}</strong>
+      · {{ detalle.cantidadVentas }} venta(s)
+    </p>
+    <table class="rp-table">
+      <thead>
+        <tr>
+          <th>Factura</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Saldo pendiente</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (venta of ventasDe(detalle); track venta.ventaId) {
+          <tr>
+            <td class="cell-mono">{{ venta.numeroFactura }}</td>
+            <td class="cell-secondary">{{ formatFecha(venta.createdAt) }}</td>
+            <td class="cell-secondary">{{ formatCurrency(venta.total) }}</td>
+            <td class="cell-secondary">{{ formatCurrency(venta.saldoPendiente) }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="rp-empty">Este cliente no tiene ventas pendientes</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <div class="rp-form-actions">
+      <button type="button" class="rp-btn rp-btn--ghost" (click)="cerrarDetalle()">Cerrar</button>
+    </div>
+  </app-rp-modal>
+}

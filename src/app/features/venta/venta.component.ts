@@ -97,6 +97,7 @@ export class VentaComponent implements OnInit {
   readonly factura = signal('—');
   readonly mediosPago = signal<MedioPagoOpcion[]>([]);
   readonly medioPagoId = signal<number | null>(null);
+  readonly pagoCredito = signal(false);
   readonly leyendoPesoId = signal<number | null>(null);
   readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
 
@@ -511,6 +512,8 @@ export class VentaComponent implements OnInit {
 
     this.error.set(null);
     this.mensaje.set(null);
+    this.pagoCredito.set(false);
+    this.medioPagoId.set(null);
     this.showPagoModal.set(true);
     this.loadingMediosPago.set(true);
 
@@ -538,19 +541,30 @@ export class VentaComponent implements OnInit {
 
   cancelarPagoModal(): void {
     this.showPagoModal.set(false);
+    this.pagoCredito.set(false);
   }
 
   seleccionarMedioPago(id: number): void {
+    this.pagoCredito.set(false);
     this.medioPagoId.set(id);
   }
 
+  seleccionarPagoCredito(): void {
+    this.pagoCredito.set(true);
+    this.medioPagoId.set(null);
+  }
+
   confirmarPagoYRegistrar(): void {
-    const medioId = this.medioPagoId();
-    if (medioId == null) {
-      this.error.set('Seleccione el medio de pago.');
+    if (this.pagoCredito()) {
+      this.ejecutarRegistroVenta(null, true);
       return;
     }
-    this.ejecutarRegistroVenta(medioId);
+    const medioId = this.medioPagoId();
+    if (medioId == null) {
+      this.error.set('Seleccione el medio de pago o pago a crédito.');
+      return;
+    }
+    this.ejecutarRegistroVenta(medioId, false);
   }
 
   private setMediosDesdeSaldos(saldos: CajaSaldo[]): void {
@@ -573,11 +587,6 @@ export class VentaComponent implements OnInit {
           medios?.find((medio) => medio.tipo === 'EFECTIVO')?.id
         );
         this.loadingMediosPago.set(false);
-        if (!opciones.length) {
-          this.error.set(
-            'No hay medios de pago activos. Configure Nequi, Daviplata o cuentas en Parametrización.'
-          );
-        }
       },
       error: (err) => {
         this.loadingMediosPago.set(false);
@@ -602,7 +611,7 @@ export class VentaComponent implements OnInit {
     this.medioPagoId.set(efectivoId ?? opciones[0]?.id ?? null);
   }
 
-  private ejecutarRegistroVenta(medioCajaId: number): void {
+  private ejecutarRegistroVenta(medioCajaId: number | null, pagoCredito = false): void {
     const cliente = this.clienteSeleccionado();
     if (!cliente) return;
 
@@ -654,6 +663,7 @@ export class VentaComponent implements OnInit {
             total: this.subtotal(),
             pesoTotal: this.pesoNetoTotal(),
             medioCajaId,
+            pagoCredito,
           })
           .subscribe({
             next: (res) => {
@@ -664,6 +674,7 @@ export class VentaComponent implements OnInit {
               this.items.set([]);
               this.clienteSeleccionado.set(null);
               this.medioPagoId.set(null);
+              this.pagoCredito.set(false);
               this.recargarExistencias();
             },
             error: (err) => {

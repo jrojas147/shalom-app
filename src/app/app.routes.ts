@@ -53,6 +53,12 @@ export const routes: Routes = [
           import('./features/venta/venta.component').then((m) => m.VentaComponent),
       },
       {
+        path: 'cartera',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/cartera/cartera.component').then((m) => m.CarteraComponent),
+      },
+      {
         path: 'liquidacion',
         canActivate: [adminDireccion],
         loadComponent: () =>

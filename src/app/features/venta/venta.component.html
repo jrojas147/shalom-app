@@ -275,17 +275,29 @@
     <p class="venta-pago__desc">
       Total a cobrar: <strong>{{ formatCurrency(subtotal()) }}</strong>
     </p>
-    <p class="venta-pago__desc">Seleccione el medio con el que se recibe el pago.</p>
+    <p class="venta-pago__desc">Seleccione el medio con el que se recibe el pago o marque crédito.</p>
 
     @if (loadingMediosPago()) {
       <p class="compras-loading">Cargando medios de pago...</p>
     } @else {
       <div class="venta-pago__list" role="radiogroup" aria-label="Medio de pago">
+        <button
+          type="button"
+          class="venta-pago__opcion"
+          [class.venta-pago__opcion--activa]="pagoCredito()"
+          (click)="seleccionarPagoCredito()"
+        >
+          <span class="venta-pago__radio" aria-hidden="true"></span>
+          <span>
+            <strong>Pago a crédito</strong>
+            <em>El total queda como saldo pendiente en cartera. No ingresa a caja.</em>
+          </span>
+        </button>
         @for (opcion of mediosPago(); track opcion.id) {
           <button
             type="button"
             class="venta-pago__opcion"
-            [class.venta-pago__opcion--activa]="medioPagoId() === opcion.id"
+            [class.venta-pago__opcion--activa]="!pagoCredito() && medioPagoId() === opcion.id"
             (click)="seleccionarMedioPago(opcion.id)"
           >
             <span class="venta-pago__radio" aria-hidden="true"></span>
@@ -296,8 +308,6 @@
               }
             </span>
           </button>
-        } @empty {
-          <p class="compras-empty">No hay medios de pago disponibles</p>
         }
       </div>
 
@@ -308,7 +318,7 @@
         <button
           type="button"
           class="rp-btn rp-btn--primary"
-          [disabled]="procesando() || medioPagoId() == null"
+          [disabled]="procesando() || (!pagoCredito() && medioPagoId() == null)"
           (click)="confirmarPagoYRegistrar()"
         >
           {{ procesando() ? 'Registrando...' : 'Confirmar venta' }}

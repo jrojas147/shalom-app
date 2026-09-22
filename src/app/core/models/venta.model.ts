@@ -13,7 +13,8 @@ export interface RegistrarVentaPayload {
   items: CompraDetalleItem[];
   total: number;
   pesoTotal: number;
-  medioCajaId: number;
+  medioCajaId?: number | null;
+  pagoCredito?: boolean;
 }
 
 export interface VentaResumen {
@@ -34,6 +35,8 @@ export interface RegistrarVentaResponse {
   mensaje: string;
   total: number;
   pesoTotal: number;
+  pagoCredito?: boolean;
+  saldoPendiente?: number;
 }
 
 export function ventaClienteEtiqueta(cliente: VentaClienteSeleccion): string {

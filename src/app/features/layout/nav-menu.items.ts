@@ -13,6 +13,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Compras', route: '/app/compras', icon: 'compra' },
   { label: 'Caja', route: '/app/caja', icon: 'caja' },
   { label: 'Venta', route: '/app/venta', icon: 'venta' },
+  { label: 'Cartera', route: '/app/cartera', icon: 'cartera' },
   { label: 'Retribución', route: '/app/liquidacion', icon: 'liquidacion' },
   { label: 'Gastos', route: '/app/gastos', icon: 'gastos' },
   { label: 'Productos', route: '/app/productos', icon: 'productos' },

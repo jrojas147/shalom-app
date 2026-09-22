@@ -5,6 +5,7 @@ export type NavIconName =
   | 'compra'
   | 'caja'
   | 'venta'
+  | 'cartera'
   | 'liquidacion'
   | 'gastos'
   | 'productos'
@@ -73,6 +74,21 @@ export type NavIconName =
             stroke-linejoin="round"
           />
           <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        }
+        @case ('cartera') {
+          <rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8" />
+          <path
+            d="M3 11h18M16 15.5h3"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+          <path
+            d="M7 7V5.5A2.5 2.5 0 019.5 3h5A2.5 2.5 0 0117 5.5V7"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
         }
         @case ('liquidacion') {
           <path
