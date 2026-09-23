@@ -10,12 +10,8 @@
       type="button"
       class="rp-btn rp-btn--secondary"
       (click)="openSiigoModal()"
-      [disabled]="syncingSiigo() || loadingSiigoCatalogo() || !siigoActivo()"
-      [title]="
-        siigoActivo()
-          ? 'Traer productos desde Siigo Nube'
-          : 'Debe activar Siigo en Parametrización'
-      "
+      [disabled]="syncingSiigo() || loadingSiigoCatalogo()"
+      title="Traer productos desde Siigo Nube"
     >
       {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar' }}
     </button>
@@ -270,6 +266,24 @@
           {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar seleccionados' }}
         </button>
       </div>
+    </div>
+  </app-rp-modal>
+}
+
+@if (showExisteModal() && existeEnSiigo(); as existente) {
+  <app-rp-modal title="Producto existente en Siigo" (closed)="closeExisteModal()">
+    <p>
+      El código <strong>{{ existente.codigo }}</strong> ya existe en Siigo Nube como
+      <strong>{{ existente.nombre || existente.codigo }}</strong>.
+    </p>
+    <p>No se crea en Shalom. Use Sincronizar para traer ese producto.</p>
+    <div class="rp-form-actions">
+      <button type="button" class="rp-btn rp-btn--ghost" (click)="closeExisteModal()">
+        Cerrar
+      </button>
+      <button type="button" class="rp-btn rp-btn--primary" (click)="irASincronizar()">
+        Sincronizar
+      </button>
     </div>
   </app-rp-modal>
 }

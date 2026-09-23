@@ -4,13 +4,13 @@ import {
   CodigoCiiu,
   CodigoCiiuRequest,
   CodigoCiiuSiigoCatalogo,
+  CodigoCiiuSiigoCodigo,
   CodigoCiiuSiigoItem,
   CodigoCiiuSiigoSyncResult,
 } from '../../../core/models/codigo-ciiu.model';
 import { Categoria } from '../../../core/models/categoria.model';
 import { CategoriasService } from '../../../core/services/categorias.service';
 import { CodigosCiiuService } from '../../../core/services/codigos-ciiu.service';
-import { ConfiguracionSiigoService } from '../../../core/services/configuracion-siigo.service';
 import { RpConfirmDialogService } from '../../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../../shared/components/rp-modal/rp-modal.component';
 
@@ -25,7 +25,6 @@ export class CodigosCiiuConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly categoriasService = inject(CategoriasService);
-  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly categorias = signal<Categoria[]>([]);
@@ -35,7 +34,6 @@ export class CodigosCiiuConfigComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly editingId = signal<number | null>(null);
 
-  readonly siigoActivo = signal(false);
   readonly showSiigoModal = signal(false);
   readonly loadingSiigoCatalogo = signal(false);
   readonly syncingSiigo = signal(false);
@@ -48,6 +46,8 @@ export class CodigosCiiuConfigComponent implements OnInit {
   readonly siigoTotal = signal(0);
   readonly siigoHayMas = signal(false);
   readonly loadingSiigoMas = signal(false);
+  readonly showExisteModal = signal(false);
+  readonly existeEnSiigo = signal<CodigoCiiuSiigoCodigo | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     codigo: ['', [Validators.required, Validators.maxLength(20)]],
@@ -87,7 +87,6 @@ export class CodigosCiiuConfigComponent implements OnInit {
   ngOnInit(): void {
     this.loadCodigosCiiu();
     this.loadCategorias();
-    this.loadSiigoActivo();
   }
 
   loadCodigosCiiu(): void {
@@ -139,10 +138,42 @@ export class CodigosCiiuConfigComponent implements OnInit {
     this.error.set(null);
 
     const id = this.editingId();
+    if (id) {
+      this.persist(id, request);
+      return;
+    }
+
+    this.codigosCiiuService.consultarCodigoSiigo(request.codigo).subscribe({
+      next: (res) => {
+        if (res.existe) {
+          this.saving.set(false);
+          this.existeEnSiigo.set(res);
+          this.showExisteModal.set(true);
+          return;
+        }
+        this.persist(null, request);
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(err.error?.message ?? 'No se pudo consultar el producto en Siigo.');
+      },
+    });
+  }
+
+  closeExisteModal(): void {
+    this.showExisteModal.set(false);
+    this.existeEnSiigo.set(null);
+  }
+
+  irASincronizar(): void {
+    this.closeExisteModal();
+    this.openSiigoModal();
+  }
+
+  private persist(id: number | null, request: CodigoCiiuRequest): void {
     const op$ = id
       ? this.codigosCiiuService.update(id, request)
       : this.codigosCiiuService.create(request);
-
     op$.subscribe({
       next: () => {
         this.saving.set(false);
@@ -184,7 +215,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
   }
 
   openSiigoModal(): void {
-    if (this.loadingSiigoCatalogo() || this.syncingSiigo() || !this.siigoActivo()) {
+    if (this.loadingSiigoCatalogo() || this.syncingSiigo()) {
       return;
     }
     this.showSiigoModal.set(true);
@@ -311,15 +342,11 @@ export class CodigosCiiuConfigComponent implements OnInit {
 
   private loadCategorias(): void {
     this.categoriasService.getAll().subscribe({
-      next: (data) => this.categorias.set((data ?? []).filter((item) => item.estado === 'ACTIVO')),
+      next: (data) =>
+        this.categorias.set(
+          (data ?? []).filter((item) => item.estado === 'ACTIVO' && item.siigoAccountGroupId)
+        ),
       error: () => this.categorias.set([]),
-    });
-  }
-
-  private loadSiigoActivo(): void {
-    this.configuracionSiigoService.get().subscribe({
-      next: (config) => this.siigoActivo.set(!!config.activo),
-      error: () => this.siigoActivo.set(false),
     });
   }
 }

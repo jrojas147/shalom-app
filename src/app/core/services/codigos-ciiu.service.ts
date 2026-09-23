@@ -6,6 +6,7 @@ import {
   CodigoCiiu,
   CodigoCiiuRequest,
   CodigoCiiuSiigoCatalogo,
+  CodigoCiiuSiigoCodigo,
   CodigoCiiuSiigoSyncResult,
 } from '../models/codigo-ciiu.model';
 
@@ -32,6 +33,11 @@ export class CodigosCiiuService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  consultarCodigoSiigo(code: string): Observable<CodigoCiiuSiigoCodigo> {
+    const params = new HttpParams().set('code', code);
+    return this.http.get<CodigoCiiuSiigoCodigo>(`${this.baseUrl}/siigo/codigo`, { params });
   }
 
   listarSiigo(page = 1): Observable<CodigoCiiuSiigoCatalogo> {

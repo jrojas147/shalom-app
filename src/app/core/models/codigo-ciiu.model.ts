@@ -19,6 +19,13 @@ export interface CodigoCiiuRequest {
   categoriaId?: number | null;
 }
 
+export interface CodigoCiiuSiigoCodigo {
+  existe: boolean;
+  codigo?: string | null;
+  nombre?: string | null;
+  siigoId?: string | null;
+}
+
 export interface CodigoCiiuSiigoItem {
   id: string;
   codigo?: string | null;
