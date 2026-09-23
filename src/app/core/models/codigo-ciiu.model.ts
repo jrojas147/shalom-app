@@ -4,6 +4,9 @@ export interface CodigoCiiu {
   id: number;
   codigo: string;
   nombre: string;
+  categoriaId?: number | null;
+  categoriaCodigo?: string | null;
+  categoriaNombre?: string | null;
   siigoAccountGroupId?: number | null;
   siigoId?: string | null;
   estado: CodigoCiiuEstado;
@@ -13,6 +16,7 @@ export interface CodigoCiiu {
 export interface CodigoCiiuRequest {
   codigo: string;
   nombre: string;
+  categoriaId?: number | null;
 }
 
 export interface CodigoCiiuSiigoItem {

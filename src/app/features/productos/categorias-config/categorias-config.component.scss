@@ -26,13 +26,12 @@
 
 .param-block__add-row {
   display: grid;
-  grid-template-columns: 120px 1fr minmax(10rem, 16rem) auto auto;
+  grid-template-columns: 120px 1fr auto auto;
   gap: var(--spacing-sm);
   align-items: start;
   margin-bottom: var(--spacing-md);
 
-  input,
-  select {
+  input {
     width: 100%;
     padding: 0.6875rem 0.875rem;
     border: 1px solid var(--rp-border);
@@ -210,12 +209,6 @@
   margin-left: auto;
 }
 
-.ciiu-siigo-modal__more {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--spacing-sm);
-}
-
 .ciiu-siigo-modal__table {
   max-height: min(45vh, 22rem);
   overflow: auto;
@@ -243,17 +236,6 @@
     }
   }
 
-  .param-block__add-row {
-    grid-template-columns: 1fr;
-
-    .rp-btn--primary,
-    .rp-btn--ghost {
-      width: 100%;
-    }
-  }
-}
-
-@container (max-width: 560px) {
   .param-block__add-row {
     grid-template-columns: 1fr;
 

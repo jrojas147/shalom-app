@@ -113,7 +113,7 @@ export function productoPrecioKg(producto: Producto): number {
   return producto.precioCompra ?? producto.precioVenta ?? 0;
 }
 
-export type ProductoSeccion = 'detalle' | 'materiales';
+export type ProductoSeccion = 'detalle' | 'materiales' | 'categorias';
 
 export interface ProductoSeccionConfig {
   id: ProductoSeccion;
@@ -131,6 +131,11 @@ export const PRODUCTO_SECCIONES: ProductoSeccionConfig[] = [
     id: 'materiales',
     label: 'Grupo materiales',
     descripcion: 'Códigos SUI disponibles para clasificar productos.',
+  },
+  {
+    id: 'categorias',
+    label: 'Categorías',
+    descripcion: 'Categorías de inventario. Se crean o vinculan con Siigo Nube.',
   },
 ];
 

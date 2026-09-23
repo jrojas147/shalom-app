@@ -235,6 +235,12 @@
       <app-codigos-ciiu-config />
     </section>
   }
+
+  @if (seccionActiva() === 'categorias') {
+    <section class="rp-panel productos-panel">
+      <app-categorias-config />
+    </section>
+  }
 </div>
 
 @if (showForm()) {

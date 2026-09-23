@@ -35,6 +35,7 @@ import {
 } from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
+import { CategoriasConfigComponent } from './categorias-config/categorias-config.component';
 import { CodigosCiiuConfigComponent } from './grupo-materiales-config/codigos-ciiu-config.component';
 
 const MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
@@ -43,7 +44,13 @@ const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RpModalComponent, CodigosCiiuConfigComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RpModalComponent,
+    CodigosCiiuConfigComponent,
+    CategoriasConfigComponent,
+  ],
   templateUrl: './productos.component.html',
   styleUrl: './productos.component.scss',
 })
