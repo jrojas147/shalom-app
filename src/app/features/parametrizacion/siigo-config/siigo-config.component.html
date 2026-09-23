@@ -32,11 +32,8 @@
           <strong>{{ username() }}</strong>
           · Partner-Id: <strong>{{ partnerId() }}</strong>.
         } @else {
-          No hay credenciales en el entorno. Copie
-          <code>shalom-core/.env.example</code> a <code>shalom-core/.env</code>, complete
-          <code>SIIGO_USERNAME</code> y <code>SIIGO_ACCESS_KEY</code> y reinicie el backend.
+          No hay credenciales en definidas.
         }
-        El token dura 24 horas y Siigo solo permite generar uno por día; se guarda para reutilizarlo.
       </p>
 
       @if (loadingCatalogos()) {
