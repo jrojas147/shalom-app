@@ -16,11 +16,19 @@ export interface CodigoCiiuRequest {
 }
 
 export interface CodigoCiiuSiigoItem {
-  id: number;
+  id: string;
   codigo?: string | null;
   nombre?: string | null;
   activo: boolean;
   yaSincronizado: boolean;
+}
+
+export interface CodigoCiiuSiigoCatalogo {
+  page: number;
+  pageSize: number;
+  total: number;
+  hayMas: boolean;
+  items: CodigoCiiuSiigoItem[];
 }
 
 export interface CodigoCiiuSiigoSyncError {

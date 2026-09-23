@@ -1,11 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import {
   CodigoCiiu,
   CodigoCiiuRequest,
-  CodigoCiiuSiigoItem,
+  CodigoCiiuSiigoCatalogo,
   CodigoCiiuSiigoSyncResult,
 } from '../models/codigo-ciiu.model';
 
@@ -34,11 +34,12 @@ export class CodigosCiiuService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  listarSiigo(): Observable<CodigoCiiuSiigoItem[]> {
-    return this.http.get<CodigoCiiuSiigoItem[]>(`${this.baseUrl}/siigo`);
+  listarSiigo(page = 1): Observable<CodigoCiiuSiigoCatalogo> {
+    const params = new HttpParams().set('page', String(page));
+    return this.http.get<CodigoCiiuSiigoCatalogo>(`${this.baseUrl}/siigo`, { params });
   }
 
-  sincronizarSiigo(ids: number[]): Observable<CodigoCiiuSiigoSyncResult> {
+  sincronizarSiigo(ids: string[]): Observable<CodigoCiiuSiigoSyncResult> {
     return this.http.post<CodigoCiiuSiigoSyncResult>(`${this.baseUrl}/sincronizar-siigo`, { ids });
   }
 }

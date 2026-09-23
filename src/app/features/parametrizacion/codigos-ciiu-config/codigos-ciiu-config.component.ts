@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   CodigoCiiu,
   CodigoCiiuRequest,
+  CodigoCiiuSiigoCatalogo,
   CodigoCiiuSiigoItem,
   CodigoCiiuSiigoSyncResult,
 } from '../../../core/models/codigo-ciiu.model';
@@ -35,10 +36,14 @@ export class CodigosCiiuConfigComponent implements OnInit {
   readonly loadingSiigoCatalogo = signal(false);
   readonly syncingSiigo = signal(false);
   readonly siigoCatalogo = signal<CodigoCiiuSiigoItem[]>([]);
-  readonly siigoSeleccion = signal<Set<number>>(new Set());
+  readonly siigoSeleccion = signal<Set<string>>(new Set());
   readonly siigoBusqueda = signal('');
   readonly siigoCatalogoError = signal<string | null>(null);
   readonly siigoSyncResult = signal<CodigoCiiuSiigoSyncResult | null>(null);
+  readonly siigoPagina = signal(1);
+  readonly siigoTotal = signal(0);
+  readonly siigoHayMas = signal(false);
+  readonly loadingSiigoMas = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     codigo: ['', [Validators.required, Validators.maxLength(20)]],
@@ -177,19 +182,10 @@ export class CodigosCiiuConfigComponent implements OnInit {
     this.siigoBusqueda.set('');
     this.siigoCatalogoError.set(null);
     this.siigoSyncResult.set(null);
-    this.loadingSiigoCatalogo.set(true);
-    this.codigosCiiuService.listarSiigo().subscribe({
-      next: (data) => {
-        this.siigoCatalogo.set(data ?? []);
-        this.loadingSiigoCatalogo.set(false);
-      },
-      error: (err) => {
-        this.loadingSiigoCatalogo.set(false);
-        this.siigoCatalogoError.set(
-          err.error?.message ?? 'No se pudieron consultar las categorías de Siigo.'
-        );
-      },
-    });
+    this.siigoPagina.set(1);
+    this.siigoTotal.set(0);
+    this.siigoHayMas.set(false);
+    this.cargarPaginaSiigo(1, false);
   }
 
   closeSiigoModal(): void {
@@ -201,17 +197,59 @@ export class CodigosCiiuConfigComponent implements OnInit {
     this.siigoSeleccion.set(new Set());
     this.siigoBusqueda.set('');
     this.siigoCatalogoError.set(null);
+    this.siigoHayMas.set(false);
+  }
+
+  cargarMasSiigo(): void {
+    if (!this.siigoHayMas() || this.loadingSiigoMas() || this.loadingSiigoCatalogo() || this.syncingSiigo()) {
+      return;
+    }
+    this.cargarPaginaSiigo(this.siigoPagina() + 1, true);
+  }
+
+  private cargarPaginaSiigo(page: number, append: boolean): void {
+    this.siigoCatalogoError.set(null);
+    if (append) {
+      this.loadingSiigoMas.set(true);
+    } else {
+      this.loadingSiigoCatalogo.set(true);
+    }
+    this.codigosCiiuService.listarSiigo(page).subscribe({
+      next: (data) => this.applyPaginaSiigo(data, append),
+      error: (err) => {
+        this.loadingSiigoCatalogo.set(false);
+        this.loadingSiigoMas.set(false);
+        this.siigoCatalogoError.set(
+          err.error?.message ?? 'No se pudieron consultar los productos de Siigo.'
+        );
+      },
+    });
+  }
+
+  private applyPaginaSiigo(data: CodigoCiiuSiigoCatalogo, append: boolean): void {
+    const items = data.items ?? [];
+    if (append) {
+      const seen = new Set(this.siigoCatalogo().map((item) => item.id));
+      this.siigoCatalogo.set([...this.siigoCatalogo(), ...items.filter((item) => !seen.has(item.id))]);
+    } else {
+      this.siigoCatalogo.set(items);
+    }
+    this.siigoPagina.set(data.page);
+    this.siigoTotal.set(data.total);
+    this.siigoHayMas.set(!!data.hayMas);
+    this.loadingSiigoCatalogo.set(false);
+    this.loadingSiigoMas.set(false);
   }
 
   onSiigoBusquedaChange(value: string): void {
     this.siigoBusqueda.set(value);
   }
 
-  siigoSeleccionado(id: number): boolean {
+  siigoSeleccionado(id: string): boolean {
     return this.siigoSeleccion().has(id);
   }
 
-  toggleSiigoItem(id: number, checked: boolean): void {
+  toggleSiigoItem(id: string, checked: boolean): void {
     const next = new Set(this.siigoSeleccion());
     if (checked) {
       next.add(id);
@@ -255,7 +293,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
       },
       error: (err) => {
         this.syncingSiigo.set(false);
-        this.siigoCatalogoError.set(err.error?.message ?? 'No se pudieron sincronizar los grupos.');
+        this.siigoCatalogoError.set(err.error?.message ?? 'No se pudieron sincronizar los productos.');
       },
     });
   }
