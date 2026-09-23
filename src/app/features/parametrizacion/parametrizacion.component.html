@@ -27,9 +27,6 @@
   <app-rp-modal [title]="catalogo.titulo" [wide]="true" (closed)="cerrarCatalogo()">
     <div class="param-modal-body">
       @switch (catalogo.id) {
-        @case ('ciiu') {
-          <app-codigos-ciiu-config />
-        }
         @case ('empaque') {
           <app-tipos-empaque-config />
         }

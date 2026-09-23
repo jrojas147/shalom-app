@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-import { CodigosCiiuConfigComponent } from './codigos-ciiu-config/codigos-ciiu-config.component';
 import { CierreMesConfigComponent } from './cierre-mes-config/cierre-mes-config.component';
 import { LecturaPesoConfigComponent } from './lectura-peso-config/lectura-peso-config.component';
 import { MediosCajaConfigComponent } from './medios-caja-config/medios-caja-config.component';
@@ -10,7 +9,6 @@ import { TiposGastoConfigComponent } from './tipos-gasto-config/tipos-gasto-conf
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 export type CatalogoParamId =
-  | 'ciiu'
   | 'empaque'
   | 'gasto'
   | 'abono'
@@ -29,7 +27,6 @@ interface CatalogoParam {
   selector: 'app-parametrizacion',
   standalone: true,
   imports: [
-    CodigosCiiuConfigComponent,
     TiposEmpaqueConfigComponent,
     MediosCajaConfigComponent,
     TiposGastoConfigComponent,
@@ -44,11 +41,6 @@ interface CatalogoParam {
 })
 export class ParametrizacionComponent {
   readonly catalogos: CatalogoParam[] = [
-    {
-      id: 'ciiu',
-      titulo: 'Grupo de materiales',
-      descripcion: 'Códigos SUI disponibles para clasificar productos.',
-    },
     {
       id: 'empaque',
       titulo: 'Tipos de empaque',

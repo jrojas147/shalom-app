@@ -113,6 +113,27 @@ export function productoPrecioKg(producto: Producto): number {
   return producto.precioCompra ?? producto.precioVenta ?? 0;
 }
 
+export type ProductoSeccion = 'detalle' | 'materiales';
+
+export interface ProductoSeccionConfig {
+  id: ProductoSeccion;
+  label: string;
+  descripcion: string;
+}
+
+export const PRODUCTO_SECCIONES: ProductoSeccionConfig[] = [
+  {
+    id: 'detalle',
+    label: 'Producto detalle',
+    descripcion: 'Registre productos los cuales se comercializan.',
+  },
+  {
+    id: 'materiales',
+    label: 'Grupo materiales',
+    descripcion: 'Códigos SUI disponibles para clasificar productos.',
+  },
+];
+
 export function productoIdVisible(
   codigoSui?: string | number | null,
   idInterno?: string | null

@@ -2,19 +2,36 @@
   <header class="rp-page-header">
     <div>
       <h1>Productos</h1>
+      <p>Seleccione una sección para gestionar la información del producto.</p>
     </div>
   </header>
+
+  <div class="productos-tabs" role="tablist" aria-label="Secciones de productos">
+    @for (seccion of secciones; track seccion.id) {
+      <button
+        type="button"
+        class="productos-tab"
+        role="tab"
+        [class.active]="seccionActiva() === seccion.id"
+        [attr.aria-selected]="seccionActiva() === seccion.id"
+        (click)="setSeccion(seccion.id)"
+      >
+        {{ seccion.label }}
+      </button>
+    }
+  </div>
 
   @if (error() && !showForm()) {
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
 
+  @if (seccionActiva() === 'detalle') {
   <section class="rp-panel productos-panel">
     <div class="panel-header productos__toolbar">
       <div>
-        <h2>Listado de productos</h2>
+        <h2>{{ seccionConfig().label }}</h2>
         <p class="productos-panel__desc">
-          Registre productos los cuales se comercializan.
+          {{ seccionConfig().descripcion }}
         </p>
       </div>
       <div class="productos__actions">
@@ -220,6 +237,13 @@
       </table>
     }
   </section>
+  }
+
+  @if (seccionActiva() === 'materiales') {
+    <section class="rp-panel productos-panel">
+      <app-codigos-ciiu-config />
+    </section>
+  }
 </div>
 
 @if (showForm()) {
@@ -308,7 +332,7 @@
             }
           } @else if (siigoActivo()) {
             <span class="productos-siigo-hint">
-              El catálogo es el de Parametrización (Grupo de materiales). Si el código tiene Siigo,
+              El catálogo es el de Productos → Grupo materiales. Si el código tiene Siigo,
               el producto se enviará a Nube.
             </span>
           }

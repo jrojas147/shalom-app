@@ -19,6 +19,8 @@ import {
   ProductoPrecioHistorial,
   productoImagenUrl,
   ProductoRequest,
+  PRODUCTO_SECCIONES,
+  ProductoSeccion,
   ProductoSiigoCatalogo,
   ProductoSiigoCodigo,
   ProductoSiigoItem,
@@ -35,6 +37,7 @@ import {
 } from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
+import { CodigosCiiuConfigComponent } from './grupo-materiales-config/codigos-ciiu-config.component';
 
 const MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
 const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -43,7 +46,7 @@ const SIIGO_CODIGO_PATTERN = /^[A-Za-z0-9._-]{1,30}$/;
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RpModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, RpModalComponent, CodigosCiiuConfigComponent],
   templateUrl: './productos.component.html',
   styleUrl: './productos.component.scss',
 })
@@ -63,6 +66,12 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private previewObjectUrl: string | null = null;
 
   readonly productoImagenUrl = productoImagenUrl;
+
+  readonly secciones = PRODUCTO_SECCIONES;
+  readonly seccionActiva = signal<ProductoSeccion>('detalle');
+  readonly seccionConfig = computed(
+    () => this.secciones.find((item) => item.id === this.seccionActiva()) ?? this.secciones[0]
+  );
 
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
   readonly editingSiigoId = signal<string | null>(null);
@@ -251,6 +260,13 @@ export class ProductosComponent implements OnInit, OnDestroy {
   });
 
   readonly idInternoMaxLength = computed(() => (this.codigoCiiuEnSiigo() ? 30 : 50));
+
+  setSeccion(id: ProductoSeccion): void {
+    this.seccionActiva.set(id);
+    if (id === 'detalle') {
+      this.loadCodigosCiiu();
+    }
+  }
 
   ngOnInit(): void {
     this.form.controls.codigoCiiuId.valueChanges

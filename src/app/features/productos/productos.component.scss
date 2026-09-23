@@ -1,3 +1,45 @@
+.productos {
+  .rp-page-header p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--rp-text-secondary);
+  }
+}
+
+.productos-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.productos-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5625rem 1rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+  color: var(--rp-text-secondary);
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover:not(.active) {
+    border-color: var(--rp-border-strong);
+    color: var(--rp-text);
+  }
+
+  &.active {
+    background: var(--rp-primary);
+    border-color: var(--rp-primary);
+    color: var(--rp-on-primary);
+  }
+}
+
 .productos-panel {
   .panel-header h2 {
     margin: 0;
