@@ -40,7 +40,7 @@
         <p class="rp-loading">Consultando catálogos de Siigo...</p>
       }
 
-      @if (documentos().length) {
+      <!--@if (documentos().length) {
         <label class="siigo-field">
           <span>Tipo de factura de venta (FV)</span>
           <select formControlName="documentTypeId">
@@ -50,9 +50,9 @@
             }
           </select>
         </label>
-      }
+      }-->
 
-      @if (mediosPago().length) {
+      <!--@if (mediosPago().length) {
         <label class="siigo-field">
           <span>Medio de pago en Siigo</span>
           <select formControlName="paymentTypeId">
@@ -62,7 +62,7 @@
             }
           </select>
         </label>
-      }
+      }-->
 
       @if (documentosDs().length) {
         <label class="siigo-field">
@@ -91,7 +91,7 @@
         </label>
       }
 
-      @if (vendedores().length) {
+      <!--@if (vendedores().length) {
         <label class="siigo-field">
           <span>Vendedor en Siigo</span>
           <select formControlName="sellerId">
@@ -101,7 +101,7 @@
             }
           </select>
         </label>
-      }
+      }-->
 
       <div class="siigo-actions">
         <button
