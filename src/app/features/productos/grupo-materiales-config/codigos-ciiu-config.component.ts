@@ -178,11 +178,6 @@ export class CodigosCiiuConfigComponent implements OnInit {
     this.existeEnSiigo.set(null);
   }
 
-  irASincronizar(): void {
-    this.closeExisteModal();
-    this.openSiigoModal();
-  }
-
   private persist(id: number | null, request: CodigoCiiuRequest): void {
     const op$ = id
       ? this.codigosCiiuService.update(id, request)
