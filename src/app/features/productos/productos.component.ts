@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   computed,
-  DestroyRef,
   ElementRef,
   inject,
   OnDestroy,
@@ -10,7 +9,6 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Producto,
@@ -41,7 +39,6 @@ import { CodigosCiiuConfigComponent } from './grupo-materiales-config/codigos-ci
 
 const MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
 const IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const SIIGO_CODIGO_PATTERN = /^[A-Za-z0-9._-]{1,30}$/;
 
 @Component({
   selector: 'app-productos',
@@ -57,7 +54,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private excelArchivoInput?: ElementRef<HTMLInputElement>;
 
   private readonly fb = inject(FormBuilder);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
@@ -244,23 +240,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
     descripcion: ['', Validators.maxLength(500)],
   });
 
-  readonly codigoCiiuIdValue = signal<number | null>(null);
-
-  readonly codigoCiiuSeleccionado = computed(() => {
-    const id = this.codigoCiiuIdValue();
-    if (id == null) {
-      return null;
-    }
-    return this.codigosCiiu().find((item) => item.id === id) ?? null;
-  });
-
-  readonly codigoCiiuEnSiigo = computed(() => {
-    const ciiu = this.codigoCiiuSeleccionado();
-    return !!(ciiu?.siigoId?.trim() || ciiu?.siigoAccountGroupId != null);
-  });
-
-  readonly idInternoMaxLength = computed(() => (this.codigoCiiuEnSiigo() ? 30 : 50));
-
   setSeccion(id: ProductoSeccion): void {
     this.seccionActiva.set(id);
     if (id === 'detalle') {
@@ -269,12 +248,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.form.controls.codigoCiiuId.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((id) => {
-        this.codigoCiiuIdValue.set(id);
-        this.actualizarValidacionIdInterno();
-      });
     this.loadProductos();
     this.loadCodigosCiiu();
     this.loadSiigoActivo();
@@ -770,42 +743,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     }
 
     const imagen = this.imagenPendiente();
-    if (!id && this.siigoActivo()) {
-      this.verificarCodigoSiigoYGuardar(request, imagen);
-      return;
-    }
     this.persistirProducto(id, request, imagen);
-  }
-
-  private verificarCodigoSiigoYGuardar(request: ProductoRequest, imagen?: File | null): void {
-    this.saving.set(true);
-    this.error.set(null);
-    this.productosService.consultarCodigoSiigo(request.idInterno).subscribe({
-      next: (res) => {
-        if (res.existe) {
-          this.saving.set(false);
-          const nombre = res.nombre?.trim() || res.codigo || request.idInterno;
-          const message =
-            `El ID "${request.idInterno}" ya existe en Siigo y corresponde al producto "${nombre}". Cambia el ID del producto o editalo en Siggo.`;
-          this.error.set(message);
-          this.confirmDialog
-            .confirm({
-              title: 'El ID ya existe en Siigo',
-              message,
-              confirmLabel: 'Entendido',
-              cancelLabel: '',
-              confirmVariant: 'danger',
-            })
-            .subscribe();
-          return;
-        }
-        this.persistirProducto(null, request, imagen);
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.error.set(this.extractErrorMessage(err));
-      },
-    });
   }
 
   private persistirProducto(
@@ -893,17 +831,8 @@ export class ProductosComponent implements OnInit, OnDestroy {
   }
 
   private actualizarValidacionIdInterno(): void {
-    const idInterno = this.form.controls.idInterno;
-    if (this.codigoCiiuEnSiigo()) {
-      idInterno.setValidators([
-        Validators.required,
-        Validators.maxLength(30),
-        Validators.pattern(SIIGO_CODIGO_PATTERN),
-      ]);
-    } else {
-      idInterno.setValidators([Validators.required, Validators.maxLength(50)]);
-    }
-    idInterno.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.idInterno.setValidators([Validators.required, Validators.maxLength(50)]);
+    this.form.controls.idInterno.updateValueAndValidity({ emitEvent: false });
   }
 
   estadoLabel(estado: ProductoEstado): string {

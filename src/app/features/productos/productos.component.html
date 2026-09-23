@@ -51,15 +51,6 @@
         >
           Cargar Excel
         </button>
-        <button
-          type="button"
-          class="rp-btn rp-btn--secondary"
-          (click)="openSiigoModal()"
-          [disabled]="syncingSiigo() || loadingSiigoCatalogo() || importingExcel() || !siigoActivo()"
-          [title]="siigoActivo() ? 'Traer productos desde Siigo Nube' : 'Debe activar Siigo en Parametrización'"
-        >
-          {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar' }}
-        </button>
         <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
           + Nuevo producto
         </button>
@@ -260,22 +251,15 @@
             id="idInterno"
             type="text"
             formControlName="idInterno"
-            [maxlength]="idInternoMaxLength()"
+            maxlength="50"
             placeholder="Ej. 101"
           />
           @if (form.controls.idInterno.touched && form.controls.idInterno.invalid) {
-            @if (form.controls.idInterno.errors?.['pattern'] || form.controls.idInterno.errors?.['maxlength']) {
-              <span class="rp-field-error">
-                En Siigo el código no puede tener espacios (máx. 30, letras, números, punto, guion o guion bajo).
-              </span>
+            @if (form.controls.idInterno.errors?.['maxlength']) {
+              <span class="rp-field-error">El ID interno no puede superar 50 caracteres.</span>
             } @else {
               <span class="rp-field-error">El ID interno es obligatorio.</span>
             }
-          }
-          @if (codigoCiiuEnSiigo()) {
-            <span class="productos-siigo-hint">
-              Este ID es el código único en Siigo: sin espacios, máximo 30 caracteres.
-            </span>
           }
         </div>
 
@@ -316,26 +300,10 @@
             <option [ngValue]="null">Sin código SUI</option>
             @for (ciiu of codigosCiiu(); track ciiu.id) {
               <option [ngValue]="ciiu.id">
-                {{ ciiu.codigo }} — {{ ciiu.nombre }}{{ ciiu.siigoId || ciiu.siigoAccountGroupId ? ' · Siigo' : '' }}
+                {{ ciiu.codigo }} — {{ ciiu.nombre }}
               </option>
             }
           </select>
-          @if (codigoCiiuSeleccionado(); as ciiu) {
-            @if (ciiu.siigoId || ciiu.siigoAccountGroupId) {
-              <span class="productos-siigo-hint">
-                Esta categoría está en Siigo. Al guardar, el producto se crea o actualiza en Nube.
-              </span>
-            } @else {
-              <span class="productos-siigo-hint">
-                Esta categoría aún no está en Siigo. El producto solo se guarda en Shalom.
-              </span>
-            }
-          } @else if (siigoActivo()) {
-            <span class="productos-siigo-hint">
-              El catálogo es el de Productos → Grupo materiales. Si el código tiene Siigo,
-              el producto se enviará a Nube.
-            </span>
-          }
         </div>
 
         <div class="rp-field">
