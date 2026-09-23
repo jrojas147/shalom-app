@@ -48,44 +48,6 @@ export interface ProductoExcelImportResult {
   detalleErrores: ProductoExcelFilaError[];
 }
 
-export interface ProductoSiigoItem {
-  id: string;
-  codigo?: string | null;
-  nombre?: string | null;
-  activo: boolean;
-  precioVenta?: number | null;
-  tipoMedida?: TipoMedida | null;
-  yaSincronizado: boolean;
-}
-
-export interface ProductoSiigoCatalogo {
-  page: number;
-  pageSize: number;
-  total: number;
-  hayMas: boolean;
-  items: ProductoSiigoItem[];
-}
-
-export interface ProductoSiigoCodigo {
-  existe: boolean;
-  codigo?: string | null;
-  nombre?: string | null;
-  siigoId?: string | null;
-}
-
-export interface ProductoSiigoSyncError {
-  codigo: string;
-  mensaje: string;
-}
-
-export interface ProductoSiigoSyncResult {
-  consultados: number;
-  creados: number;
-  actualizados: number;
-  errores: number;
-  detalleErrores: ProductoSiigoSyncError[];
-}
-
 export interface ProductoPrecioHistorial {
   id: number;
   productoId: number;
@@ -125,12 +87,12 @@ export const PRODUCTO_SECCIONES: ProductoSeccionConfig[] = [
   {
     id: 'detalle',
     label: 'Producto detalle',
-    descripcion: 'Registre productos los cuales se comercializan.',
+    descripcion: 'Catálogo interno de productos que se comercializan. No se sincroniza con Siigo.',
   },
   {
     id: 'materiales',
     label: 'Grupo materiales',
-    descripcion: 'Códigos SUI disponibles para clasificar productos.',
+    descripcion: 'Códigos SUI que se crean o sincronizan con productos de Siigo Nube.',
   },
   {
     id: 'categorias',

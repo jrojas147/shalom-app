@@ -1,8 +1,8 @@
-<div class="productos">
+﻿<div class="productos">
   <header class="rp-page-header">
     <div>
       <h1>Productos</h1>
-      <p>Seleccione una sección para gestionar la información del producto.</p>
+      <p>Seleccione una secciÃ³n para gestionar la informaciÃ³n del producto.</p>
     </div>
   </header>
 
@@ -39,7 +39,7 @@
           type="button"
           class="rp-btn rp-btn--secondary"
           (click)="downloadExcel()"
-          [disabled]="downloadingExcel() || importingExcel() || syncingSiigo()"
+          [disabled]="downloadingExcel() || importingExcel()"
         >
           {{ downloadingExcel() ? 'Descargando...' : 'Descargar Excel' }}
         </button>
@@ -47,7 +47,7 @@
           type="button"
           class="rp-btn rp-btn--secondary"
           (click)="openExcelModal()"
-          [disabled]="importingExcel() || syncingSiigo()"
+          [disabled]="importingExcel()"
         >
           Cargar Excel
         </button>
@@ -61,7 +61,7 @@
       <input
         type="search"
         class="productos__search"
-        placeholder="Buscar por ID, nombre, SUI o descripción..."
+        placeholder="Buscar por ID, nombre, SUI o descripciÃ³n..."
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
@@ -73,47 +73,13 @@
           [value]="codigoCiiuFiltro() ?? ''"
           (change)="onCodigoCiiuFiltro($any($event.target).value)"
         >
-          <option value="">Todos los códigos SUI</option>
+          <option value="">Todos los cÃ³digos SUI</option>
           @for (ciiu of codigosCiiu(); track ciiu.id) {
-            <option [value]="ciiu.id">{{ ciiu.codigo }} — {{ ciiu.nombre }}</option>
+            <option [value]="ciiu.id">{{ ciiu.codigo }} â€” {{ ciiu.nombre }}</option>
           }
         </select>
       </div>
     </div>
-
-    @if (siigoSyncResult(); as result) {
-      <div class="productos-excel-result">
-        <p>
-          Siigo Nube:
-          <strong>{{ result.consultados }}</strong> consultado(s),
-          <strong>{{ result.creados }}</strong> creado(s),
-          <strong>{{ result.actualizados }}</strong> actualizado(s)
-          @if (result.errores) {
-            y <strong>{{ result.errores }}</strong> error(es).
-          } @else {
-            sin errores.
-          }
-        </p>
-        @if (result.detalleErrores.length) {
-          <table class="rp-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Error</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of result.detalleErrores; track item.codigo + item.mensaje) {
-                <tr>
-                  <td class="cell-mono">{{ item.codigo }}</td>
-                  <td class="cell-secondary">{{ item.mensaje }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      </div>
-    }
 
     @if (loading()) {
       <p class="rp-loading">Cargando...</p>
@@ -133,7 +99,7 @@
         <tbody>
           @for (producto of productosFiltrados(); track producto.id) {
             <tr>
-              <td class="cell-mono productos-id">{{ producto.idInterno || '—' }}</td>
+              <td class="cell-mono productos-id">{{ producto.idInterno || 'â€”' }}</td>
               <td>
                 @if (productoImagenUrl(producto.imagen); as imgUrl) {
                   <span class="productos-list-thumb">
@@ -144,14 +110,11 @@
                     />
                   </span>
                 } @else {
-                  <span class="row-icon" aria-hidden="true">📦</span>
+                  <span class="row-icon" aria-hidden="true">ðŸ“¦</span>
                 }
                 <span class="cell-primary">{{ producto.nombreInterno }}</span>
                 @if (producto.tipoMedida === 'UNIDAD') {
                   <span class="rp-badge rp-badge--neutral">Unidad</span>
-                }
-                @if (producto.siigoId) {
-                  <span class="rp-badge rp-badge--success">Siigo</span>
                 }
               </td>
               <td class="cell-secondary">
@@ -161,7 +124,7 @@
                     <span class="productos-ciiu-nombre">{{ producto.nombreCiiu }}</span>
                   }
                 } @else {
-                  —
+                  â€”
                 }
               </td>
               <td class="cell-secondary">
@@ -193,7 +156,7 @@
                   (click)="openHistorial(producto)"
                   title="Historial de precios"
                 >
-                  ⏱
+                  â±
                 </button>
                 <button
                   type="button"
@@ -201,7 +164,7 @@
                   (click)="openEdit(producto)"
                   title="Editar"
                 >
-                  ✎
+                  âœŽ
                 </button>
                 <button
                   type="button"
@@ -209,7 +172,7 @@
                   (click)="deleteProducto(producto)"
                   title="Eliminar"
                 >
-                  🗑
+                  ðŸ—‘
                 </button>
               </td>
             </tr>
@@ -218,7 +181,7 @@
               <td colspan="7" class="rp-empty">
                 {{
                   busqueda()
-                    ? 'No hay productos que coincidan con la búsqueda'
+                    ? 'No hay productos que coincidan con la bÃºsqueda'
                     : 'No hay productos registrados'
                 }}
               </td>
@@ -301,12 +264,12 @@
         </div>
 
         <div class="rp-field rp-field--full">
-          <label for="codigoCiiuId">Código SUI</label>
+          <label for="codigoCiiuId">Codigo SUI</label>
           <select id="codigoCiiuId" formControlName="codigoCiiuId">
-            <option [ngValue]="null">Sin código SUI</option>
+            <option [ngValue]="null">Sin cÃ³digo SUI</option>
             @for (ciiu of codigosCiiu(); track ciiu.id) {
               <option [ngValue]="ciiu.id">
-                {{ ciiu.codigo }} — {{ ciiu.nombre }}
+                {{ ciiu.codigo }} â€” {{ ciiu.nombre }}
               </option>
             }
           </select>
@@ -345,7 +308,7 @@
         </div>
 
         <div class="rp-field rp-field--full">
-          <label for="descripcion">Descripción</label>
+          <label for="descripcion">DescripciÃ³n</label>
           <textarea
             id="descripcion"
             formControlName="descripcion"
@@ -405,7 +368,7 @@
                   />
                 </svg>
                 <span>
-                  Arrastra una imagen aquí o
+                  Arrastra una imagen aquÃ­ o
                   <strong>selecciona un archivo</strong>
                 </span>
               </div>
@@ -413,7 +376,7 @@
           </label>
           <div class="productos-imagen-field__footer">
             <span class="rp-hint">
-              JPG, PNG, WEBP o GIF. Máximo 5 MB. Se guarda al registrar el producto.
+              JPG, PNG, WEBP o GIF. MÃ¡ximo 5 MB. Se guarda al registrar el producto.
             </span>
             @if (tieneImagen()) {
               <button
@@ -450,7 +413,7 @@
     @if (excelResult(); as result) {
       <div class="productos-excel-result">
         <p>
-          Se procesó el archivo:
+          Se procesÃ³ el archivo:
           <strong>{{ result.creados }}</strong> creado(s),
           <strong>{{ result.actualizados }}</strong> actualizado(s)
           @if (result.errores) {
@@ -483,13 +446,13 @@
     <div class="productos-excel-help">
       <p>
         Descargue el Excel, complete o edite las los campos que se deseen ediitar y vuelva a cargarlo.
-        <strong>id vacío</strong> crea un producto; <strong>id existente</strong> lo actualiza.
+        <strong>id vacÃ­o</strong> crea un producto; <strong>id existente</strong> lo actualiza.
       </p>
       <!--
       <ul>
         <li>Columnas: id, nombre_interno, codigo_sui, precio_compra, precio_venta, descripcion, activo</li>
-        <li>El nombre interno es obligatorio y se guarda en mayúsculas</li>
-        <li>codigo_sui debe coincidir con un código SUI activo, o dejarse vacío</li>
+        <li>El nombre interno es obligatorio y se guarda en mayÃºsculas</li>
+        <li>codigo_sui debe coincidir con un cÃ³digo SUI activo, o dejarse vacÃ­o</li>
         <li>activo: SI / NO. La imagen no se importa por Excel</li>
       </ul>-->
     </div>
@@ -518,7 +481,7 @@
             <br />
             Haz clic o arrastra otro archivo .xlsx para reemplazarlo
           } @else {
-            Arrastra el Excel aquí o
+            Arrastra el Excel aquÃ­ o
             <strong>selecciona un archivo .xlsx</strong>
           }
         </span>
@@ -538,355 +501,6 @@
         {{ importingExcel() ? 'Importando...' : 'Importar productos' }}
       </button>
     </div>
-    </div>
-  </app-rp-modal>
-}
-
-@if (showSiigoModal()) {
-  <app-rp-modal title="Sincronizar productos de Siigo" [wide]="true" (closed)="closeSiigoModal()">
-    <div class="productos-modal-form">
-      @if (siigoCatalogoError()) {
-        <div class="rp-alert rp-alert--error">{{ siigoCatalogoError() }}</div>
-      }
-      @if (siigoSyncResult(); as result) {
-        <div class="productos-excel-result">
-          <p>
-            Siigo Nube:
-            <strong>{{ result.consultados }}</strong> seleccionado(s),
-            <strong>{{ result.creados }}</strong> creado(s),
-            <strong>{{ result.actualizados }}</strong> actualizado(s)
-            @if (result.errores) {
-              y <strong>{{ result.errores }}</strong> error(es).
-            } @else {
-              sin errores.
-            }
-          </p>
-          @if (result.detalleErrores.length) {
-            <table class="rp-table">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of result.detalleErrores; track item.codigo + item.mensaje) {
-                  <tr>
-                    <td class="cell-mono">{{ item.codigo }}</td>
-                    <td class="cell-secondary">{{ item.mensaje }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          }
-        </div>
-      }
-
-      <p class="productos-siigo-modal__hint">
-        Marque los productos que desea crear o actualizar, o use
-        <strong>Buscar mi producto</strong> para localizar en Siigo uno que ya tenga en Shalom.
-        Se cargan de 100 en 100 para no saturar el cupo de Siigo (10 consultas por minuto en pruebas).
-      </p>
-
-      <div class="productos-siigo-modal__toolbar">
-        <button
-          type="button"
-          class="rp-btn rp-btn--secondary"
-          (click)="openSiigoBuscarLocalModal(); $event.stopPropagation()"
-          [disabled]="syncingSiigo()"
-        >
-          Buscar mi producto
-        </button>
-        <label class="productos-siigo-modal__check-all">
-          <input
-            type="checkbox"
-            [checked]="siigoTodosVisiblesSeleccionados()"
-            [indeterminate]="siigoAlgunoVisibleSeleccionado()"
-            [disabled]="loadingSiigoCatalogo() || syncingSiigo() || !siigoCatalogoFiltrado().length"
-            (change)="toggleSiigoVisibles($any($event.target).checked)"
-          />
-          Seleccionar visibles
-        </label>
-        <input
-          type="search"
-          class="productos__search"
-          placeholder="Buscar en los productos cargados..."
-          [value]="siigoBusqueda()"
-          (input)="onSiigoBusquedaChange($any($event.target).value)"
-          [disabled]="loadingSiigoCatalogo() || syncingSiigo()"
-        />
-        <span class="productos-siigo-modal__count">
-          {{ siigoSeleccionCount() }} seleccionados · {{ siigoCatalogo().length }} cargados
-          @if (siigoTotal()) {
-            de {{ siigoTotal() }}
-          }
-        </span>
-      </div>
-
-      @if (loadingSiigoCatalogo() && !siigoCatalogo().length) {
-        <p class="rp-loading">Consultando productos en Siigo Nube...</p>
-      } @else if (!siigoCatalogo().length && !siigoCatalogoError()) {
-        <p class="rp-loading">Siigo no devolvió productos.</p>
-      } @else {
-        <div class="productos-siigo-modal__table">
-          <table class="rp-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Código</th>
-                <th>Producto</th>
-                <th>Medida</th>
-                <th>Precio venta</th>
-                <th>Estado</th>
-                <th>Shalom</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of siigoCatalogoFiltrado(); track item.id) {
-                <tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      [checked]="siigoSeleccionado(item.id)"
-                      [disabled]="syncingSiigo()"
-                      (change)="toggleSiigoProducto(item.id, $any($event.target).checked)"
-                    />
-                  </td>
-                  <td class="cell-mono">{{ item.codigo || '—' }}</td>
-                  <td class="cell-primary">{{ item.nombre || '—' }}</td>
-                  <td class="cell-secondary">{{ tipoMedidaSiigoLabel(item.tipoMedida) }}</td>
-                  <td class="cell-secondary">{{ formatPrecio(item.precioVenta) }}</td>
-                  <td class="cell-secondary">{{ item.activo ? 'Activo' : 'Inactivo' }}</td>
-                  <td>
-                    @if (item.yaSincronizado) {
-                      <span class="rp-badge rp-badge--success">Shalom</span>
-                    } @else {
-                      <span class="cell-secondary">Nuevo</span>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        @if (siigoHayMas()) {
-          <div class="productos-siigo-modal__more">
-            <button
-              type="button"
-              class="rp-btn rp-btn--secondary"
-              (click)="cargarMasSiigo()"
-              [disabled]="loadingSiigoMas() || syncingSiigo() || loadingSiigoCatalogo()"
-            >
-              {{ loadingSiigoMas() ? 'Cargando...' : 'Cargar más' }}
-            </button>
-          </div>
-        }
-      }
-
-      <div class="rp-form-actions productos-modal-actions">
-        <button
-          type="button"
-          class="rp-btn rp-btn--ghost"
-          (click)="closeSiigoModal()"
-          [disabled]="syncingSiigo()"
-        >
-          Cerrar
-        </button>
-        <button
-          type="button"
-          class="rp-btn rp-btn--secondary"
-          (click)="openSiigoBuscarLocalModal(); $event.stopPropagation()"
-          [disabled]="syncingSiigo()"
-        >
-          Buscar mi producto
-        </button>
-        <button
-          type="button"
-          class="rp-btn rp-btn--primary"
-          (click)="confirmarSincronizarSiigo()"
-          [disabled]="syncingSiigo() || !siigoSeleccionCount()"
-        >
-          {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar seleccionados' }}
-        </button>
-      </div>
-    </div>
-  </app-rp-modal>
-}
-
-@if (showSiigoBuscarLocalModal()) {
-  <app-rp-modal
-    [title]="siigoBuscarLocalTitle()"
-    [wide]="true"
-    [stacked]="true"
-    (closed)="closeSiigoBuscarLocalModal()"
-  >
-    <div class="productos-modal-form">
-      @if (siigoBuscarLocalError()) {
-        <div class="rp-alert rp-alert--error">{{ siigoBuscarLocalError() }}</div>
-      }
-      @if (siigoBuscarLocalSyncResult(); as result) {
-        <div class="productos-excel-result">
-          <p>
-            Siigo Nube:
-            <strong>{{ result.consultados }}</strong> seleccionado(s),
-            <strong>{{ result.creados }}</strong> creado(s),
-            <strong>{{ result.actualizados }}</strong> actualizado(s)
-            @if (result.errores) {
-              y <strong>{{ result.errores }}</strong> error(es).
-            } @else {
-              sin errores.
-            }
-          </p>
-          @if (result.detalleErrores.length) {
-            <table class="rp-table">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of result.detalleErrores; track item.codigo + item.mensaje) {
-                  <tr>
-                    <td class="cell-mono">{{ item.codigo }}</td>
-                    <td class="cell-secondary">{{ item.mensaje }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          }
-        </div>
-      }
-
-      @if (siigoBuscarLocalProducto(); as local) {
-        @if (siigoBuscarLocalLoading()) {
-          <p class="rp-loading">Buscando "{{ local.nombreInterno }}" en Siigo Nube...</p>
-        } @else if (siigoBuscarLocalResult()) {
-          @if (siigoBuscarLocalResult(); as remoto) {
-            <div class="productos-siigo-local-result">
-              <div class="productos-siigo-local-card">
-                <span class="productos-siigo-local-card__label">En Shalom</span>
-                <strong>{{ local.nombreInterno }}</strong>
-                <span class="cell-mono">ID {{ local.idInterno || '—' }}</span>
-                @if (local.siigoId) {
-                  <span class="rp-badge rp-badge--success">Ya vinculado</span>
-                }
-              </div>
-              @if (remoto.existe) {
-                <div class="productos-siigo-local-card productos-siigo-local-card--siigo">
-                  <span class="productos-siigo-local-card__label">En Siigo</span>
-                  <strong>{{ remoto.nombre || '—' }}</strong>
-                  <span class="cell-mono">Código {{ remoto.codigo || local.idInterno }}</span>
-                </div>
-              } @else {
-                <div class="rp-alert rp-alert--error">
-                  No se encontró en Siigo un producto con el código "{{ local.idInterno }}".
-                </div>
-              }
-            </div>
-          }
-        }
-        <div class="rp-form-actions productos-modal-actions">
-          <button
-            type="button"
-            class="rp-btn rp-btn--ghost"
-            (click)="volverListadoSiigoLocal()"
-            [disabled]="siigoBuscarLocalLoading() || syncingSiigo()"
-          >
-            Volver al listado
-          </button>
-          @if (puedeSincronizarProductoBuscado()) {
-            <button
-              type="button"
-              class="rp-btn rp-btn--primary"
-              (click)="sincronizarProductoBuscado(); $event.stopPropagation()"
-              [disabled]="syncingSiigo() || siigoBuscarLocalLoading()"
-            >
-              {{ syncingSiigo() ? 'Sincronizando...' : 'Sincronizar este producto' }}
-            </button>
-          }
-        </div>
-      } @else {
-        <p class="productos-siigo-modal__hint">
-          Elija un producto de Shalom. Se buscará en Siigo por su ID interno y podrá sincronizarlo.
-        </p>
-        <div class="productos-siigo-modal__toolbar">
-          <input
-            type="search"
-            class="productos__search"
-            placeholder="Buscar por ID, nombre, SUI o descripción..."
-            [value]="siigoBuscarLocalQuery()"
-            (input)="onSiigoBuscarLocalQueryChange($any($event.target).value)"
-            [disabled]="siigoBuscarLocalLoading() || syncingSiigo()"
-          />
-          <span class="productos-siigo-modal__count">
-            {{ siigoProductosLocalesFiltrados().length }} producto(s)
-          </span>
-        </div>
-        <div class="productos-siigo-modal__table">
-          <table class="rp-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Producto</th>
-                <th>SUI</th>
-                <th>Siigo</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (producto of siigoProductosLocalesFiltrados(); track producto.id) {
-                <tr>
-                  <td class="cell-mono">{{ producto.idInterno || '—' }}</td>
-                  <td class="cell-primary">{{ producto.nombreInterno }}</td>
-                  <td class="cell-secondary">
-                    {{ producto.codigoCiiu || '—' }}
-                    @if (producto.nombreCiiu) {
-                      <span class="productos-ciiu-nombre">{{ producto.nombreCiiu }}</span>
-                    }
-                  </td>
-                  <td>
-                    @if (producto.siigoId) {
-                      <span class="rp-badge rp-badge--success">Vinculado</span>
-                    } @else {
-                      <span class="cell-secondary">No</span>
-                    }
-                  </td>
-                  <td class="cell-actions">
-                    <button
-                      type="button"
-                      class="rp-btn rp-btn--secondary"
-                      (click)="buscarProductoLocalEnSiigo(producto)"
-                      [disabled]="siigoBuscarLocalLoading() || syncingSiigo() || !producto.idInterno"
-                      [title]="
-                        producto.idInterno
-                          ? 'Buscar este ID en Siigo'
-                          : 'El producto no tiene ID interno'
-                      "
-                    >
-                      Buscar en Siigo
-                    </button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="5" class="rp-empty">No hay productos que coincidan con la búsqueda.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        <div class="rp-form-actions productos-modal-actions">
-          <button
-            type="button"
-            class="rp-btn rp-btn--ghost"
-            (click)="closeSiigoBuscarLocalModal()"
-            [disabled]="siigoBuscarLocalLoading() || syncingSiigo()"
-          >
-            Cerrar
-          </button>
-        </div>
-      }
     </div>
   </app-rp-modal>
 }
@@ -925,7 +539,7 @@
                   "
                 >
                   {{ formatPrecio(item.precioCompraAnterior) }}
-                  <span class="productos-historial__arrow">→</span>
+                  <span class="productos-historial__arrow">â†’</span>
                   {{ formatPrecio(item.precioCompraNuevo) }}
                 </span>
               </td>
@@ -937,7 +551,7 @@
                   "
                 >
                   {{ formatPrecio(item.precioVentaAnterior) }}
-                  <span class="productos-historial__arrow">→</span>
+                  <span class="productos-historial__arrow">â†’</span>
                   {{ formatPrecio(item.precioVentaNuevo) }}
                 </span>
               </td>
@@ -945,7 +559,7 @@
           } @empty {
             <tr>
               <td colspan="4" class="rp-empty">
-                Aún no hay cambios de precio registrados para este producto.
+                AÃºn no hay cambios de precio registrados para este producto.
               </td>
             </tr>
           }

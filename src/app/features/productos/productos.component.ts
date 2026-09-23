@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   Component,
   computed,
@@ -19,14 +19,9 @@ import {
   ProductoRequest,
   PRODUCTO_SECCIONES,
   ProductoSeccion,
-  ProductoSiigoCatalogo,
-  ProductoSiigoCodigo,
-  ProductoSiigoItem,
-  ProductoSiigoSyncResult,
 } from '../../core/models/producto.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
-import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { ProductosService } from '../../core/services/productos.service';
 import {
   formatCurrencyCo,
@@ -63,7 +58,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly productosService = inject(ProductosService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
-  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   private previewObjectUrl: string | null = null;
@@ -77,7 +71,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   );
 
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
-  readonly editingSiigoId = signal<string | null>(null);
 
   readonly imagenPendiente = signal<File | null>(null);
   readonly imagenGuardada = signal<string | null>(null);
@@ -121,26 +114,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly importingExcel = signal(false);
   readonly excelResult = signal<ProductoExcelImportResult | null>(null);
   readonly excelError = signal<string | null>(null);
-  readonly siigoActivo = signal(false);
-  readonly showSiigoModal = signal(false);
-  readonly loadingSiigoCatalogo = signal(false);
-  readonly loadingSiigoMas = signal(false);
-  readonly syncingSiigo = signal(false);
-  readonly siigoCatalogo = signal<ProductoSiigoItem[]>([]);
-  readonly siigoPagina = signal(1);
-  readonly siigoTotal = signal(0);
-  readonly siigoHayMas = signal(false);
-  readonly siigoSeleccion = signal<Set<string>>(new Set());
-  readonly siigoBusqueda = signal('');
-  readonly siigoCatalogoError = signal<string | null>(null);
-  readonly siigoSyncResult = signal<ProductoSiigoSyncResult | null>(null);
-  readonly showSiigoBuscarLocalModal = signal(false);
-  readonly siigoBuscarLocalQuery = signal('');
-  readonly siigoBuscarLocalProducto = signal<Producto | null>(null);
-  readonly siigoBuscarLocalResult = signal<ProductoSiigoCodigo | null>(null);
-  readonly siigoBuscarLocalLoading = signal(false);
-  readonly siigoBuscarLocalError = signal<string | null>(null);
-  readonly siigoBuscarLocalSyncResult = signal<ProductoSiigoSyncResult | null>(null);
 
   readonly showHistorial = signal(false);
   readonly historialProducto = signal<Producto | null>(null);
@@ -155,7 +128,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly historialTitle = computed(() => {
     const producto = this.historialProducto();
     return producto
-      ? `Historial de precios — ${producto.nombreInterno}`
+      ? `Historial de precios â€” ${producto.nombreInterno}`
       : 'Historial de precios';
   });
 
@@ -176,64 +149,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       }
       return this.matchesSearch(p, q);
     });
-  });
-
-  readonly siigoCatalogoFiltrado = computed(() => {
-    const q = this.siigoBusqueda().trim().toLowerCase();
-    if (!q) {
-      return this.siigoCatalogo();
-    }
-    return this.siigoCatalogo().filter((item) => {
-      const fields = [item.codigo, item.nombre, item.id];
-      return fields.some((value) => value?.toLowerCase().includes(q));
-    });
-  });
-
-  readonly siigoSeleccionCount = computed(() => this.siigoSeleccion().size);
-
-  readonly siigoTodosVisiblesSeleccionados = computed(() => {
-    const visibles = this.siigoCatalogoFiltrado();
-    if (!visibles.length) {
-      return false;
-    }
-    const sel = this.siigoSeleccion();
-    return visibles.every((item) => sel.has(item.id));
-  });
-
-  readonly siigoAlgunoVisibleSeleccionado = computed(() => {
-    const visibles = this.siigoCatalogoFiltrado();
-    const sel = this.siigoSeleccion();
-    const n = visibles.filter((item) => sel.has(item.id)).length;
-    return n > 0 && n < visibles.length;
-  });
-
-  readonly siigoProductosLocalesFiltrados = computed(() => {
-    const q = this.siigoBuscarLocalQuery().trim().toLowerCase();
-    return this.productos().filter((producto) => {
-      if (producto.estado === 'ELIMINADO') {
-        return false;
-      }
-      if (!q) {
-        return true;
-      }
-      return this.matchesSearch(producto, q);
-    });
-  });
-
-  readonly siigoBuscarLocalTitle = computed(() => {
-    const producto = this.siigoBuscarLocalProducto();
-    return producto
-      ? `Buscar en Siigo — ${producto.nombreInterno}`
-      : 'Buscar mi producto';
-  });
-
-  readonly puedeSincronizarProductoBuscado = computed(() => {
-    const remoto = this.siigoBuscarLocalResult();
-    const local = this.siigoBuscarLocalProducto();
-    if (!remoto?.existe) {
-      return false;
-    }
-    return !!(remoto.siigoId?.trim() || remoto.codigo?.trim() || local?.idInterno?.trim());
   });
 
   readonly form = this.fb.nonNullable.group({
@@ -257,7 +172,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadProductos();
     this.loadCodigosCiiu();
-    this.loadSiigoActivo();
   }
 
   ngOnDestroy(): void {
@@ -279,7 +193,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   openCreate(): void {
     this.editingId.set(null);
-    this.editingSiigoId.set(null);
     this.resetForm();
     this.actualizarValidacionIdInterno();
     this.showForm.set(true);
@@ -288,7 +201,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   openEdit(producto: Producto): void {
     this.editingId.set(producto.id);
-    this.editingSiigoId.set(producto.siigoId ?? null);
     this.resetImagenState();
     this.form.patchValue({
       idInterno: producto.idInterno ?? '',
@@ -310,7 +222,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
-    this.editingSiigoId.set(null);
     this.error.set(null);
     this.resetForm();
   }
@@ -326,269 +237,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
     }
     this.showExcelModal.set(false);
     this.resetExcelState();
-  }
-
-  openSiigoModal(): void {
-    if (this.loadingSiigoCatalogo() || this.syncingSiigo() || !this.siigoActivo()) {
-      return;
-    }
-    this.showSiigoModal.set(true);
-    this.siigoCatalogo.set([]);
-    this.siigoSeleccion.set(new Set());
-    this.siigoBusqueda.set('');
-    this.siigoCatalogoError.set(null);
-    this.siigoSyncResult.set(null);
-    this.siigoPagina.set(1);
-    this.siigoTotal.set(0);
-    this.siigoHayMas.set(false);
-    this.resetSiigoBuscarLocal();
-    this.cargarPaginaSiigo(1, false);
-  }
-
-  closeSiigoModal(): void {
-    if (this.syncingSiigo()) {
-      return;
-    }
-    this.showSiigoModal.set(false);
-    this.siigoCatalogo.set([]);
-    this.siigoSeleccion.set(new Set());
-    this.siigoBusqueda.set('');
-    this.siigoCatalogoError.set(null);
-    this.siigoHayMas.set(false);
-    this.resetSiigoBuscarLocal();
-  }
-
-  cargarMasSiigo(): void {
-    if (!this.siigoHayMas() || this.loadingSiigoMas() || this.loadingSiigoCatalogo() || this.syncingSiigo()) {
-      return;
-    }
-    this.cargarPaginaSiigo(this.siigoPagina() + 1, true);
-  }
-
-  private cargarPaginaSiigo(page: number, append: boolean): void {
-    this.siigoCatalogoError.set(null);
-    this.error.set(null);
-    if (append) {
-      this.loadingSiigoMas.set(true);
-    } else {
-      this.loadingSiigoCatalogo.set(true);
-    }
-    this.productosService.listarSiigo(page).subscribe({
-      next: (data) => this.applyPaginaSiigo(data, append),
-      error: (err) => {
-        this.loadingSiigoCatalogo.set(false);
-        this.loadingSiigoMas.set(false);
-        this.siigoCatalogoError.set(this.extractErrorMessage(err));
-      },
-    });
-  }
-
-  private applyPaginaSiigo(data: ProductoSiigoCatalogo, append: boolean): void {
-    const items = data.items ?? [];
-    if (append) {
-      const seen = new Set(this.siigoCatalogo().map((item) => item.id));
-      this.siigoCatalogo.set([...this.siigoCatalogo(), ...items.filter((item) => !seen.has(item.id))]);
-    } else {
-      const extras = this.siigoCatalogo().filter(
-        (item) =>
-          this.siigoSeleccion().has(item.id) && !items.some((nuevo) => nuevo.id === item.id)
-      );
-      this.siigoCatalogo.set([...extras, ...items]);
-    }
-    this.siigoPagina.set(data.page);
-    this.siigoTotal.set(data.total);
-    this.siigoHayMas.set(!!data.hayMas);
-    this.loadingSiigoCatalogo.set(false);
-    this.loadingSiigoMas.set(false);
-  }
-
-  onSiigoBusquedaChange(value: string): void {
-    this.siigoBusqueda.set(value);
-  }
-
-  siigoSeleccionado(id: string): boolean {
-    return this.siigoSeleccion().has(id);
-  }
-
-  toggleSiigoProducto(id: string, checked: boolean): void {
-    const next = new Set(this.siigoSeleccion());
-    if (checked) {
-      next.add(id);
-    } else {
-      next.delete(id);
-    }
-    this.siigoSeleccion.set(next);
-  }
-
-  toggleSiigoVisibles(checked: boolean): void {
-    const next = new Set(this.siigoSeleccion());
-    for (const item of this.siigoCatalogoFiltrado()) {
-      if (checked) {
-        next.add(item.id);
-      } else {
-        next.delete(item.id);
-      }
-    }
-    this.siigoSeleccion.set(next);
-  }
-
-  confirmarSincronizarSiigo(): void {
-    const ids = [...this.siigoSeleccion()];
-    if (!ids.length || this.syncingSiigo()) {
-      return;
-    }
-    this.syncingSiigo.set(true);
-    this.siigoSyncResult.set(null);
-    this.siigoCatalogoError.set(null);
-    this.productosService.sincronizarSiigo(ids).subscribe({
-      next: (result) => {
-        this.syncingSiigo.set(false);
-        this.siigoSyncResult.set(result);
-        this.loadProductos();
-        const seleccion = new Set(ids);
-        this.siigoCatalogo.set(
-          this.siigoCatalogo().map((item) =>
-            seleccion.has(item.id) ? { ...item, yaSincronizado: true } : item
-          )
-        );
-      },
-      error: (err) => {
-        this.syncingSiigo.set(false);
-        this.siigoCatalogoError.set(this.extractErrorMessage(err));
-      },
-    });
-  }
-
-  openSiigoBuscarLocalModal(): void {
-    if (this.syncingSiigo()) {
-      return;
-    }
-    this.siigoBuscarLocalQuery.set('');
-    this.siigoBuscarLocalProducto.set(null);
-    this.siigoBuscarLocalResult.set(null);
-    this.siigoBuscarLocalLoading.set(false);
-    this.siigoBuscarLocalError.set(null);
-    this.siigoBuscarLocalSyncResult.set(null);
-    this.showSiigoBuscarLocalModal.set(true);
-  }
-
-  closeSiigoBuscarLocalModal(): void {
-    if (this.siigoBuscarLocalLoading() || this.syncingSiigo()) {
-      return;
-    }
-    this.resetSiigoBuscarLocal();
-  }
-
-  onSiigoBuscarLocalQueryChange(value: string): void {
-    this.siigoBuscarLocalQuery.set(value);
-  }
-
-  volverListadoSiigoLocal(): void {
-    if (this.siigoBuscarLocalLoading() || this.syncingSiigo()) {
-      return;
-    }
-    this.siigoBuscarLocalProducto.set(null);
-    this.siigoBuscarLocalResult.set(null);
-    this.siigoBuscarLocalError.set(null);
-    this.siigoBuscarLocalSyncResult.set(null);
-  }
-
-  buscarProductoLocalEnSiigo(producto: Producto): void {
-    const code = producto.idInterno?.trim();
-    this.siigoBuscarLocalProducto.set(producto);
-    this.siigoBuscarLocalResult.set(null);
-    this.siigoBuscarLocalSyncResult.set(null);
-    this.siigoBuscarLocalError.set(null);
-    if (!code) {
-      this.siigoBuscarLocalError.set(
-        'Este producto no tiene ID interno para buscarlo en Siigo.'
-      );
-      return;
-    }
-    this.siigoBuscarLocalLoading.set(true);
-    this.productosService.consultarCodigoSiigo(code).subscribe({
-      next: (res) => {
-        this.siigoBuscarLocalLoading.set(false);
-        this.siigoBuscarLocalResult.set(res);
-        if (res.existe && res.siigoId) {
-          this.incorporarProductoSiigo(
-            {
-              id: res.siigoId,
-              codigo: res.codigo,
-              nombre: res.nombre,
-              activo: true,
-              yaSincronizado: this.productos().some((item) => item.siigoId === res.siigoId),
-            },
-            true
-          );
-        }
-      },
-      error: (err) => {
-        this.siigoBuscarLocalLoading.set(false);
-        this.siigoBuscarLocalError.set(this.extractErrorMessage(err));
-      },
-    });
-  }
-
-  sincronizarProductoBuscado(): void {
-    const remoto = this.siigoBuscarLocalResult();
-    const local = this.siigoBuscarLocalProducto();
-    const siigoId = remoto?.siigoId?.trim();
-    const code = remoto?.codigo?.trim() || local?.idInterno?.trim();
-    if ((!siigoId && !code) || this.syncingSiigo() || this.siigoBuscarLocalLoading()) {
-      if (!siigoId && !code) {
-        this.siigoBuscarLocalError.set(
-          'No se pudo identificar el producto en Siigo para sincronizarlo.'
-        );
-      }
-      return;
-    }
-    this.syncingSiigo.set(true);
-    this.siigoBuscarLocalError.set(null);
-    this.siigoBuscarLocalSyncResult.set(null);
-    this.productosService
-      .sincronizarSiigo(code ? [] : siigoId ? [siigoId] : [], code ? [code] : [])
-      .subscribe({
-      next: (result) => {
-        this.syncingSiigo.set(false);
-        this.siigoBuscarLocalSyncResult.set(result);
-        this.siigoSyncResult.set(result);
-        this.loadProductos();
-        if (siigoId) {
-          this.siigoCatalogo.set(
-            this.siigoCatalogo().map((item) =>
-              item.id === siigoId ? { ...item, yaSincronizado: true } : item
-            )
-          );
-        }
-      },
-      error: (err) => {
-        this.syncingSiigo.set(false);
-        this.siigoBuscarLocalError.set(this.extractErrorMessage(err));
-      },
-    });
-  }
-
-  private incorporarProductoSiigo(item: ProductoSiigoItem, seleccionar: boolean): void {
-    if (!this.siigoCatalogo().some((actual) => actual.id === item.id)) {
-      this.siigoCatalogo.set([item, ...this.siigoCatalogo()]);
-    }
-    if (!seleccionar) {
-      return;
-    }
-    const next = new Set(this.siigoSeleccion());
-    next.add(item.id);
-    this.siigoSeleccion.set(next);
-  }
-
-  private resetSiigoBuscarLocal(): void {
-    this.showSiigoBuscarLocalModal.set(false);
-    this.siigoBuscarLocalQuery.set('');
-    this.siigoBuscarLocalProducto.set(null);
-    this.siigoBuscarLocalResult.set(null);
-    this.siigoBuscarLocalLoading.set(false);
-    this.siigoBuscarLocalError.set(null);
-    this.siigoBuscarLocalSyncResult.set(null);
   }
 
   downloadExcel(): void {
@@ -817,7 +465,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.confirmDialog
       .confirm({
         title: 'Eliminar producto',
-        message: `¿Eliminar el producto "${producto.nombreInterno}"? Quedará marcado como eliminado y no se borrará del historial.`,
+        message: `Â¿Eliminar el producto "${producto.nombreInterno}"? QuedarÃ¡ marcado como eliminado y no se borrarÃ¡ del historial.`,
         confirmLabel: 'Eliminar',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',
@@ -857,13 +505,9 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   formatPrecio(value?: number | null): string {
     if (value == null) {
-      return '—';
+      return 'â€”';
     }
     return formatCurrencyCo(value);
-  }
-
-  tipoMedidaSiigoLabel(tipo?: 'PESO' | 'UNIDAD' | null): string {
-    return tipo === 'UNIDAD' ? 'Unidad' : 'Peso';
   }
 
   onPrecioInput(campo: 'precioCompra' | 'precioVenta', event: Event): void {
@@ -904,12 +548,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadSiigoActivo(): void {
-    this.configuracionSiigoService.get().subscribe({
-      next: (config) => this.siigoActivo.set(!!config.activo),
-      error: () => this.siigoActivo.set(false),
-    });
-  }
 
   private matchesSearch(producto: Producto, q: string): boolean {
     const fields = [
@@ -1039,6 +677,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       const first = Object.values(body.errors)[0];
       if (first) return first;
     }
-    return body?.message ?? 'Ocurrió un error al procesar la solicitud.';
+    return body?.message ?? 'OcurriÃ³ un error al procesar la solicitud.';
   }
 }
