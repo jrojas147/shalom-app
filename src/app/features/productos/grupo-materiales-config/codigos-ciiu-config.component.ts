@@ -9,8 +9,10 @@ import {
   CodigoCiiuSiigoSyncResult,
 } from '../../../core/models/codigo-ciiu.model';
 import { Categoria } from '../../../core/models/categoria.model';
+import { UnidadMedida } from '../../../core/models/unidad-medida.model';
 import { CategoriasService } from '../../../core/services/categorias.service';
 import { CodigosCiiuService } from '../../../core/services/codigos-ciiu.service';
+import { UnidadesMedidaService } from '../../../core/services/unidades-medida.service';
 import { RpConfirmDialogService } from '../../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../../shared/components/rp-modal/rp-modal.component';
 
@@ -25,9 +27,11 @@ export class CodigosCiiuConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly categoriasService = inject(CategoriasService);
+  private readonly unidadesMedidaService = inject(UnidadesMedidaService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly categorias = signal<Categoria[]>([]);
+  readonly unidades = signal<UnidadMedida[]>([]);
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -53,6 +57,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
     codigo: ['', [Validators.required, Validators.maxLength(20)]],
     nombre: ['', [Validators.required, Validators.maxLength(255)]],
     categoriaId: [null as number | null, Validators.required],
+    unidadMedidaId: [null as number | null, Validators.required],
   });
 
   readonly siigoCatalogoFiltrado = computed(() => {
@@ -87,6 +92,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
   ngOnInit(): void {
     this.loadCodigosCiiu();
     this.loadCategorias();
+    this.loadUnidades();
   }
 
   loadCodigosCiiu(): void {
@@ -111,13 +117,19 @@ export class CodigosCiiuConfigComponent implements OnInit {
       codigo: item.codigo,
       nombre: item.nombre,
       categoriaId: item.categoriaId ?? null,
+      unidadMedidaId: item.unidadMedidaId ?? this.defaultUnidadId(),
     });
     this.error.set(null);
   }
 
   cancelEdit(): void {
     this.editingId.set(null);
-    this.form.reset({ codigo: '', nombre: '', categoriaId: null });
+    this.form.reset({
+      codigo: '',
+      nombre: '',
+      categoriaId: null,
+      unidadMedidaId: this.defaultUnidadId(),
+    });
     this.error.set(null);
   }
 
@@ -132,6 +144,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
       codigo: raw.codigo.trim(),
       nombre: raw.nombre.trim(),
       categoriaId: raw.categoriaId,
+      unidadMedidaId: raw.unidadMedidaId,
     };
 
     this.saving.set(true);
@@ -337,6 +350,24 @@ export class CodigosCiiuConfigComponent implements OnInit {
         this.syncingSiigo.set(false);
         this.siigoCatalogoError.set(err.error?.message ?? 'No se pudieron sincronizar los productos.');
       },
+    });
+  }
+
+  private defaultUnidadId(): number | null {
+    const kg = this.unidades().find((item) => item.codigoSiigo.toUpperCase() === 'KGM');
+    return kg?.id ?? this.unidades()[0]?.id ?? null;
+  }
+
+  private loadUnidades(): void {
+    this.unidadesMedidaService.getAll().subscribe({
+      next: (data) => {
+        const vigentes = (data ?? []).filter((item) => item.estado === 'ACTIVO');
+        this.unidades.set(vigentes);
+        if (this.form.controls.unidadMedidaId.value == null) {
+          this.form.patchValue({ unidadMedidaId: this.defaultUnidadId() });
+        }
+      },
+      error: () => this.unidades.set([]),
     });
   }
 

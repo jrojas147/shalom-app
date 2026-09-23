@@ -7,6 +7,9 @@ export interface CodigoCiiu {
   categoriaId?: number | null;
   categoriaCodigo?: string | null;
   categoriaNombre?: string | null;
+  unidadMedidaId?: number | null;
+  unidadMedidaCodigo?: string | null;
+  unidadMedidaNombre?: string | null;
   siigoAccountGroupId?: number | null;
   siigoId?: string | null;
   estado: CodigoCiiuEstado;
@@ -17,6 +20,7 @@ export interface CodigoCiiuRequest {
   codigo: string;
   nombre: string;
   categoriaId?: number | null;
+  unidadMedidaId?: number | null;
 }
 
 export interface CodigoCiiuSiigoCodigo {

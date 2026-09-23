@@ -26,7 +26,7 @@
 
 .param-block__add-row {
   display: grid;
-  grid-template-columns: 120px 1fr minmax(10rem, 16rem) auto auto;
+  grid-template-columns: 110px 1fr minmax(8rem, 12rem) minmax(9rem, 13rem) auto auto;
   gap: var(--spacing-sm);
   align-items: start;
   margin-bottom: var(--spacing-md);

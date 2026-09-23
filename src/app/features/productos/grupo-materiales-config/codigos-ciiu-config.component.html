@@ -42,6 +42,12 @@
         <option [ngValue]="cat.id">{{ cat.codigo }} — {{ cat.nombre }}</option>
       }
     </select>
+    <select formControlName="unidadMedidaId" aria-label="Unidad de medida Siigo">
+      <option [ngValue]="null">Unidad Siigo</option>
+      @for (unidad of unidades(); track unidad.id) {
+        <option [ngValue]="unidad.id">{{ unidad.codigoSiigo }} — {{ unidad.nombre }}</option>
+      }
+    </select>
     <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
       {{ saving() ? 'Guardando...' : editingId() ? 'Guardar' : 'Agregar' }}
     </button>
@@ -52,6 +58,11 @@
   @if (!categorias().length) {
     <p class="param-block__desc">
       Cree primero una categoría en el paso Categorías para asociarla al grupo de materiales.
+    </p>
+  }
+  @if (!unidades().length) {
+    <p class="param-block__desc">
+      Ejecute el script 61 de unidades de medida. Siigo exige el código DIAN (unit), no el id interno.
     </p>
   }
 
@@ -67,6 +78,9 @@
               <span class="param-block__item-meta">{{ item.nombre }}</span>
               @if (item.categoriaNombre) {
                 <span class="param-block__item-meta">{{ item.categoriaNombre }}</span>
+              }
+              @if (item.unidadMedidaCodigo) {
+                <span class="param-block__item-meta">{{ item.unidadMedidaCodigo }}</span>
               }
               @if (item.siigoId) {
                 <span class="rp-badge rp-badge--success">Siigo</span>
