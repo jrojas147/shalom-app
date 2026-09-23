@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   Component,
   computed,
@@ -128,7 +128,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
   readonly historialTitle = computed(() => {
     const producto = this.historialProducto();
     return producto
-      ? `Historial de precios â€” ${producto.nombreInterno}`
+      ? `Historial de precios — ${producto.nombreInterno}`
       : 'Historial de precios';
   });
 
@@ -465,7 +465,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
     this.confirmDialog
       .confirm({
         title: 'Eliminar producto',
-        message: `Â¿Eliminar el producto "${producto.nombreInterno}"? QuedarÃ¡ marcado como eliminado y no se borrarÃ¡ del historial.`,
+        message: `¿Eliminar el producto "${producto.nombreInterno}"? Quedará marcado como eliminado y no se borrará del historial.`,
         confirmLabel: 'Eliminar',
         cancelLabel: 'Cancelar',
         confirmVariant: 'danger',
@@ -505,7 +505,7 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   formatPrecio(value?: number | null): string {
     if (value == null) {
-      return 'â€”';
+      return '—';
     }
     return formatCurrencyCo(value);
   }
@@ -677,6 +677,6 @@ export class ProductosComponent implements OnInit, OnDestroy {
       const first = Object.values(body.errors)[0];
       if (first) return first;
     }
-    return body?.message ?? 'OcurriÃ³ un error al procesar la solicitud.';
+    return body?.message ?? 'Ocurrió un error al procesar la solicitud.';
   }
 }

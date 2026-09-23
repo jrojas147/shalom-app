@@ -1,8 +1,8 @@
-﻿<div class="productos">
+<div class="productos">
   <header class="rp-page-header">
     <div>
       <h1>Productos</h1>
-      <p>Seleccione una secciÃ³n para gestionar la informaciÃ³n del producto.</p>
+      <p>Seleccione una sección para gestionar la información del producto.</p>
     </div>
   </header>
 
@@ -61,7 +61,7 @@
       <input
         type="search"
         class="productos__search"
-        placeholder="Buscar por ID, nombre, SUI o descripciÃ³n..."
+        placeholder="Buscar por ID, nombre, SUI o descripción..."
         [value]="busqueda()"
         (input)="onBusquedaChange($any($event.target).value)"
       />
@@ -73,9 +73,9 @@
           [value]="codigoCiiuFiltro() ?? ''"
           (change)="onCodigoCiiuFiltro($any($event.target).value)"
         >
-          <option value="">Todos los cÃ³digos SUI</option>
+          <option value="">Todos los códigos SUI</option>
           @for (ciiu of codigosCiiu(); track ciiu.id) {
-            <option [value]="ciiu.id">{{ ciiu.codigo }} â€” {{ ciiu.nombre }}</option>
+            <option [value]="ciiu.id">{{ ciiu.codigo }} — {{ ciiu.nombre }}</option>
           }
         </select>
       </div>
@@ -99,7 +99,7 @@
         <tbody>
           @for (producto of productosFiltrados(); track producto.id) {
             <tr>
-              <td class="cell-mono productos-id">{{ producto.idInterno || 'â€”' }}</td>
+              <td class="cell-mono productos-id">{{ producto.idInterno || '—' }}</td>
               <td>
                 @if (productoImagenUrl(producto.imagen); as imgUrl) {
                   <span class="productos-list-thumb">
@@ -110,7 +110,7 @@
                     />
                   </span>
                 } @else {
-                  <span class="row-icon" aria-hidden="true">ðŸ“¦</span>
+                  <span class="row-icon" aria-hidden="true">📦</span>
                 }
                 <span class="cell-primary">{{ producto.nombreInterno }}</span>
                 @if (producto.tipoMedida === 'UNIDAD') {
@@ -124,7 +124,7 @@
                     <span class="productos-ciiu-nombre">{{ producto.nombreCiiu }}</span>
                   }
                 } @else {
-                  â€”
+                  —
                 }
               </td>
               <td class="cell-secondary">
@@ -156,7 +156,7 @@
                   (click)="openHistorial(producto)"
                   title="Historial de precios"
                 >
-                  â±
+                  ⏱
                 </button>
                 <button
                   type="button"
@@ -164,7 +164,7 @@
                   (click)="openEdit(producto)"
                   title="Editar"
                 >
-                  âœŽ
+                  ✎
                 </button>
                 <button
                   type="button"
@@ -172,7 +172,7 @@
                   (click)="deleteProducto(producto)"
                   title="Eliminar"
                 >
-                  ðŸ—‘
+                  🗑
                 </button>
               </td>
             </tr>
@@ -181,7 +181,7 @@
               <td colspan="7" class="rp-empty">
                 {{
                   busqueda()
-                    ? 'No hay productos que coincidan con la bÃºsqueda'
+                    ? 'No hay productos que coincidan con la búsqueda'
                     : 'No hay productos registrados'
                 }}
               </td>
@@ -264,12 +264,12 @@
         </div>
 
         <div class="rp-field rp-field--full">
-          <label for="codigoCiiuId">Codigo SUI</label>
+          <label for="codigoCiiuId">Código SUI</label>
           <select id="codigoCiiuId" formControlName="codigoCiiuId">
-            <option [ngValue]="null">Sin cÃ³digo SUI</option>
+            <option [ngValue]="null">Sin código SUI</option>
             @for (ciiu of codigosCiiu(); track ciiu.id) {
               <option [ngValue]="ciiu.id">
-                {{ ciiu.codigo }} â€” {{ ciiu.nombre }}
+                {{ ciiu.codigo }} — {{ ciiu.nombre }}
               </option>
             }
           </select>
@@ -308,7 +308,7 @@
         </div>
 
         <div class="rp-field rp-field--full">
-          <label for="descripcion">DescripciÃ³n</label>
+          <label for="descripcion">Descripción</label>
           <textarea
             id="descripcion"
             formControlName="descripcion"
@@ -368,7 +368,7 @@
                   />
                 </svg>
                 <span>
-                  Arrastra una imagen aquÃ­ o
+                  Arrastra una imagen aquí o
                   <strong>selecciona un archivo</strong>
                 </span>
               </div>
@@ -376,7 +376,7 @@
           </label>
           <div class="productos-imagen-field__footer">
             <span class="rp-hint">
-              JPG, PNG, WEBP o GIF. MÃ¡ximo 5 MB. Se guarda al registrar el producto.
+              JPG, PNG, WEBP o GIF. Máximo 5 MB. Se guarda al registrar el producto.
             </span>
             @if (tieneImagen()) {
               <button
@@ -413,7 +413,7 @@
     @if (excelResult(); as result) {
       <div class="productos-excel-result">
         <p>
-          Se procesÃ³ el archivo:
+          Se procesó el archivo:
           <strong>{{ result.creados }}</strong> creado(s),
           <strong>{{ result.actualizados }}</strong> actualizado(s)
           @if (result.errores) {
@@ -446,13 +446,13 @@
     <div class="productos-excel-help">
       <p>
         Descargue el Excel, complete o edite las los campos que se deseen ediitar y vuelva a cargarlo.
-        <strong>id vacÃ­o</strong> crea un producto; <strong>id existente</strong> lo actualiza.
+        <strong>id vacío</strong> crea un producto; <strong>id existente</strong> lo actualiza.
       </p>
       <!--
       <ul>
         <li>Columnas: id, nombre_interno, codigo_sui, precio_compra, precio_venta, descripcion, activo</li>
-        <li>El nombre interno es obligatorio y se guarda en mayÃºsculas</li>
-        <li>codigo_sui debe coincidir con un cÃ³digo SUI activo, o dejarse vacÃ­o</li>
+        <li>El nombre interno es obligatorio y se guarda en mayúsculas</li>
+        <li>codigo_sui debe coincidir con un código SUI activo, o dejarse vacío</li>
         <li>activo: SI / NO. La imagen no se importa por Excel</li>
       </ul>-->
     </div>
@@ -481,7 +481,7 @@
             <br />
             Haz clic o arrastra otro archivo .xlsx para reemplazarlo
           } @else {
-            Arrastra el Excel aquÃ­ o
+            Arrastra el Excel aquí o
             <strong>selecciona un archivo .xlsx</strong>
           }
         </span>
@@ -539,7 +539,7 @@
                   "
                 >
                   {{ formatPrecio(item.precioCompraAnterior) }}
-                  <span class="productos-historial__arrow">â†’</span>
+                  <span class="productos-historial__arrow">→</span>
                   {{ formatPrecio(item.precioCompraNuevo) }}
                 </span>
               </td>
@@ -551,7 +551,7 @@
                   "
                 >
                   {{ formatPrecio(item.precioVentaAnterior) }}
-                  <span class="productos-historial__arrow">â†’</span>
+                  <span class="productos-historial__arrow">→</span>
                   {{ formatPrecio(item.precioVentaNuevo) }}
                 </span>
               </td>
@@ -559,7 +559,7 @@
           } @empty {
             <tr>
               <td colspan="4" class="rp-empty">
-                AÃºn no hay cambios de precio registrados para este producto.
+                Aún no hay cambios de precio registrados para este producto.
               </td>
             </tr>
           }
