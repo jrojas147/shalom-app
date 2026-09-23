@@ -1,11 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import {
   Categoria,
   CategoriaRequest,
-  CategoriaSiigoItem,
+  CategoriaSiigoCatalogo,
   CategoriaSiigoSyncResult,
 } from '../models/categoria.model';
 
@@ -30,8 +30,9 @@ export class CategoriasService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  listarSiigo(): Observable<CategoriaSiigoItem[]> {
-    return this.http.get<CategoriaSiigoItem[]>(`${this.baseUrl}/siigo`);
+  listarSiigo(page = 1): Observable<CategoriaSiigoCatalogo> {
+    const params = new HttpParams().set('page', String(page));
+    return this.http.get<CategoriaSiigoCatalogo>(`${this.baseUrl}/siigo`, { params });
   }
 
   sincronizarSiigo(ids: number[]): Observable<CategoriaSiigoSyncResult> {

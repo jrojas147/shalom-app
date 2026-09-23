@@ -3,11 +3,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Categoria,
   CategoriaRequest,
+  CategoriaSiigoCatalogo,
   CategoriaSiigoItem,
   CategoriaSiigoSyncResult,
 } from '../../../core/models/categoria.model';
 import { CategoriasService } from '../../../core/services/categorias.service';
-import { ConfiguracionSiigoService } from '../../../core/services/configuracion-siigo.service';
 import { RpConfirmDialogService } from '../../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../../shared/components/rp-modal/rp-modal.component';
 
@@ -21,7 +21,6 @@ import { RpModalComponent } from '../../../shared/components/rp-modal/rp-modal.c
 export class CategoriasConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly categoriasService = inject(CategoriasService);
-  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly categorias = signal<Categoria[]>([]);
@@ -30,7 +29,6 @@ export class CategoriasConfigComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly editingId = signal<number | null>(null);
 
-  readonly siigoActivo = signal(false);
   readonly showSiigoModal = signal(false);
   readonly loadingSiigoCatalogo = signal(false);
   readonly syncingSiigo = signal(false);
@@ -39,6 +37,10 @@ export class CategoriasConfigComponent implements OnInit {
   readonly siigoBusqueda = signal('');
   readonly siigoCatalogoError = signal<string | null>(null);
   readonly siigoSyncResult = signal<CategoriaSiigoSyncResult | null>(null);
+  readonly siigoPagina = signal(1);
+  readonly siigoTotal = signal(0);
+  readonly siigoHayMas = signal(false);
+  readonly loadingSiigoMas = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     codigo: ['', [Validators.required, Validators.maxLength(20)]],
@@ -76,7 +78,6 @@ export class CategoriasConfigComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategorias();
-    this.loadSiigoActivo();
   }
 
   loadCategorias(): void {
@@ -162,7 +163,7 @@ export class CategoriasConfigComponent implements OnInit {
   }
 
   openSiigoModal(): void {
-    if (this.loadingSiigoCatalogo() || this.syncingSiigo() || !this.siigoActivo()) {
+    if (this.loadingSiigoCatalogo() || this.syncingSiigo()) {
       return;
     }
     this.showSiigoModal.set(true);
@@ -171,19 +172,10 @@ export class CategoriasConfigComponent implements OnInit {
     this.siigoBusqueda.set('');
     this.siigoCatalogoError.set(null);
     this.siigoSyncResult.set(null);
-    this.loadingSiigoCatalogo.set(true);
-    this.categoriasService.listarSiigo().subscribe({
-      next: (data) => {
-        this.siigoCatalogo.set(data ?? []);
-        this.loadingSiigoCatalogo.set(false);
-      },
-      error: (err) => {
-        this.loadingSiigoCatalogo.set(false);
-        this.siigoCatalogoError.set(
-          err.error?.message ?? 'No se pudieron consultar las categorías de Siigo.'
-        );
-      },
-    });
+    this.siigoPagina.set(1);
+    this.siigoTotal.set(0);
+    this.siigoHayMas.set(false);
+    this.cargarPaginaSiigo(1, false);
   }
 
   closeSiigoModal(): void {
@@ -195,6 +187,48 @@ export class CategoriasConfigComponent implements OnInit {
     this.siigoSeleccion.set(new Set());
     this.siigoBusqueda.set('');
     this.siigoCatalogoError.set(null);
+    this.siigoHayMas.set(false);
+  }
+
+  cargarMasSiigo(): void {
+    if (!this.siigoHayMas() || this.loadingSiigoMas() || this.loadingSiigoCatalogo() || this.syncingSiigo()) {
+      return;
+    }
+    this.cargarPaginaSiigo(this.siigoPagina() + 1, true);
+  }
+
+  private cargarPaginaSiigo(page: number, append: boolean): void {
+    this.siigoCatalogoError.set(null);
+    if (append) {
+      this.loadingSiigoMas.set(true);
+    } else {
+      this.loadingSiigoCatalogo.set(true);
+    }
+    this.categoriasService.listarSiigo(page).subscribe({
+      next: (data) => this.applyPaginaSiigo(data, append),
+      error: (err) => {
+        this.loadingSiigoCatalogo.set(false);
+        this.loadingSiigoMas.set(false);
+        this.siigoCatalogoError.set(
+          err.error?.message ?? 'No se pudieron consultar las categorías de Siigo.'
+        );
+      },
+    });
+  }
+
+  private applyPaginaSiigo(data: CategoriaSiigoCatalogo, append: boolean): void {
+    const items = data.items ?? [];
+    if (append) {
+      const seen = new Set(this.siigoCatalogo().map((item) => item.id));
+      this.siigoCatalogo.set([...this.siigoCatalogo(), ...items.filter((item) => !seen.has(item.id))]);
+    } else {
+      this.siigoCatalogo.set(items);
+    }
+    this.siigoPagina.set(data.page);
+    this.siigoTotal.set(data.total);
+    this.siigoHayMas.set(!!data.hayMas);
+    this.loadingSiigoCatalogo.set(false);
+    this.loadingSiigoMas.set(false);
   }
 
   onSiigoBusquedaChange(value: string): void {
@@ -256,10 +290,4 @@ export class CategoriasConfigComponent implements OnInit {
     });
   }
 
-  private loadSiigoActivo(): void {
-    this.configuracionSiigoService.get().subscribe({
-      next: (config) => this.siigoActivo.set(!!config.activo),
-      error: () => this.siigoActivo.set(false),
-    });
-  }
 }

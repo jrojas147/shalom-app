@@ -209,6 +209,12 @@
   margin-left: auto;
 }
 
+.ciiu-siigo-modal__more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-sm);
+}
+
 .ciiu-siigo-modal__table {
   max-height: min(45vh, 22rem);
   overflow: auto;

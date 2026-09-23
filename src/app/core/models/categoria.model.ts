@@ -22,6 +22,14 @@ export interface CategoriaSiigoItem {
   yaSincronizado: boolean;
 }
 
+export interface CategoriaSiigoCatalogo {
+  page: number;
+  pageSize: number;
+  total: number;
+  hayMas: boolean;
+  items: CategoriaSiigoItem[];
+}
+
 export interface CategoriaSiigoSyncError {
   codigo: string;
   mensaje: string;
