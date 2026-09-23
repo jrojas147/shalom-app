@@ -32,8 +32,9 @@ export class ConfiguracionSiigoService {
     return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/documentos`, { params });
   }
 
-  mediosPago(): Observable<SiigoCatalogoItem[]> {
-    return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/medios-pago`);
+  mediosPago(documentType = 'FV'): Observable<SiigoCatalogoItem[]> {
+    const params = new HttpParams().set('documentType', documentType);
+    return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/medios-pago`, { params });
   }
 
   vendedores(): Observable<SiigoCatalogoItem[]> {

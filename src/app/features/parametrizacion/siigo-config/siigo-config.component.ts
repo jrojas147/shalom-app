@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { catchError, forkJoin, of } from 'rxjs';
 import { SiigoCatalogoItem } from '../../../core/models/configuracion-siigo.model';
 import { ConfiguracionSiigoService } from '../../../core/services/configuracion-siigo.service';
 
@@ -25,12 +26,16 @@ export class SiigoConfigComponent implements OnInit {
   readonly credentialsConfigured = signal(false);
   readonly documentos = signal<SiigoCatalogoItem[]>([]);
   readonly mediosPago = signal<SiigoCatalogoItem[]>([]);
+  readonly documentosDs = signal<SiigoCatalogoItem[]>([]);
+  readonly mediosPagoDs = signal<SiigoCatalogoItem[]>([]);
   readonly vendedores = signal<SiigoCatalogoItem[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     activo: [false],
     documentTypeId: [null as number | null],
     paymentTypeId: [null as number | null],
+    documentTypeDsId: [null as number | null],
+    paymentTypeDsId: [null as number | null],
     sellerId: [null as number | null],
   });
 
@@ -51,6 +56,8 @@ export class SiigoConfigComponent implements OnInit {
           activo: data.activo,
           documentTypeId: data.documentTypeId ?? null,
           paymentTypeId: data.paymentTypeId ?? null,
+          documentTypeDsId: data.documentTypeDsId ?? null,
+          paymentTypeDsId: data.paymentTypeDsId ?? null,
           sellerId: data.sellerId ?? null,
         });
         this.loading.set(false);
@@ -88,6 +95,8 @@ export class SiigoConfigComponent implements OnInit {
         activo: raw.activo,
         documentTypeId: raw.documentTypeId,
         paymentTypeId: raw.paymentTypeId,
+        documentTypeDsId: raw.documentTypeDsId,
+        paymentTypeDsId: raw.paymentTypeDsId,
         sellerId: raw.sellerId,
       })
       .subscribe({
@@ -127,33 +136,47 @@ export class SiigoConfigComponent implements OnInit {
 
   private cargarCatalogos(): void {
     this.loadingCatalogos.set(true);
-    this.configuracionService.documentos('FV').subscribe({
-      next: (docs) => {
-        this.documentos.set(docs ?? []);
-        this.configuracionService.mediosPago().subscribe({
-          next: (medios) => {
-            this.mediosPago.set(medios ?? []);
-            this.configuracionService.vendedores().subscribe({
-              next: (vendedores) => {
-                this.vendedores.set(vendedores ?? []);
-                this.loadingCatalogos.set(false);
-              },
-              error: () => {
-                this.vendedores.set([]);
-                this.loadingCatalogos.set(false);
-              },
-            });
-          },
-          error: () => {
-            this.mediosPago.set([]);
-            this.loadingCatalogos.set(false);
-          },
-        });
+    const empty = of([] as SiigoCatalogoItem[]);
+    forkJoin({
+      documentos: this.configuracionService.documentos('FV').pipe(catchError(() => empty)),
+      mediosPago: this.configuracionService.mediosPago('FV').pipe(catchError(() => empty)),
+      documentosDs: this.configuracionService.documentos('DS').pipe(catchError(() => empty)),
+      mediosPagoDs: this.configuracionService.mediosPago('DS').pipe(catchError(() => empty)),
+      vendedores: this.configuracionService.vendedores().pipe(catchError(() => empty)),
+    }).subscribe({
+      next: (data) => {
+        this.documentos.set(data.documentos ?? []);
+        this.mediosPago.set(data.mediosPago ?? []);
+        this.documentosDs.set(data.documentosDs ?? []);
+        this.mediosPagoDs.set(data.mediosPagoDs ?? []);
+        this.vendedores.set(data.vendedores ?? []);
+        this.aplicarCreditoPorDefecto(data.mediosPagoDs ?? []);
+        this.loadingCatalogos.set(false);
       },
       error: () => {
-        this.documentos.set([]);
         this.loadingCatalogos.set(false);
       },
     });
+  }
+
+  private aplicarCreditoPorDefecto(medios: SiigoCatalogoItem[]): void {
+    const credito = medios.find((item) => this.esCredito(item.nombre));
+    if (!credito) {
+      return;
+    }
+    const actual = this.form.controls.paymentTypeDsId.value;
+    const vigente = medios.some((item) => item.id === actual && this.esCredito(item.nombre));
+    if (!vigente) {
+      this.form.controls.paymentTypeDsId.setValue(credito.id);
+    }
+  }
+
+  private esCredito(nombre: string | null | undefined): boolean {
+    const n = (nombre ?? '')
+      .normalize('NFD')
+      .replace(/\p{M}+/gu, '')
+      .trim()
+      .toLowerCase();
+    return n === 'credito' || n.startsWith('credito ');
   }
 }

@@ -5,7 +5,7 @@
     <a href="https://developers.siigolatam.com/docs/siigoapi/" target="_blank" rel="noopener">
       Siigo API
     </a>
-    para facturación y contabilidad. El usuario y el access key se definen en el servidor
+    para facturación, documento soporte de compras y contabilidad. El usuario y el access key se definen en el servidor
     (<code>SIIGO_USERNAME</code> y <code>SIIGO_ACCESS_KEY</code> en <code>.env</code>), no en esta
     pantalla.
   </p>
@@ -64,6 +64,33 @@
               <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
             }
           </select>
+        </label>
+      }
+
+      @if (documentosDs().length) {
+        <label class="siigo-field">
+          <span>Tipo de documento soporte (DS)</span>
+          <select formControlName="documentTypeDsId">
+            <option [ngValue]="null">Seleccione</option>
+            @for (item of documentosDs(); track item.id) {
+              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+            }
+          </select>
+        </label>
+      }
+
+      @if (mediosPagoDs().length) {
+        <label class="siigo-field">
+          <span>Medio de pago documento soporte (crédito)</span>
+          <select formControlName="paymentTypeDsId">
+            <option [ngValue]="null">Seleccione</option>
+            @for (item of mediosPagoDs(); track item.id) {
+              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+            }
+          </select>
+          <small class="siigo-hint">
+            Al confirmar la compra se valida en Siigo y se usa el medio Crédito vigente.
+          </small>
         </label>
       }
 

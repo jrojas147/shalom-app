@@ -43,6 +43,7 @@ export interface Compra {
   usuarioRegistroNombre?: string;
   usuarioConfirmacionId?: number | null;
   confirmedAt?: string | null;
+  siigoId?: string | null;
   createdAt: string;
   detalle: CompraDetalleLinea[];
 }

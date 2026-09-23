@@ -6,6 +6,8 @@ export interface ConfiguracionSiigo {
   accessKeyConfigured: boolean;
   documentTypeId?: number | null;
   paymentTypeId?: number | null;
+  documentTypeDsId?: number | null;
+  paymentTypeDsId?: number | null;
   sellerId?: number | null;
   tokenExpiresAt?: string | null;
   partnerId: string;
@@ -15,6 +17,8 @@ export interface ConfiguracionSiigoRequest {
   activo: boolean;
   documentTypeId?: number | null;
   paymentTypeId?: number | null;
+  documentTypeDsId?: number | null;
+  paymentTypeDsId?: number | null;
   sellerId?: number | null;
 }
 
