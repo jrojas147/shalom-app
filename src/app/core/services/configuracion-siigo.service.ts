@@ -41,6 +41,10 @@ export class ConfiguracionSiigoService {
     return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/vendedores`);
   }
 
+  centrosCosto(): Observable<SiigoCatalogoItem[]> {
+    return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/centros-costo`);
+  }
+
   gruposCuenta(): Observable<SiigoCatalogoItem[]> {
     const url = `${this.baseUrl}/grupos-cuenta`;
     console.log('[Siigo] GET grupos productos', url);

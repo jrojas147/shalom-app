@@ -63,6 +63,7 @@ export interface RegistrarCompraRequest {
   }>;
   total?: number;
   pesoTotal?: number;
+  costCenterId?: number | null;
 }
 
 export interface RegistrarCompraResponse {

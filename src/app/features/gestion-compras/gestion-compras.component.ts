@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   Compra,
   CompraDetalleLinea,
@@ -21,7 +21,9 @@ import {
   TipoLecturaPeso,
 } from '../../core/models/configuracion-lectura-peso.model';
 import { BasculaService } from '../../core/services/bascula.service';
+import { SiigoCatalogoItem } from '../../core/models/configuracion-siigo.model';
 import { ComprasService } from '../../core/services/compras.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import {
@@ -54,6 +56,7 @@ import { CompraProveedorModalComponent } from '../compras/compra-proveedor-modal
 })
 export class GestionComprasComponent implements OnInit {
   private readonly comprasService = inject(ComprasService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
   private readonly basculaService = inject(BasculaService);
@@ -89,6 +92,9 @@ export class GestionComprasComponent implements OnInit {
   readonly proveedorEdit = signal<CompraProveedorSeleccion | null>(null);
   readonly itemsEdit = signal<CompraDetalleItem[]>([]);
   readonly showProveedorModal = signal(false);
+  readonly centrosCosto = signal<SiigoCatalogoItem[]>([]);
+  readonly loadingCentrosCosto = signal(false);
+  readonly costCenterId = signal<number | null>(null);
 
   readonly subtotalEdit = computed(() =>
     this.itemsEdit().reduce((sum, item) => sum + this.itemTotal(item), 0)
@@ -125,12 +131,26 @@ export class GestionComprasComponent implements OnInit {
     this.error.set(null);
     this.mensaje.set(null);
     this.editMode.set(false);
-    this.comprasService.obtener(compra.id).subscribe({
-      next: (detalle) => {
+    this.costCenterId.set(null);
+    this.centrosCosto.set([]);
+    this.loadingCentrosCosto.set(true);
+    forkJoin({
+      detalle: this.comprasService.obtener(compra.id),
+      centros: this.configuracionSiigoService.centrosCosto().pipe(catchError(() => of([]))),
+    }).subscribe({
+      next: ({ detalle, centros }) => {
         this.compraSeleccionada.set(detalle);
         this.syncEditState(detalle);
+        this.centrosCosto.set(centros ?? []);
+        this.loadingCentrosCosto.set(false);
+        if (centros?.length === 1) {
+          this.costCenterId.set(centros[0].id);
+        }
       },
-      error: (err) => this.error.set(this.extractErrorMessage(err)),
+      error: (err) => {
+        this.loadingCentrosCosto.set(false);
+        this.error.set(this.extractErrorMessage(err));
+      },
     });
   }
 
@@ -138,6 +158,8 @@ export class GestionComprasComponent implements OnInit {
     this.compraSeleccionada.set(null);
     this.editMode.set(false);
     this.showProveedorModal.set(false);
+    this.costCenterId.set(null);
+    this.centrosCosto.set([]);
   }
 
   activarEdicion(): void {
@@ -353,6 +375,10 @@ export class GestionComprasComponent implements OnInit {
       this.error.set('La pre-compra debe tener al menos un producto.');
       return;
     }
+    if (this.centrosCosto().length > 0 && this.costCenterId() == null) {
+      this.error.set('Seleccione el centro de costo para el documento soporte.');
+      return;
+    }
 
     this.confirmDialog
       .confirm({
@@ -414,9 +440,7 @@ export class GestionComprasComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     const payload = this.buildPayload(proveedor);
-    const request$ = this.editMode()
-      ? this.comprasService.confirmar(compra.id, payload)
-      : this.comprasService.confirmar(compra.id);
+    const request$ = this.comprasService.confirmar(compra.id, payload);
 
     request$.subscribe({
       next: (res) => {
@@ -539,6 +563,7 @@ export class GestionComprasComponent implements OnInit {
       items: this.itemsEdit(),
       total: this.subtotalEdit(),
       pesoTotal: this.pesoNetoTotalEdit(),
+      costCenterId: this.costCenterId(),
     };
   }
 

@@ -19,6 +19,7 @@ export interface RegistrarPreCompraPayload {
   items: CompraDetalleItem[];
   total: number;
   pesoTotal: number;
+  costCenterId?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -91,6 +92,7 @@ export class ComprasService {
       })),
       total: payload.total,
       pesoTotal: payload.pesoTotal,
+      costCenterId: payload.costCenterId ?? null,
     };
   }
 }

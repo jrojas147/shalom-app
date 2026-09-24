@@ -8,6 +8,7 @@ export interface ConfiguracionSiigo {
   paymentTypeId?: number | null;
   documentTypeDsId?: number | null;
   paymentTypeDsId?: number | null;
+  costCenterDsId?: number | null;
   sellerId?: number | null;
   tokenExpiresAt?: string | null;
   partnerId: string;
@@ -19,6 +20,7 @@ export interface ConfiguracionSiigoRequest {
   paymentTypeId?: number | null;
   documentTypeDsId?: number | null;
   paymentTypeDsId?: number | null;
+  costCenterDsId?: number | null;
   sellerId?: number | null;
 }
 

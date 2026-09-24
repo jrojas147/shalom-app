@@ -251,6 +251,28 @@
         <div><span>Total</span><strong>{{ formatCurrency(subtotalEdit()) }}</strong></div>
       </div>
 
+      <div class="gestion-compras-modal__cost-center">
+        <label class="rp-field">
+          <span>Centro de costo</span>
+          @if (loadingCentrosCosto()) {
+            <p class="rp-loading">Consultando centros de costo en Siigo...</p>
+          } @else if (centrosCosto().length) {
+            <select
+              [ngModel]="costCenterId()"
+              (ngModelChange)="costCenterId.set($event)"
+            >
+              <option [ngValue]="null">Seleccione</option>
+              @for (item of centrosCosto(); track item.id) {
+                <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+              }
+            </select>
+            <small>Se envía al documento soporte de Siigo al confirmar.</small>
+          } @else {
+            <small>No hay centros de costo vigentes en Siigo.</small>
+          }
+        </label>
+      </div>
+
       <div class="gestion-compras-modal__actions">
         @if (!editMode()) {
           <button type="button" class="rp-btn rp-btn--danger" [disabled]="saving()" (click)="anularCompra()">
@@ -274,7 +296,12 @@
             {{ loadingEdicion() ? 'Cargando...' : 'Editar' }}
           </button>
         }
-        <button type="button" class="rp-btn rp-btn--primary" [disabled]="saving()" (click)="confirmarCompra()">
+        <button
+          type="button"
+          class="rp-btn rp-btn--primary"
+          [disabled]="saving() || loadingCentrosCosto() || (centrosCosto().length > 0 && costCenterId() == null)"
+          (click)="confirmarCompra()"
+        >
           {{ saving() ? 'Confirmando...' : 'Confirmar compra' }}
         </button>
       </div>
