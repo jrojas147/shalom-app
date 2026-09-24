@@ -159,11 +159,12 @@
 
   &__receipt {
     display: grid;
-    grid-template-columns: minmax(8rem, 12rem) minmax(10rem, 16rem);
+    grid-template-columns: repeat(2, minmax(8rem, 12rem));
     gap: var(--spacing-sm);
+    align-items: start;
 
     @media (max-width: 640px) {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(8rem, 12rem);
     }
 
     input {

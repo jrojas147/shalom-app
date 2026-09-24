@@ -145,6 +145,7 @@ export class GestionComprasComponent implements OnInit {
       next: ({ detalle, centros }) => {
         this.compraSeleccionada.set(detalle);
         this.syncEditState(detalle);
+        this.sugerirComprobanteProveedor(detalle.numeroFactura);
         this.centrosCosto.set(centros ?? []);
         this.loadingCentrosCosto.set(false);
         if (centros?.length === 1) {
@@ -589,6 +590,11 @@ export class GestionComprasComponent implements OnInit {
 
   onReceiptNumber(value: string): void {
     this.receiptNumber.set((value ?? '').replace(/\D+/g, '').slice(0, 11));
+  }
+
+  private sugerirComprobanteProveedor(numeroFactura: string | null | undefined): void {
+    this.receiptPrefix.set('DEM');
+    this.onReceiptNumber(numeroFactura ?? '');
   }
 
   private extractErrorMessage(
