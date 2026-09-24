@@ -1601,11 +1601,7 @@ export class ProveedoresComponent implements OnInit {
 
   private identificacionesSiigoInterno(documento: string): string[] {
     const doc = documento.trim();
-    const ids = this.selectedSucursalIds()
-      .map((id) => this.sucursales().find((sucursal) => sucursal.id === id))
-      .filter((sucursal): sucursal is Sucursal => sucursal?.idSucursal != null)
-      .map((sucursal) => `${doc}${String(sucursal.idSucursal).padStart(2, '0')}`);
-    return [...new Set(ids)];
+    return doc ? [doc] : [];
   }
 
   private verificarIdentificacionesSiigoYGuardar(
