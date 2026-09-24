@@ -20,6 +20,8 @@ export interface RegistrarPreCompraPayload {
   total: number;
   pesoTotal: number;
   costCenterId?: number | null;
+  supplierReceiptPrefix?: string | null;
+  supplierReceiptNumber?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -93,6 +95,8 @@ export class ComprasService {
       total: payload.total,
       pesoTotal: payload.pesoTotal,
       costCenterId: payload.costCenterId ?? null,
+      supplierReceiptPrefix: payload.supplierReceiptPrefix ?? null,
+      supplierReceiptNumber: payload.supplierReceiptNumber ?? null,
     };
   }
 }

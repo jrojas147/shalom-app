@@ -95,6 +95,8 @@ export class GestionComprasComponent implements OnInit {
   readonly centrosCosto = signal<SiigoCatalogoItem[]>([]);
   readonly loadingCentrosCosto = signal(false);
   readonly costCenterId = signal<number | null>(null);
+  readonly receiptPrefix = signal('');
+  readonly receiptNumber = signal('');
 
   readonly subtotalEdit = computed(() =>
     this.itemsEdit().reduce((sum, item) => sum + this.itemTotal(item), 0)
@@ -132,6 +134,8 @@ export class GestionComprasComponent implements OnInit {
     this.mensaje.set(null);
     this.editMode.set(false);
     this.costCenterId.set(null);
+    this.receiptPrefix.set('');
+    this.receiptNumber.set('');
     this.centrosCosto.set([]);
     this.loadingCentrosCosto.set(true);
     forkJoin({
@@ -159,6 +163,8 @@ export class GestionComprasComponent implements OnInit {
     this.editMode.set(false);
     this.showProveedorModal.set(false);
     this.costCenterId.set(null);
+    this.receiptPrefix.set('');
+    this.receiptNumber.set('');
     this.centrosCosto.set([]);
   }
 
@@ -379,6 +385,14 @@ export class GestionComprasComponent implements OnInit {
       this.error.set('Seleccione el centro de costo para el documento soporte.');
       return;
     }
+    if (!this.receiptPrefix().trim()) {
+      this.error.set('Ingrese el prefijo del comprobante del proveedor.');
+      return;
+    }
+    if (!this.receiptNumber().trim()) {
+      this.error.set('Ingrese el consecutivo del comprobante del proveedor.');
+      return;
+    }
 
     this.confirmDialog
       .confirm({
@@ -564,7 +578,17 @@ export class GestionComprasComponent implements OnInit {
       total: this.subtotalEdit(),
       pesoTotal: this.pesoNetoTotalEdit(),
       costCenterId: this.costCenterId(),
+      supplierReceiptPrefix: this.receiptPrefix().trim(),
+      supplierReceiptNumber: this.receiptNumber().trim(),
     };
+  }
+
+  onReceiptPrefix(value: string): void {
+    this.receiptPrefix.set((value ?? '').replace(/[^A-Za-z0-9]/g, '').slice(0, 6));
+  }
+
+  onReceiptNumber(value: string): void {
+    this.receiptNumber.set((value ?? '').replace(/\D+/g, '').slice(0, 11));
   }
 
   private extractErrorMessage(

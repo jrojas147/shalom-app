@@ -64,6 +64,8 @@ export interface RegistrarCompraRequest {
   total?: number;
   pesoTotal?: number;
   costCenterId?: number | null;
+  supplierReceiptPrefix?: string | null;
+  supplierReceiptNumber?: string | null;
 }
 
 export interface RegistrarCompraResponse {
