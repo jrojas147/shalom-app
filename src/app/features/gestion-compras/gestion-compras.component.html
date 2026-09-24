@@ -257,24 +257,24 @@
           Método de pago: crédito. Forma de pago: Crédito a proveedores. Plazo: 30 días.
         </p>
 
-        <label class="rp-field">
-          <span>Centro de costo</span>
-          @if (loadingCentrosCosto()) {
-            <p class="rp-loading">Consultando centros de costo en Siigo...</p>
-          } @else if (centrosCosto().length) {
-            <select
-              [ngModel]="costCenterId()"
-              (ngModelChange)="costCenterId.set($event)"
-            >
-              <option [ngValue]="null">Seleccione</option>
-              @for (item of centrosCosto(); track item.id) {
-                <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
-              }
-            </select>
-          } @else {
-            <small>No hay centros de costo vigentes en Siigo.</small>
-          }
-        </label>
+        @if (loadingCentrosCosto() || centrosCosto().length) {
+          <label class="rp-field">
+            <span>Centro de costo</span>
+            @if (loadingCentrosCosto()) {
+              <p class="rp-loading">Consultando centros de costo en Siigo...</p>
+            } @else {
+              <select
+                [ngModel]="costCenterId()"
+                (ngModelChange)="costCenterId.set($event)"
+              >
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of centrosCosto(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+            }
+          </label>
+        }
 
         <div class="gestion-compras-modal__receipt">
           <label class="rp-field">
