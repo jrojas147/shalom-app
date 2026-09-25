@@ -62,6 +62,7 @@ export class ClientesComponent implements OnInit {
   readonly editingId = signal<number | null>(null);
   readonly editingSiigoId = signal<string | null>(null);
   readonly siigoActivo = signal(false);
+  readonly documentoSiigoExistente = signal<string | null>(null);
 
   readonly puedeGestionar = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
 
@@ -121,6 +122,12 @@ export class ClientesComponent implements OnInit {
     this.form.controls.departamentoId.valueChanges.subscribe((departamentoId) => {
       this.loadMunicipios(departamentoId);
     });
+
+    this.form.controls.documento.valueChanges.subscribe(() => {
+      if (this.documentoSiigoExistente()) {
+        this.documentoSiigoExistente.set(null);
+      }
+    });
   }
 
   loadClientes(): void {
@@ -145,6 +152,7 @@ export class ClientesComponent implements OnInit {
   openCreate(): void {
     this.editingId.set(null);
     this.editingSiigoId.set(null);
+    this.documentoSiigoExistente.set(null);
     this.soloLectura.set(false);
     this.resetForm();
     this.showForm.set(true);
@@ -163,6 +171,7 @@ export class ClientesComponent implements OnInit {
     this.showForm.set(false);
     this.editingId.set(null);
     this.editingSiigoId.set(null);
+    this.documentoSiigoExistente.set(null);
     this.soloLectura.set(false);
     this.viewingCliente.set(null);
     this.error.set(null);
@@ -203,10 +212,39 @@ export class ClientesComponent implements OnInit {
 
     const id = this.editingId();
     if (!id && this.siigoActivo()) {
+      if (this.documentoSiigoExistente()) {
+        this.mostrarDocumentoExistenteSiigo(this.documentoSiigoExistente()!);
+        return;
+      }
       this.verificarDocumentoSiigoYGuardar(request.documento, request);
       return;
     }
     this.persistirCliente(id, request);
+  }
+
+  onDocumentoBlur(): void {
+    if (this.soloLectura() || this.editingId() || !this.siigoActivo()) {
+      return;
+    }
+    const documento = this.form.controls.documento.value.trim();
+    if (!documento) {
+      this.documentoSiigoExistente.set(null);
+      return;
+    }
+    this.configuracionSiigoService.consultarIdentificacion(documento).subscribe({
+      next: (res) => {
+        if (res.existe) {
+          const nombre = res.nombre?.trim() || res.identificacion || documento;
+          const message =
+            `El documento "${documento}" ya existe en Siigo y corresponde a "${nombre}". No se puede crear el cliente.`;
+          this.documentoSiigoExistente.set(message);
+          this.mostrarDocumentoExistenteSiigo(message);
+          return;
+        }
+        this.documentoSiigoExistente.set(null);
+      },
+      error: (err) => this.error.set(this.extractErrorMessage(err)),
+    });
   }
 
   private verificarDocumentoSiigoYGuardar(documento: string, request: ClienteRequest): void {
@@ -219,18 +257,11 @@ export class ClientesComponent implements OnInit {
           const nombre = res.nombre?.trim() || res.identificacion || documento;
           const message =
             `El documento "${documento}" ya existe en Siigo y corresponde a "${nombre}". No se puede crear el cliente.`;
-          this.error.set(message);
-          this.confirmDialog
-            .confirm({
-              title: 'El documento ya existe en Siigo',
-              message,
-              confirmLabel: 'Entendido',
-              cancelLabel: '',
-              confirmVariant: 'danger',
-            })
-            .subscribe();
+          this.documentoSiigoExistente.set(message);
+          this.mostrarDocumentoExistenteSiigo(message);
           return;
         }
+        this.documentoSiigoExistente.set(null);
         this.persistirCliente(null, request);
       },
       error: (err) => {
@@ -238,6 +269,19 @@ export class ClientesComponent implements OnInit {
         this.error.set(this.extractErrorMessage(err));
       },
     });
+  }
+
+  private mostrarDocumentoExistenteSiigo(message: string): void {
+    this.error.set(message);
+    this.confirmDialog
+      .confirm({
+        title: 'El documento ya existe en Siigo',
+        message,
+        confirmLabel: 'Entendido',
+        cancelLabel: '',
+        confirmVariant: 'danger',
+      })
+      .subscribe();
   }
 
   private persistirCliente(id: number | null, request: ClienteRequest): void {
@@ -476,7 +520,7 @@ export class ClientesComponent implements OnInit {
   private loadSiigo(): void {
     this.configuracionSiigoService.get().subscribe({
       next: (config) => {
-        this.siigoActivo.set(!!config.activo);
+        this.siigoActivo.set(!!(config.accessKeyConfigured || config.activo));
         this.actualizarValidacionSiigo();
       },
       error: () => {

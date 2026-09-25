@@ -181,7 +181,13 @@
 
         <div class="rp-field">
           <label for="documento">Número de documento</label>
-          <input id="documento" type="text" formControlName="documento" maxlength="30" />
+          <input
+            id="documento"
+            type="text"
+            formControlName="documento"
+            maxlength="30"
+            (blur)="onDocumentoBlur()"
+          />
         </div>
 
         @if (esEmpresa()) {
@@ -300,7 +306,11 @@
           {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
         </button>
         @if (puedeGestionar() && !soloLectura()) {
-          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+          <button
+            type="submit"
+            class="rp-btn rp-btn--primary"
+            [disabled]="saving() || (!editingId() && !!documentoSiigoExistente())"
+          >
             {{ saving() ? 'Guardando...' : editingId() ? 'Guardar cambios' : 'Crear cliente' }}
           </button>
         }
