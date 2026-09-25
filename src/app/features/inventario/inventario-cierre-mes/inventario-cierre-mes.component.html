@@ -107,7 +107,12 @@
               }
             </span>
           </label>
-          <small>{{ categoria.productos }} productos · {{ formatPeso(categoria.totales.stockKg) }} KG</small>
+          <small>
+            {{ categoria.productos }} productos · {{ formatPeso(categoria.totales.stockKg) }} KG
+            <span class="cierre-mes__siigo-stock">
+              Stock Siigo {{ stockSiigoLabel(categoria.codigoSui) }}
+            </span>
+          </small>
         </header>
 
         <table class="rp-table">

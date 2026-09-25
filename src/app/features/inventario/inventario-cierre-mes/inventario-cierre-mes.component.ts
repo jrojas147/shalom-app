@@ -1,14 +1,16 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   CierreMesCategoria,
   CierreMesPreview,
   CierreMesProducto,
   CierreMesResumen,
 } from '../../../core/models/cierre-mes.model';
+import { SiigoProductoStock } from '../../../core/models/configuracion-siigo.model';
 import { CierreMesService } from '../../../core/services/cierre-mes.service';
+import { ConfiguracionSiigoService } from '../../../core/services/configuracion-siigo.service';
 import { formatCurrencyCo } from '../../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../../shared/components/rp-modal/rp-modal.component';
@@ -22,6 +24,7 @@ import { RpModalComponent } from '../../../shared/components/rp-modal/rp-modal.c
 })
 export class InventarioCierreMesComponent {
   private readonly cierreMesService = inject(CierreMesService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly refreshToken = input(0);
@@ -36,6 +39,8 @@ export class InventarioCierreMesComponent {
   readonly observacion = signal('');
   readonly validados = signal<Set<number>>(new Set());
   readonly cierreHistorial = signal<CierreMesPreview | null>(null);
+  readonly stockSiigo = signal<Map<string, SiigoProductoStock>>(new Map());
+  readonly loadingStockSiigo = signal(false);
 
   readonly productos = computed(() => {
     const preview = this.preview();
@@ -100,6 +105,7 @@ export class InventarioCierreMesComponent {
         this.historial.set(historial ?? []);
         this.syncValidados(preview);
         this.loading.set(false);
+        this.cargarStockSiigo(preview);
       },
       error: (err) => {
         this.loading.set(false);
@@ -218,6 +224,27 @@ export class InventarioCierreMesComponent {
     return Number.isFinite(unidades) && unidades > 0 ? String(Math.trunc(unidades)) : '—';
   }
 
+  stockSiigoLabel(codigoSui: string | null | undefined): string {
+    if (this.loadingStockSiigo()) {
+      return 'Consultando...';
+    }
+    const codigo = (codigoSui ?? '').trim();
+    if (!codigo) {
+      return '—';
+    }
+    const item = this.stockSiigo().get(codigo.toLowerCase());
+    if (!item) {
+      return '—';
+    }
+    if (!item.existe) {
+      return 'No está en Siigo';
+    }
+    if (item.disponible == null || !Number.isFinite(Number(item.disponible))) {
+      return 'Sin control de inventario';
+    }
+    return `${this.formatPeso(item.disponible)}`;
+  }
+
   formatMoneda(value: number | null | undefined): string {
     return formatCurrencyCo(Number(value) || 0) || '$ 0';
   }
@@ -243,6 +270,40 @@ export class InventarioCierreMesComponent {
         error: (err) => {
           this.saving.set(false);
           this.error.set(this.extractErrorMessage(err, 'No se pudo ejecutar el cierre.'));
+        },
+      });
+  }
+
+  private cargarStockSiigo(preview: CierreMesPreview): void {
+    const codes = [
+      ...new Set(
+        (preview.categorias ?? [])
+          .map((categoria) => (categoria.codigoSui ?? '').trim())
+          .filter((codigo) => !!codigo)
+      ),
+    ];
+    if (codes.length === 0) {
+      this.stockSiigo.set(new Map());
+      return;
+    }
+    this.loadingStockSiigo.set(true);
+    this.configuracionSiigoService
+      .stockProductos(codes)
+      .pipe(catchError(() => of([] as SiigoProductoStock[])))
+      .subscribe({
+        next: (items) => {
+          const map = new Map<string, SiigoProductoStock>();
+          for (const item of items ?? []) {
+            if (item?.codigo) {
+              map.set(item.codigo.trim().toLowerCase(), item);
+            }
+          }
+          this.stockSiigo.set(map);
+          this.loadingStockSiigo.set(false);
+        },
+        error: () => {
+          this.stockSiigo.set(new Map());
+          this.loadingStockSiigo.set(false);
         },
       });
   }

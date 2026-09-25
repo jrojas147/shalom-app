@@ -128,6 +128,15 @@
       font-size: 0.75rem;
       color: var(--rp-text-secondary);
     }
+
+    .cierre-mes__siigo-stock {
+      display: inline-block;
+      margin-left: 0.75rem;
+      padding-left: 0.75rem;
+      border-left: 2px solid #c0392b;
+      color: #c0392b;
+      font-weight: 700;
+    }
   }
 
   .rp-table {

@@ -37,6 +37,13 @@ export interface SiigoCatalogoItem {
   activo: boolean;
 }
 
+export interface SiigoProductoStock {
+  codigo: string;
+  existe: boolean;
+  disponible?: number | null;
+  nombre?: string | null;
+}
+
 export interface SiigoTerceroIdentificacion {
   existe: boolean;
   identificacion?: string | null;

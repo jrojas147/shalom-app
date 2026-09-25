@@ -177,6 +177,7 @@
           } @else {
             Aún no hay cierre. Saldo en 0. Compra y venta del mes en curso. Stock actual disponible.
           }
+          "Informacion relacionada a KG"
         </p>
       }
       <table class="rp-table inventario__consolidado-table">
@@ -184,10 +185,11 @@
           <tr>
             <th>Código</th>
             <th>Material</th>
-            <th class="cell-num">Saldo KG</th>
-            <th class="cell-num">Compra KG</th>
-            <th class="cell-num">Venta KG</th>
-            <th class="cell-num">Stock KG</th>
+            <th class="cell-num">Saldo</th>
+            <th class="cell-num">Compra</th>
+            <th class="cell-num">Venta</th>
+            <th class="cell-num">Stock Shalom</th>
+            <th class="cell-num">Stock Siigo</th>
           </tr>
         </thead>
         <tbody>
@@ -199,10 +201,11 @@
               <td class="cell-num">{{ formatPeso(item.compraKg) }}</td>
               <td class="cell-num">{{ formatPeso(item.ventaKg) }}</td>
               <td class="cell-num cell-primary">{{ formatPeso(item.stockKg) }}</td>
+              <td class="cell-num inventario__stock-siigo">{{ stockSiigoLabel(item.codigoSui) }}</td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="cell-empty">
+              <td colspan="7" class="cell-empty">
                 {{
                   busqueda() || codigoCiiuFiltro() != null
                     ? 'No hay materiales SUI que coincidan con el filtro.'
@@ -220,6 +223,13 @@
               <td class="cell-num">{{ formatPeso(consolidadoTotales().compraKg) }}</td>
               <td class="cell-num">{{ formatPeso(consolidadoTotales().ventaKg) }}</td>
               <td class="cell-num cell-primary">{{ formatPeso(consolidadoTotales().stockKg) }}</td>
+              <td class="cell-num inventario__stock-siigo">
+                {{
+                  loadingStockSiigo()
+                    ? 'Consultando...'
+                    : formatPeso(consolidadoTotales().stockSiigoKg)
+                }}
+              </td>
             </tr>
           </tfoot>
         }

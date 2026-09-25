@@ -7,6 +7,7 @@ import {
   ConfiguracionSiigoRequest,
   SiigoCatalogoItem,
   SiigoPrueba,
+  SiigoProductoStock,
   SiigoTerceroIdentificacion,
 } from '../models/configuracion-siigo.model';
 
@@ -54,6 +55,14 @@ export class ConfiguracionSiigoService {
         error: (err) => console.error('[Siigo] GET grupos productos error', err),
       })
     );
+  }
+
+  stockProductos(codes: string[]): Observable<SiigoProductoStock[]> {
+    let params = new HttpParams();
+    for (const code of codes) {
+      params = params.append('codes', code);
+    }
+    return this.http.get<SiigoProductoStock[]>(`${this.baseUrl}/productos/stock`, { params });
   }
 
   consultarIdentificacion(identification: string): Observable<SiigoTerceroIdentificacion> {

@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import { compraProveedorTipoLabel } from '../../core/models/compra-proveedor.model';
+import { SiigoProductoStock } from '../../core/models/configuracion-siigo.model';
 import {
   ExistenciaProducto,
   InventarioConsolidadoSui,
@@ -11,6 +12,7 @@ import {
 } from '../../core/models/inventario.model';
 import { Producto, productoIdVisible } from '../../core/models/producto.model';
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
@@ -28,6 +30,7 @@ type VistaInventario = 'resumen' | 'detalle' | 'cierre' | 'consolidado';
 export class InventarioComponent implements OnInit {
   private readonly inventarioService = inject(InventarioService);
   private readonly productosService = inject(ProductosService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
 
   readonly inventarioEstadoLabel = inventarioEstadoLabel;
@@ -43,6 +46,8 @@ export class InventarioComponent implements OnInit {
   readonly vista = signal<VistaInventario>('resumen');
   readonly cierreRefresh = signal(0);
   readonly consolidado = signal<InventarioConsolidadoSui | null>(null);
+  readonly stockSiigo = signal<Map<string, SiigoProductoStock>>(new Map());
+  readonly loadingStockSiigo = signal(false);
   readonly exportingProductos = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -121,8 +126,9 @@ export class InventarioComponent implements OnInit {
         compraKg: acc.compraKg + Number(item.compraKg || 0),
         ventaKg: acc.ventaKg + Number(item.ventaKg || 0),
         stockKg: acc.stockKg + Number(item.stockKg || 0),
+        stockSiigoKg: acc.stockSiigoKg + this.stockSiigoNumero(item.codigoSui),
       }),
-      { saldoKg: 0, compraKg: 0, ventaKg: 0, stockKg: 0 }
+      { saldoKg: 0, compraKg: 0, ventaKg: 0, stockKg: 0, stockSiigoKg: 0 }
     )
   );
 
@@ -189,6 +195,7 @@ export class InventarioComponent implements OnInit {
       next: (data) => {
         this.consolidado.set(data);
         this.loading.set(false);
+        this.cargarStockSiigo(data);
       },
       error: (err) => {
         this.loading.set(false);
@@ -271,6 +278,27 @@ export class InventarioComponent implements OnInit {
     this.entradaSeleccionada.set(null);
   }
 
+  stockSiigoLabel(codigoSui: string | null | undefined): string {
+    if (this.loadingStockSiigo()) {
+      return 'Consultando...';
+    }
+    const codigo = (codigoSui ?? '').trim();
+    if (!codigo) {
+      return '—';
+    }
+    const item = this.stockSiigo().get(codigo.toLowerCase());
+    if (!item) {
+      return '—';
+    }
+    if (!item.existe) {
+      return 'No está en Siigo';
+    }
+    if (item.disponible == null || !Number.isFinite(Number(item.disponible))) {
+      return 'Sin control de inventario';
+    }
+    return this.formatPeso(item.disponible);
+  }
+
   formatUnidades(value: number | null | undefined): string {
     const unidades = Number(value);
     return Number.isFinite(unidades) && unidades > 0 ? String(Math.trunc(unidades)) : '—';
@@ -348,6 +376,50 @@ export class InventarioComponent implements OnInit {
       movimiento.compraDetalleId ? String(movimiento.compraDetalleId) : null,
     ];
     return fields.some((value) => value?.toLowerCase().includes(q));
+  }
+
+  private cargarStockSiigo(data: InventarioConsolidadoSui | null): void {
+    const codes = [
+      ...new Set(
+        (data?.items ?? [])
+          .map((item) => (item.codigoSui ?? '').trim())
+          .filter((codigo) => !!codigo && codigo !== 'Sin código SUI')
+      ),
+    ];
+    if (codes.length === 0) {
+      this.stockSiigo.set(new Map());
+      return;
+    }
+    this.loadingStockSiigo.set(true);
+    this.configuracionSiigoService
+      .stockProductos(codes)
+      .pipe(catchError(() => of([] as SiigoProductoStock[])))
+      .subscribe({
+        next: (items) => {
+          const map = new Map<string, SiigoProductoStock>();
+          for (const item of items ?? []) {
+            if (item?.codigo) {
+              map.set(item.codigo.trim().toLowerCase(), item);
+            }
+          }
+          this.stockSiigo.set(map);
+          this.loadingStockSiigo.set(false);
+        },
+        error: () => {
+          this.stockSiigo.set(new Map());
+          this.loadingStockSiigo.set(false);
+        },
+      });
+  }
+
+  private stockSiigoNumero(codigoSui: string | null | undefined): number {
+    const codigo = (codigoSui ?? '').trim().toLowerCase();
+    if (!codigo) {
+      return 0;
+    }
+    const item = this.stockSiigo().get(codigo);
+    const value = Number(item?.disponible);
+    return item?.existe && Number.isFinite(value) ? value : 0;
   }
 
   private extractErrorMessage(err: {
