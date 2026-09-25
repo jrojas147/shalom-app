@@ -87,7 +87,7 @@ export const PRODUCTO_SECCIONES: ProductoSeccionConfig[] = [
   {
     id: 'detalle',
     label: 'Producto detalle',
-    descripcion: 'Catálogo interno de productos que se comercializan. No se sincroniza con Siigo.',
+    descripcion: 'Detalle del producto. no aplica sincronizacion Siggo.',
   },
   {
     id: 'materiales',
