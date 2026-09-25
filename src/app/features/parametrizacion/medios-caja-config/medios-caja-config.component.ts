@@ -38,7 +38,6 @@ export class MediosCajaConfigComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editingId = signal<number | null>(null);
-  readonly editingSistema = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     tipo: [null as Exclude<MedioCajaTipo, 'EFECTIVO'> | null, Validators.required],
@@ -84,8 +83,10 @@ export class MediosCajaConfigComponent implements OnInit {
   }
 
   startEdit(medio: MedioCaja): void {
+    if (medio.sistema) {
+      return;
+    }
     this.editingId.set(medio.id);
-    this.editingSistema.set(medio.sistema);
     this.form.reset({
       tipo: medio.tipo === 'EFECTIVO' ? null : medio.tipo,
       nombre: medio.nombre,
@@ -93,15 +94,12 @@ export class MediosCajaConfigComponent implements OnInit {
       numeroCuenta: medio.numeroCuenta ?? '',
       entidadBancariaId: medio.entidadBancariaId ?? null,
     });
-    if (medio.tipo !== 'EFECTIVO') {
-      this.form.controls.tipo.disable({ emitEvent: false });
-    }
+    this.form.controls.tipo.disable({ emitEvent: false });
     this.error.set(null);
   }
 
   cancelEdit(): void {
     this.editingId.set(null);
-    this.editingSistema.set(false);
     this.form.controls.tipo.enable({ emitEvent: false });
     this.form.reset({
       tipo: null,
@@ -114,28 +112,24 @@ export class MediosCajaConfigComponent implements OnInit {
   }
 
   save(): void {
-    const editingSistema = this.editingSistema();
-    if (editingSistema) {
-      if (!this.form.controls.nombre.value.trim()) {
-        this.form.controls.nombre.markAsTouched();
-        return;
-      }
-    } else if (this.form.invalid) {
+    const editing = this.medios().find((item) => item.id === this.editingId());
+    if (editing?.sistema) {
+      this.cancelEdit();
+      return;
+    }
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const raw = this.form.getRawValue();
-    const editing = this.medios().find((item) => item.id === this.editingId());
-    const tipo: MedioCajaTipo = editingSistema
-      ? 'EFECTIVO'
-      : (raw.tipo ?? editing?.tipo ?? 'NEQUI');
+    const tipo: MedioCajaTipo = raw.tipo ?? editing?.tipo ?? 'NEQUI';
 
-    if (!editingSistema && (tipo === 'NEQUI' || tipo === 'DAVIPLATA') && !raw.telefono.trim()) {
+    if ((tipo === 'NEQUI' || tipo === 'DAVIPLATA') && !raw.telefono.trim()) {
       this.error.set('Indique el número de teléfono de la billetera.');
       return;
     }
-    if (!editingSistema && tipo === 'BANCO') {
+    if (tipo === 'BANCO') {
       if (raw.entidadBancariaId == null) {
         this.error.set('Seleccione el banco.');
         return;
@@ -204,13 +198,12 @@ export class MediosCajaConfigComponent implements OnInit {
   }
 
   muestraTelefono(): boolean {
-    if (this.editingSistema()) return false;
     const tipo = this.form.controls.tipo.value;
     return tipo === 'NEQUI' || tipo === 'DAVIPLATA';
   }
 
   muestraBanco(): boolean {
-    return !this.editingSistema() && this.form.controls.tipo.value === 'BANCO';
+    return this.form.controls.tipo.value === 'BANCO';
   }
 
   detalle(medio: MedioCaja): string {
