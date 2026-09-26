@@ -391,7 +391,7 @@ export class ComprasComponent implements OnInit {
   }
 
   private empaquePorDefecto(): string {
-    return this.tiposEmpaque()[0]?.nombre ?? EMPAQUE_SIN_NOMBRE;
+    return EMPAQUE_SIN_NOMBRE;
   }
 
   productoIcono(): string {

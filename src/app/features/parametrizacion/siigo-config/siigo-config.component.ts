@@ -138,8 +138,14 @@ export class SiigoConfigComponent implements OnInit {
     this.loadingCatalogos.set(true);
     const empty = of([] as SiigoCatalogoItem[]);
     forkJoin({
-      documentos: this.configuracionService.documentos('FV').pipe(catchError(() => empty)),
-      mediosPago: this.configuracionService.mediosPago('FV').pipe(catchError(() => empty)),
+      documentos: this.configuracionService.documentos('RP').pipe(
+        catchError(() => this.configuracionService.documentos('CE').pipe(catchError(() => empty)))
+      ),
+      mediosPago: this.configuracionService.mediosPago('RP').pipe(
+        catchError(() => this.configuracionService.mediosPago('CE').pipe(
+          catchError(() => this.configuracionService.mediosPago('FV').pipe(catchError(() => empty)))
+        ))
+      ),
       documentosDs: this.configuracionService.documentos('DS').pipe(catchError(() => empty)),
       mediosPagoDs: this.configuracionService.mediosPago('DS').pipe(catchError(() => empty)),
       vendedores: this.configuracionService.vendedores().pipe(catchError(() => empty)),

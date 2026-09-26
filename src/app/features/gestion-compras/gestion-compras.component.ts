@@ -526,7 +526,7 @@ export class GestionComprasComponent implements OnInit {
   }
 
   private empaquePorDefecto(): string {
-    return this.tiposEmpaque()[0]?.nombre ?? EMPAQUE_SIN_NOMBRE;
+    return EMPAQUE_SIN_NOMBRE;
   }
 
   private syncEditState(compra: Compra): void {

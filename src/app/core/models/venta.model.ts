@@ -38,6 +38,7 @@ export interface RegistrarVentaResponse {
   pesoTotal: number;
   pagoCredito?: boolean;
   saldoPendiente?: number;
+  siigoId?: string | null;
 }
 
 export function ventaClienteEtiqueta(cliente: VentaClienteSeleccion): string {

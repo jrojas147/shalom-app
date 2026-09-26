@@ -243,7 +243,7 @@ export class VentaComponent implements OnInit {
       return;
     }
 
-    const empaque = this.tiposEmpaque()[0]?.nombre ?? EMPAQUE_SIN_NOMBRE;
+    const empaque = EMPAQUE_SIN_NOMBRE;
     const netoInicial = 0.5;
     if (netoInicial > stock) {
       this.error.set(

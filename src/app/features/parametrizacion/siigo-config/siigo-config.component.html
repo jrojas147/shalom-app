@@ -40,9 +40,9 @@
         <p class="rp-loading">Consultando catálogos de Siigo...</p>
       }
 
-      <!--@if (documentos().length) {
+      @if (documentos().length) {
         <label class="siigo-field">
-          <span>Tipo de factura de venta (FV)</span>
+          <span>Tipo de recibo de pago (RP)</span>
           <select formControlName="documentTypeId">
             <option [ngValue]="null">Seleccione</option>
             @for (item of documentos(); track item.id) {
@@ -50,19 +50,22 @@
             }
           </select>
         </label>
-      }-->
+      }
 
-      <!--@if (mediosPago().length) {
+      @if (mediosPago().length) {
         <label class="siigo-field">
-          <span>Medio de pago en Siigo</span>
+          <span>Medio de pago del recibo</span>
           <select formControlName="paymentTypeId">
             <option [ngValue]="null">Seleccione</option>
             @for (item of mediosPago(); track item.id) {
               <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
             }
           </select>
+          <small class="siigo-hint">
+            Al registrar la venta se crea un recibo de pago en Siigo. Crédito usa el medio crédito vigente.
+          </small>
         </label>
-      }-->
+      }
 
       @if (documentosDs().length) {
         <label class="siigo-field">
@@ -91,7 +94,7 @@
         </label>
       }
 
-      <!--@if (vendedores().length) {
+      @if (vendedores().length) {
         <label class="siigo-field">
           <span>Vendedor en Siigo</span>
           <select formControlName="sellerId">
@@ -101,7 +104,7 @@
             }
           </select>
         </label>
-      }-->
+      }
 
       <div class="siigo-actions">
         <button
