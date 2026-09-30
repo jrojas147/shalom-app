@@ -26,6 +26,8 @@ export class VentasService {
       medioCajaId: payload.pagoCredito ? null : payload.medioCajaId,
       pagoCredito: !!payload.pagoCredito,
       fechaProyectadaPago: payload.pagoCredito ? payload.fechaProyectadaPago : null,
+      documentTypeId: payload.documentTypeId ?? null,
+      costCenterId: payload.costCenterId ?? null,
     });
   }
 }

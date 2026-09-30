@@ -16,6 +16,8 @@ export interface RegistrarVentaPayload {
   medioCajaId?: number | null;
   pagoCredito?: boolean;
   fechaProyectadaPago?: string | null;
+  documentTypeId?: number | null;
+  costCenterId?: number | null;
 }
 
 export interface VentaResumen {

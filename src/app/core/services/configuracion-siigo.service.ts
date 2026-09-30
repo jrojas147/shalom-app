@@ -42,8 +42,9 @@ export class ConfiguracionSiigoService {
     return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/vendedores`);
   }
 
-  centrosCosto(): Observable<SiigoCatalogoItem[]> {
-    return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/centros-costo`);
+  centrosCosto(type = 'DS'): Observable<SiigoCatalogoItem[]> {
+    const params = new HttpParams().set('type', type);
+    return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/centros-costo`, { params });
   }
 
   gruposCuenta(): Observable<SiigoCatalogoItem[]> {

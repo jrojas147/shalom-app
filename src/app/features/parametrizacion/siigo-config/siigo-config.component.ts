@@ -138,14 +138,8 @@ export class SiigoConfigComponent implements OnInit {
     this.loadingCatalogos.set(true);
     const empty = of([] as SiigoCatalogoItem[]);
     forkJoin({
-      documentos: this.configuracionService.documentos('RP').pipe(
-        catchError(() => this.configuracionService.documentos('CE').pipe(catchError(() => empty)))
-      ),
-      mediosPago: this.configuracionService.mediosPago('RP').pipe(
-        catchError(() => this.configuracionService.mediosPago('CE').pipe(
-          catchError(() => this.configuracionService.mediosPago('FV').pipe(catchError(() => empty)))
-        ))
-      ),
+      documentos: this.configuracionService.documentos('FV').pipe(catchError(() => empty)),
+      mediosPago: this.configuracionService.mediosPago('FV').pipe(catchError(() => empty)),
       documentosDs: this.configuracionService.documentos('DS').pipe(catchError(() => empty)),
       mediosPagoDs: this.configuracionService.mediosPago('DS').pipe(catchError(() => empty)),
       vendedores: this.configuracionService.vendedores().pipe(catchError(() => empty)),
@@ -156,7 +150,8 @@ export class SiigoConfigComponent implements OnInit {
         this.documentosDs.set(data.documentosDs ?? []);
         this.mediosPagoDs.set(data.mediosPagoDs ?? []);
         this.vendedores.set(data.vendedores ?? []);
-        this.aplicarCreditoPorDefecto(data.mediosPagoDs ?? []);
+        this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeId, data.mediosPago ?? []);
+        this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeDsId, data.mediosPagoDs ?? []);
         this.loadingCatalogos.set(false);
       },
       error: () => {
@@ -165,15 +160,18 @@ export class SiigoConfigComponent implements OnInit {
     });
   }
 
-  private aplicarCreditoPorDefecto(medios: SiigoCatalogoItem[]): void {
+  private aplicarCreditoPorDefecto(
+    control: { value: number | null; setValue: (id: number) => void },
+    medios: SiigoCatalogoItem[]
+  ): void {
     const credito = medios.find((item) => this.esCredito(item.nombre));
     if (!credito) {
       return;
     }
-    const actual = this.form.controls.paymentTypeDsId.value;
+    const actual = control.value;
     const vigente = medios.some((item) => item.id === actual && this.esCredito(item.nombre));
     if (!vigente) {
-      this.form.controls.paymentTypeDsId.setValue(credito.id);
+      control.setValue(credito.id);
     }
   }
 
@@ -183,6 +181,6 @@ export class SiigoConfigComponent implements OnInit {
       .replace(/\p{M}+/gu, '')
       .trim()
       .toLowerCase();
-    return n === 'credito' || n.startsWith('credito ');
+    return (n === 'credito' || n.startsWith('credito ')) && !n.includes('proveedor');
   }
 }

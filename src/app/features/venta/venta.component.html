@@ -312,7 +312,7 @@
       </div>
 
       @if (pagoCredito()) {
-        <label class="venta-pago__label" for="fechaProyectadaPago">Fecha proyectada de pago</label>
+        <label class="venta-pago__label" for="fechaProyectadaPago">Fecha proyectada de pago *</label>
         <input
           id="fechaProyectadaPago"
           type="date"
@@ -324,6 +324,23 @@
         />
       }
 
+      @if (loadingSiigoVenta()) {
+        <p class="compras-loading">Consultando resoluciones de Siigo...</p>
+      } @else if (resolucionesFv().length) {
+        <label class="venta-pago__label" for="resolucionFv">Resolución de factura *</label>
+        <select
+          id="resolucionFv"
+          class="venta-pago__fecha"
+          [ngModel]="documentTypeId()"
+          (ngModelChange)="seleccionarResolucion($event)"
+        >
+          <option [ngValue]="null">Seleccione</option>
+          @for (item of resolucionesFv(); track item.id) {
+            <option [ngValue]="item.id">{{ item.nombre }}</option>
+          }
+        </select>
+      }
+
       <div class="venta-pago__actions">
         <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelarPagoModal()">
           Cancelar
@@ -331,7 +348,13 @@
         <button
           type="button"
           class="rp-btn rp-btn--primary"
-          [disabled]="procesando() || (!pagoCredito() && medioPagoId() == null) || (pagoCredito() && !fechaProyectadaPago())"
+          [disabled]="
+            procesando()
+            || loadingSiigoVenta()
+            || (!pagoCredito() && medioPagoId() == null)
+            || (pagoCredito() && !fechaProyectadaPago())
+            || (resolucionesFv().length > 0 && documentTypeId() == null)
+          "
           (click)="confirmarPagoYRegistrar()"
         >
           {{ procesando() ? 'Registrando...' : 'Confirmar venta' }}

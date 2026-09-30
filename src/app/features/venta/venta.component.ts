@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { CompraDetalleItem, EmpaqueTipo } from '../../core/models/compra.model';
 import { CodigoCiiu } from '../../core/models/codigo-ciiu.model';
 import {
@@ -43,6 +43,8 @@ import { CajaSaldo } from '../../core/models/caja.model';
 import { MedioCaja, medioCajaDetalle } from '../../core/models/medio-caja.model';
 import { CajaService } from '../../core/services/caja.service';
 import { MediosCajaService } from '../../core/services/medios-caja.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
+import { SiigoCatalogoItem } from '../../core/models/configuracion-siigo.model';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 interface MedioPagoOpcion {
@@ -68,6 +70,7 @@ export class VentaComponent implements OnInit {
   private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
   private readonly cajaService = inject(CajaService);
   private readonly mediosCajaService = inject(MediosCajaService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
 
   readonly ventaClienteEtiqueta = ventaClienteEtiqueta;
   readonly tipoClienteLabel = tipoClienteLabel;
@@ -99,6 +102,9 @@ export class VentaComponent implements OnInit {
   readonly medioPagoId = signal<number | null>(null);
   readonly pagoCredito = signal(false);
   readonly fechaProyectadaPago = signal('');
+  readonly resolucionesFv = signal<SiigoCatalogoItem[]>([]);
+  readonly documentTypeId = signal<number | null>(null);
+  readonly loadingSiigoVenta = signal(false);
   readonly leyendoPesoId = signal<number | null>(null);
   readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
 
@@ -516,8 +522,11 @@ export class VentaComponent implements OnInit {
     this.pagoCredito.set(false);
     this.fechaProyectadaPago.set('');
     this.medioPagoId.set(null);
+    this.documentTypeId.set(null);
+    this.resolucionesFv.set([]);
     this.showPagoModal.set(true);
     this.loadingMediosPago.set(true);
+    this.cargarCatalogoSiigoVenta();
 
     this.cajaService.obtenerActual().subscribe({
       next: (caja) => {
@@ -545,6 +554,11 @@ export class VentaComponent implements OnInit {
     this.showPagoModal.set(false);
     this.pagoCredito.set(false);
     this.fechaProyectadaPago.set('');
+    this.documentTypeId.set(null);
+  }
+
+  seleccionarResolucion(id: number | null): void {
+    this.documentTypeId.set(id);
   }
 
   seleccionarMedioPago(id: number): void {
@@ -556,9 +570,6 @@ export class VentaComponent implements OnInit {
   seleccionarPagoCredito(): void {
     this.pagoCredito.set(true);
     this.medioPagoId.set(null);
-    if (!this.fechaProyectadaPago()) {
-      this.fechaProyectadaPago.set(this.hoyIso());
-    }
   }
 
   onFechaProyectadaPago(value: string): void {
@@ -574,6 +585,10 @@ export class VentaComponent implements OnInit {
   }
 
   confirmarPagoYRegistrar(): void {
+    if (this.resolucionesFv().length > 0 && this.documentTypeId() == null) {
+      this.error.set('Seleccione la resolución de factura.');
+      return;
+    }
     if (this.pagoCredito()) {
       const fecha = this.fechaProyectadaPago().trim();
       if (!fecha) {
@@ -619,6 +634,30 @@ export class VentaComponent implements OnInit {
       error: (err) => {
         this.loadingMediosPago.set(false);
         this.error.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  private cargarCatalogoSiigoVenta(): void {
+    this.loadingSiigoVenta.set(true);
+    const empty = of([] as SiigoCatalogoItem[]);
+    forkJoin({
+      config: this.configuracionSiigoService.get().pipe(catchError(() => of(null))),
+      documentos: this.configuracionSiigoService.documentos('FV').pipe(catchError(() => empty)),
+    }).subscribe({
+      next: ({ config, documentos }) => {
+        const resoluciones = documentos ?? [];
+        this.resolucionesFv.set(resoluciones);
+        const preseleccion = resoluciones.find((item) => item.id === config?.documentTypeId);
+        if (preseleccion) {
+          this.documentTypeId.set(preseleccion.id);
+        } else if (resoluciones.length === 1) {
+          this.documentTypeId.set(resoluciones[0].id);
+        }
+        this.loadingSiigoVenta.set(false);
+      },
+      error: () => {
+        this.loadingSiigoVenta.set(false);
       },
     });
   }
@@ -693,6 +732,7 @@ export class VentaComponent implements OnInit {
             medioCajaId,
             pagoCredito,
             fechaProyectadaPago: pagoCredito ? this.fechaProyectadaPago().trim() : null,
+            documentTypeId: this.documentTypeId(),
           })
           .subscribe({
             next: (res) => {
@@ -705,6 +745,7 @@ export class VentaComponent implements OnInit {
               this.medioPagoId.set(null);
               this.pagoCredito.set(false);
               this.fechaProyectadaPago.set('');
+              this.documentTypeId.set(null);
               this.recargarExistencias();
             },
             error: (err) => {

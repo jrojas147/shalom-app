@@ -5,6 +5,7 @@ export interface ConfiguracionSiigo {
   username?: string | null;
   accessKeyConfigured: boolean;
   documentTypeId?: number | null;
+  documentTypeFv2Id?: number | null;
   paymentTypeId?: number | null;
   documentTypeDsId?: number | null;
   paymentTypeDsId?: number | null;
@@ -17,6 +18,7 @@ export interface ConfiguracionSiigo {
 export interface ConfiguracionSiigoRequest {
   activo: boolean;
   documentTypeId?: number | null;
+  documentTypeFv2Id?: number | null;
   paymentTypeId?: number | null;
   documentTypeDsId?: number | null;
   paymentTypeDsId?: number | null;
@@ -35,6 +37,7 @@ export interface SiigoCatalogoItem {
   codigo?: string | null;
   nombre: string;
   activo: boolean;
+  costCenter?: boolean;
 }
 
 export interface SiigoProductoStock {
