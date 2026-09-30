@@ -40,73 +40,85 @@
         <p class="rp-loading">Consultando catálogos de Siigo...</p>
       }
 
-      @if (documentos().length) {
-        <label class="siigo-field">
-          <span>Tipo de factura / resolución (FV)</span>
-          <select formControlName="documentTypeId">
-            <option [ngValue]="null">Seleccione</option>
-            @for (item of documentos(); track item.id) {
-              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
-            }
-          </select>
-          <small class="siigo-hint">
-            En la venta se elige la resolución en un solo listado. El centro de costo sale de esa resolución.
-          </small>
-        </label>
-      }
+      @if (credentialsConfigured() && !loadingCatalogos()) {
+        <section class="siigo-section">
+          <h3 class="siigo-section__title">Documento soporte</h3>
+          @if (documentosDs().length) {
+            <label class="siigo-field">
+              <span>Tipo de documento soporte (DS)</span>
+              <select formControlName="documentTypeDsId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of documentosDs(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+            </label>
+          } @else {
+            <p class="siigo-hint">No hay tipos de documento soporte activos en Siigo.</p>
+          }
 
-      @if (mediosPago().length) {
-        <label class="siigo-field">
-          <span>Medio de pago de la factura (crédito)</span>
-          <select formControlName="paymentTypeId">
-            <option [ngValue]="null">Seleccione</option>
-            @for (item of mediosPago(); track item.id) {
-              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
-            }
-          </select>
-          <small class="siigo-hint">
-            Al registrar la venta se crea una factura de venta en Siigo. La forma de pago es siempre crédito.
-          </small>
-        </label>
-      }
+          @if (mediosPagoDs().length) {
+            <label class="siigo-field">
+              <span>Medio de pago (crédito)</span>
+              <select formControlName="paymentTypeDsId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of mediosPagoDs(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+              <small class="siigo-hint">
+                Al confirmar la compra se valida en Siigo y se usa el medio Crédito vigente.
+              </small>
+            </label>
+          }
+        </section>
 
-      @if (documentosDs().length) {
-        <label class="siigo-field">
-          <span>Tipo de documento soporte (DS)</span>
-          <select formControlName="documentTypeDsId">
-            <option [ngValue]="null">Seleccione</option>
-            @for (item of documentosDs(); track item.id) {
-              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
-            }
-          </select>
-        </label>
-      }
+        <section class="siigo-section">
+          <h3 class="siigo-section__title">Factura de venta</h3>
+          @if (documentos().length) {
+            <label class="siigo-field">
+              <span>Tipo de factura / resolución (FV)</span>
+              <select formControlName="documentTypeId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of documentos(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+              <small class="siigo-hint">
+                En la venta se elige la resolución en un solo listado. El centro de costo sale de esa resolución.
+              </small>
+            </label>
+          } @else {
+            <p class="siigo-hint">No hay tipos de factura de venta activos en Siigo.</p>
+          }
 
-      @if (mediosPagoDs().length) {
-        <label class="siigo-field">
-          <span>Medio de pago documento soporte (crédito)</span>
-          <select formControlName="paymentTypeDsId">
-            <option [ngValue]="null">Seleccione</option>
-            @for (item of mediosPagoDs(); track item.id) {
-              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
-            }
-          </select>
-          <small class="siigo-hint">
-            Al confirmar la compra se valida en Siigo y se usa el medio Crédito vigente.
-          </small>
-        </label>
-      }
+          @if (mediosPago().length) {
+            <label class="siigo-field">
+              <span>Medio de pago (crédito)</span>
+              <select formControlName="paymentTypeId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of mediosPago(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+              <small class="siigo-hint">
+                Al registrar la venta se crea una factura de venta en Siigo. La forma de pago es siempre crédito.
+              </small>
+            </label>
+          }
 
-      @if (vendedores().length) {
-        <label class="siigo-field">
-          <span>Vendedor en Siigo</span>
-          <select formControlName="sellerId">
-            <option [ngValue]="null">Seleccione</option>
-            @for (item of vendedores(); track item.id) {
-              <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
-            }
-          </select>
-        </label>
+          @if (vendedores().length) {
+            <label class="siigo-field">
+              <span>Vendedor en Siigo</span>
+              <select formControlName="sellerId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of vendedores(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+            </label>
+          }
+        </section>
       }
 
       <div class="siigo-actions">
