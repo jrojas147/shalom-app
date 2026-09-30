@@ -28,6 +28,7 @@ export class VentasService {
       fechaProyectadaPago: payload.pagoCredito ? payload.fechaProyectadaPago : null,
       documentTypeId: payload.documentTypeId ?? null,
       costCenterId: payload.costCenterId ?? null,
+      invoiceNumber: payload.invoiceNumber ?? null,
     });
   }
 }

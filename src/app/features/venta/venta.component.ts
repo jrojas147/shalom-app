@@ -104,6 +104,7 @@ export class VentaComponent implements OnInit {
   readonly fechaProyectadaPago = signal('');
   readonly resolucionesFv = signal<SiigoCatalogoItem[]>([]);
   readonly documentTypeId = signal<number | null>(null);
+  readonly invoiceNumber = signal('');
   readonly loadingSiigoVenta = signal(false);
   readonly leyendoPesoId = signal<number | null>(null);
   readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
@@ -111,6 +112,12 @@ export class VentaComponent implements OnInit {
   readonly permiteManual = computed(() => permiteIngresoManual(this.lecturaPeso()));
   readonly permiteBascula = computed(() =>
     permiteLecturaBascula(this.lecturaPeso(), true)
+  );
+  readonly resolucionSeleccionada = computed(
+    () => this.resolucionesFv().find((item) => item.id === this.documentTypeId()) ?? null
+  );
+  readonly numeracionAutomatica = computed(
+    () => !!this.resolucionSeleccionada()?.automaticNumber
   );
 
   readonly productosFiltrados = computed(() => {
@@ -523,6 +530,7 @@ export class VentaComponent implements OnInit {
     this.fechaProyectadaPago.set('');
     this.medioPagoId.set(null);
     this.documentTypeId.set(null);
+    this.invoiceNumber.set('');
     this.resolucionesFv.set([]);
     this.showPagoModal.set(true);
     this.loadingMediosPago.set(true);
@@ -555,10 +563,36 @@ export class VentaComponent implements OnInit {
     this.pagoCredito.set(false);
     this.fechaProyectadaPago.set('');
     this.documentTypeId.set(null);
+    this.invoiceNumber.set('');
   }
 
   seleccionarResolucion(id: number | null): void {
     this.documentTypeId.set(id);
+    this.sugerirNumeroFactura(id);
+  }
+
+  onInvoiceNumber(value: string): void {
+    this.invoiceNumber.set((value ?? '').replace(/\D+/g, '').slice(0, 11));
+  }
+
+  private sugerirNumeroFactura(id: number | null): void {
+    const item = this.resolucionesFv().find((resolucion) => resolucion.id === id);
+    if (!item) {
+      this.invoiceNumber.set('');
+      return;
+    }
+    const actual = item.consecutive;
+    const siguiente = actual != null && actual > 0 ? actual + 1 : 1;
+    this.invoiceNumber.set(String(siguiente));
+  }
+
+  private numeroFacturaConfirmado(): number | null {
+    const digits = this.invoiceNumber().trim();
+    if (!digits) {
+      return null;
+    }
+    const value = Number(digits);
+    return Number.isInteger(value) && value > 0 ? value : null;
   }
 
   seleccionarMedioPago(id: number): void {
@@ -587,6 +621,14 @@ export class VentaComponent implements OnInit {
   confirmarPagoYRegistrar(): void {
     if (this.resolucionesFv().length > 0 && this.documentTypeId() == null) {
       this.error.set('Seleccione la resolución de factura.');
+      return;
+    }
+    if (
+      this.resolucionesFv().length > 0
+      && !this.numeracionAutomatica()
+      && !this.invoiceNumber().trim()
+    ) {
+      this.error.set('Confirme el número de factura.');
       return;
     }
     if (this.pagoCredito()) {
@@ -651,8 +693,10 @@ export class VentaComponent implements OnInit {
         const preseleccion = resoluciones.find((item) => item.id === config?.documentTypeId);
         if (preseleccion) {
           this.documentTypeId.set(preseleccion.id);
+          this.sugerirNumeroFactura(preseleccion.id);
         } else if (resoluciones.length === 1) {
           this.documentTypeId.set(resoluciones[0].id);
+          this.sugerirNumeroFactura(resoluciones[0].id);
         }
         this.loadingSiigoVenta.set(false);
       },
@@ -733,6 +777,7 @@ export class VentaComponent implements OnInit {
             pagoCredito,
             fechaProyectadaPago: pagoCredito ? this.fechaProyectadaPago().trim() : null,
             documentTypeId: this.documentTypeId(),
+            invoiceNumber: this.numeracionAutomatica() ? null : this.numeroFacturaConfirmado(),
           })
           .subscribe({
             next: (res) => {
@@ -746,6 +791,7 @@ export class VentaComponent implements OnInit {
               this.pagoCredito.set(false);
               this.fechaProyectadaPago.set('');
               this.documentTypeId.set(null);
+              this.invoiceNumber.set('');
               this.recargarExistencias();
             },
             error: (err) => {

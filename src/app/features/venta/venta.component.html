@@ -341,6 +341,24 @@
         </select>
       }
 
+      @if (resolucionesFv().length && documentTypeId() != null) {
+        <label class="venta-pago__label" for="numeroFacturaSiigo">Número de factura *</label>
+        <input
+          id="numeroFacturaSiigo"
+          type="text"
+          inputmode="numeric"
+          maxlength="11"
+          autocomplete="off"
+          class="venta-pago__fecha"
+          [readOnly]="numeracionAutomatica()"
+          [ngModel]="invoiceNumber()"
+          (ngModelChange)="onInvoiceNumber($event)"
+        />
+        @if (numeracionAutomatica()) {
+          <p class="venta-pago__desc">Esta resolución numera sola. El consecutivo lo asigna Siigo.</p>
+        }
+      }
+
       <div class="venta-pago__actions">
         <button type="button" class="rp-btn rp-btn--ghost" (click)="cancelarPagoModal()">
           Cancelar
@@ -354,6 +372,7 @@
             || (!pagoCredito() && medioPagoId() == null)
             || (pagoCredito() && !fechaProyectadaPago())
             || (resolucionesFv().length > 0 && documentTypeId() == null)
+            || (resolucionesFv().length > 0 && !numeracionAutomatica() && !invoiceNumber().trim())
           "
           (click)="confirmarPagoYRegistrar()"
         >

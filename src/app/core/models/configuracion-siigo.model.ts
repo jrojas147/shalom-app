@@ -38,6 +38,8 @@ export interface SiigoCatalogoItem {
   nombre: string;
   activo: boolean;
   costCenter?: boolean;
+  automaticNumber?: boolean;
+  consecutive?: number | null;
 }
 
 export interface SiigoProductoStock {

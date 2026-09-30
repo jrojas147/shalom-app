@@ -18,6 +18,7 @@ export interface RegistrarVentaPayload {
   fechaProyectadaPago?: string | null;
   documentTypeId?: number | null;
   costCenterId?: number | null;
+  invoiceNumber?: number | null;
 }
 
 export interface VentaResumen {
