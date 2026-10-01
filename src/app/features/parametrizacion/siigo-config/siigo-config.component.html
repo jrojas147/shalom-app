@@ -131,6 +131,41 @@
             </label>
           }
         </section>
+
+        <section class="siigo-section">
+          <h3 class="siigo-section__title">Traslados</h3>
+          @if (documentosCc().length) {
+            <label class="siigo-field">
+              <span>Comprobante contable (CC)</span>
+              <select formControlName="documentTypeCcId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of documentosCc(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+              <small class="siigo-hint">
+                Al registrar un traslado se crea un comprobante en Siigo que baja el stock del
+                grupo de origen y sube el de destino.
+              </small>
+            </label>
+          } @else {
+            <p class="siigo-hint">No hay comprobantes contables (CC) activos en Siigo.</p>
+          }
+
+          <label class="siigo-field">
+            <span>Cuenta de inventario</span>
+            <input
+              type="text"
+              maxlength="30"
+              autocomplete="off"
+              placeholder="Ej. 14350501"
+              formControlName="cuentaInventarioCc"
+            />
+            <small class="siigo-hint">
+              Código de la cuenta de inventario en Siigo Nube (la misma para salida y entrada).
+            </small>
+          </label>
+        </section>
       }
 
       <div class="siigo-actions">

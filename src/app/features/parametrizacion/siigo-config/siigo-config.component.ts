@@ -30,6 +30,7 @@ export class SiigoConfigComponent implements OnInit {
   readonly mediosPagoDs = signal<SiigoCatalogoItem[]>([]);
   readonly vendedores = signal<SiigoCatalogoItem[]>([]);
   readonly centrosCosto = signal<SiigoCatalogoItem[]>([]);
+  readonly documentosCc = signal<SiigoCatalogoItem[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     activo: [false],
@@ -39,6 +40,8 @@ export class SiigoConfigComponent implements OnInit {
     paymentTypeDsId: [null as number | null],
     costCenterFvId: [null as number | null],
     sellerId: [null as number | null],
+    documentTypeCcId: [null as number | null],
+    cuentaInventarioCc: [''],
   });
 
   ngOnInit(): void {
@@ -62,6 +65,8 @@ export class SiigoConfigComponent implements OnInit {
           paymentTypeDsId: data.paymentTypeDsId ?? null,
           costCenterFvId: data.costCenterFvId ?? null,
           sellerId: data.sellerId ?? null,
+          documentTypeCcId: data.documentTypeCcId ?? null,
+          cuentaInventarioCc: data.cuentaInventarioCc ?? '',
         });
         this.loading.set(false);
         if (data.accessKeyConfigured) {
@@ -102,6 +107,8 @@ export class SiigoConfigComponent implements OnInit {
         paymentTypeDsId: raw.paymentTypeDsId,
         costCenterFvId: raw.costCenterFvId,
         sellerId: raw.sellerId,
+        documentTypeCcId: raw.documentTypeCcId,
+        cuentaInventarioCc: raw.cuentaInventarioCc?.trim() || null,
       })
       .subscribe({
         next: (data) => {
@@ -148,6 +155,7 @@ export class SiigoConfigComponent implements OnInit {
       mediosPagoDs: this.configuracionService.mediosPago('DS').pipe(catchError(() => empty)),
       vendedores: this.configuracionService.vendedores().pipe(catchError(() => empty)),
       centrosCosto: this.configuracionService.centrosCosto('FV').pipe(catchError(() => empty)),
+      documentosCc: this.configuracionService.documentos('CC').pipe(catchError(() => empty)),
     }).subscribe({
       next: (data) => {
         this.documentos.set(data.documentos ?? []);
@@ -156,6 +164,7 @@ export class SiigoConfigComponent implements OnInit {
         this.mediosPagoDs.set(data.mediosPagoDs ?? []);
         this.vendedores.set(data.vendedores ?? []);
         this.centrosCosto.set(data.centrosCosto ?? []);
+        this.documentosCc.set(data.documentosCc ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeId, data.mediosPago ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeDsId, data.mediosPagoDs ?? []);
         this.loadingCatalogos.set(false);
