@@ -29,6 +29,7 @@ export class SiigoConfigComponent implements OnInit {
   readonly documentosDs = signal<SiigoCatalogoItem[]>([]);
   readonly mediosPagoDs = signal<SiigoCatalogoItem[]>([]);
   readonly vendedores = signal<SiigoCatalogoItem[]>([]);
+  readonly centrosCosto = signal<SiigoCatalogoItem[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     activo: [false],
@@ -36,6 +37,7 @@ export class SiigoConfigComponent implements OnInit {
     paymentTypeId: [null as number | null],
     documentTypeDsId: [null as number | null],
     paymentTypeDsId: [null as number | null],
+    costCenterFvId: [null as number | null],
     sellerId: [null as number | null],
   });
 
@@ -58,6 +60,7 @@ export class SiigoConfigComponent implements OnInit {
           paymentTypeId: data.paymentTypeId ?? null,
           documentTypeDsId: data.documentTypeDsId ?? null,
           paymentTypeDsId: data.paymentTypeDsId ?? null,
+          costCenterFvId: data.costCenterFvId ?? null,
           sellerId: data.sellerId ?? null,
         });
         this.loading.set(false);
@@ -97,6 +100,7 @@ export class SiigoConfigComponent implements OnInit {
         paymentTypeId: raw.paymentTypeId,
         documentTypeDsId: raw.documentTypeDsId,
         paymentTypeDsId: raw.paymentTypeDsId,
+        costCenterFvId: raw.costCenterFvId,
         sellerId: raw.sellerId,
       })
       .subscribe({
@@ -143,6 +147,7 @@ export class SiigoConfigComponent implements OnInit {
       documentosDs: this.configuracionService.documentos('DS').pipe(catchError(() => empty)),
       mediosPagoDs: this.configuracionService.mediosPago('DS').pipe(catchError(() => empty)),
       vendedores: this.configuracionService.vendedores().pipe(catchError(() => empty)),
+      centrosCosto: this.configuracionService.centrosCosto('FV').pipe(catchError(() => empty)),
     }).subscribe({
       next: (data) => {
         this.documentos.set(data.documentos ?? []);
@@ -150,6 +155,7 @@ export class SiigoConfigComponent implements OnInit {
         this.documentosDs.set(data.documentosDs ?? []);
         this.mediosPagoDs.set(data.mediosPagoDs ?? []);
         this.vendedores.set(data.vendedores ?? []);
+        this.centrosCosto.set(data.centrosCosto ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeId, data.mediosPago ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeDsId, data.mediosPagoDs ?? []);
         this.loadingCatalogos.set(false);

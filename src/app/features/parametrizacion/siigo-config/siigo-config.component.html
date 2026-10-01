@@ -85,11 +85,23 @@
                 }
               </select>
               <small class="siigo-hint">
-                En la venta se elige la resolución en un solo listado. El centro de costo sale de esa resolución.
+                En la venta se elige la resolución en un solo listado.
               </small>
             </label>
           } @else {
             <p class="siigo-hint">No hay tipos de factura de venta activos en Siigo.</p>
+          }
+
+          @if (centrosCosto().length) {
+            <label class="siigo-field">
+              <span>Centro de costo</span>
+              <select formControlName="costCenterFvId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of centrosCosto(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+            </label>
           }
 
           @if (mediosPago().length) {
