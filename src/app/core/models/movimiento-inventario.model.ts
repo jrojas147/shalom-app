@@ -15,7 +15,6 @@ export interface MovimientoInventario {
   createdAt: string;
   existenciaOrigen?: number | null;
   existenciaDestino?: number | null;
-  siigoId?: string | null;
 }
 
 export interface RegistrarMovimientoRequest {

@@ -123,7 +123,7 @@ export class MovimientosComponent implements OnInit {
     this.confirmDialog
       .confirm({
         title: 'Confirmar movimiento',
-        message: `¿Mover ${this.formatPeso(cantidadKg)} KG de ${origen} a ${destino}? Se actualizará el inventario de Shalom y el de Siigo.`,
+        message: `¿Mover ${this.formatPeso(cantidadKg)} KG de ${origen} a ${destino}? Se actualizará el inventario de Shalom.`,
         confirmLabel: 'Mover',
         cancelLabel: 'Cancelar',
       })
@@ -176,9 +176,7 @@ export class MovimientosComponent implements OnInit {
           observacion: '',
         });
         this.mensaje.set(
-          movimiento.siigoId
-            ? `Se movieron ${this.formatPeso(movimiento.cantidadKg)} KG de ${movimiento.productoOrigenNombre} a ${movimiento.productoDestinoNombre}. Traslado creado en Siigo.`
-            : `Se movieron ${this.formatPeso(movimiento.cantidadKg)} KG de ${movimiento.productoOrigenNombre} a ${movimiento.productoDestinoNombre}.`
+          `Se movieron ${this.formatPeso(movimiento.cantidadKg)} KG de ${movimiento.productoOrigenNombre} a ${movimiento.productoDestinoNombre}.`
         );
         this.loadData();
       },
@@ -219,7 +217,6 @@ export class MovimientosComponent implements OnInit {
       movimiento.observacion,
       movimiento.usuarioRegistroNombre,
       movimiento.sucursalNombre,
-      movimiento.siigoId,
     ];
     return fields.some((value) => value?.toLowerCase().includes(q));
   }

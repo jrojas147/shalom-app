@@ -3,8 +3,8 @@
     <div>
       <h1>Globos</h1>
       <p>
-        Control de globos en bodega y registro de entregas y recepciones de globos a proveedores o clientes.<br>
-        Daos de los globos se parametrizan en <strong>Tipos de empaques</strong>.
+        Registro de globos en bodega, recicladores y clientes.<br>
+        Informacion parametrizada en <strong>Tipos de empaques</strong>.
       </p>
     </div>
   </header>
@@ -19,16 +19,16 @@
   @if (resumen(); as resumen) {
     <section class="empaques-stats">
       <article class="empaques-stat">
-        <span class="empaques-stat__label">En bodega</span>
+        <span class="empaques-stat__label">Propios en bodega</span>
         <strong class="empaques-stat__value">{{ resumen.bodegaCantidad }}</strong>
+      </article>
+      <article class="empaques-stat">
+        <span class="empaques-stat__label">Proveedor en bodega</span>
+        <strong class="empaques-stat__value">{{ resumen.proveedoresYoTengo }}</strong>
       </article>
       <article class="empaques-stat">
         <span class="empaques-stat__label">Prestamo a proveedor</span>
         <strong class="empaques-stat__value">{{ resumen.proveedoresEllosTienen }}</strong>
-      </article>
-      <article class="empaques-stat">
-        <span class="empaques-stat__label">Bodega de proveedor</span>
-        <strong class="empaques-stat__value">{{ resumen.proveedoresYoTengo }}</strong>
       </article>
       <article class="empaques-stat">
         <span class="empaques-stat__label">Prestamo a cliente</span>
@@ -46,7 +46,7 @@
           [class.active]="vista() === 'bodega'"
           (click)="setVista('bodega')"
         >
-          Bodega
+          Gestión Bodega
         </button>
         <button
           type="button"
@@ -54,7 +54,7 @@
           [class.active]="vista() === 'proveedores'"
           (click)="setVista('proveedores')"
         >
-          Proveedores internos
+          Gestión Recicladores
         </button>
         <button
           type="button"
@@ -62,7 +62,7 @@
           [class.active]="vista() === 'clientes'"
           (click)="setVista('clientes')"
         >
-          Clientes
+          Gestión Clientes
         </button>
         <button
           type="button"

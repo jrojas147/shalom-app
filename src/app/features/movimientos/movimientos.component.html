@@ -121,7 +121,6 @@
             <th class="cell-num">Cantidad (KG)</th>
             <th>Observación</th>
             <th>Usuario</th>
-            <th>Siigo</th>
             <th>Fecha</th>
           </tr>
         </thead>
@@ -134,12 +133,11 @@
               <td class="cell-num">{{ formatPeso(movimiento.cantidadKg) }}</td>
               <td class="cell-secondary">{{ movimiento.observacion || '—' }}</td>
               <td class="cell-secondary">{{ movimiento.usuarioRegistroNombre || '—' }}</td>
-              <td class="cell-secondary">{{ movimiento.siigoId ? 'Enviado' : '—' }}</td>
               <td class="cell-secondary">{{ movimiento.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="cell-empty">No hay movimientos registrados.</td>
+              <td colspan="7" class="cell-empty">No hay movimientos registrados.</td>
             </tr>
           }
         </tbody>
