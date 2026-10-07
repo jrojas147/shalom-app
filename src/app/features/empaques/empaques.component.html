@@ -146,9 +146,10 @@
           Ingrese los empaques que llegan a bodega. Entregar a un proveedor o vender descuenta este
           inventario. Recibirlos de vuelta (pre-compra o devolución) lo aumenta.
         } @else if (vista() === 'proveedores') {
-          Entregar sale de bodega y queda en poder del proveedor. Recibir (o confirmar una
-          pre-compra) los devuelve a bodega, o deja registrados los empaques del proveedor que
-          quedan en planta.
+          Entregar sale de bodega y queda en poder del proveedor. Recibir devuelve a bodega lo
+          que ellos tienen nuestro; si la cantidad supera ese saldo, el resto queda como empaque
+          de ellos en planta. Al confirmar la pre-compra, el empaque recibido entra a bodega y
+          se registra en Tengo de ellos.
         } @else {
           No se entregan empaques al cliente por aparte: al vender, el tipo seleccionado queda en
           su poder y sale de bodega. Aquí solo registra la devolución.
@@ -259,16 +260,63 @@
           }
         </tbody>
       </table>
+    } @else if (vista() === 'proveedores') {
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Proveedor interno</th>
+            <th>Me tienen</th>
+            <th>Tengo de ellos</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (grupo of saldosProveedor(); track grupo.contraparteId) {
+            <tr>
+              <td class="cell-primary">{{ grupo.contraparteNombre }}</td>
+              <td>
+                @if (grupo.ellosTienen > 0) {
+                  <button
+                    type="button"
+                    class="empaques-detalle"
+                    (click)="abrirDetalle(grupo, 'ellos')"
+                  >
+                    {{ grupo.ellosTienen }}
+                  </button>
+                } @else {
+                  <strong>0</strong>
+                }
+              </td>
+              <td>
+                @if (grupo.yoTengo > 0) {
+                  <button
+                    type="button"
+                    class="empaques-detalle"
+                    (click)="abrirDetalle(grupo, 'yo')"
+                  >
+                    {{ grupo.yoTengo }}
+                  </button>
+                } @else {
+                  <strong>0</strong>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="rp-empty">
+                No hay saldos con proveedores. Entregue unidades desde bodega o confirme una
+                pre-compra.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     } @else {
       <table class="rp-table">
         <thead>
           <tr>
-            <th>{{ vista() === 'clientes' ? 'Cliente' : 'Proveedor interno' }}</th>
+            <th>Cliente</th>
             <th>Tipo de empaque</th>
             <th>Me tienen</th>
-            @if (vista() === 'proveedores') {
-              <th>Tengo de ellos</th>
-            }
           </tr>
         </thead>
         <tbody>
@@ -279,22 +327,12 @@
               <td>
                 <strong>{{ saldo.ellosTienen }}</strong>
               </td>
-              @if (vista() === 'proveedores') {
-                <td>
-                  <strong>{{ saldo.yoTengo }}</strong>
-                </td>
-              }
             </tr>
           } @empty {
             <tr>
-              <td [attr.colspan]="vista() === 'proveedores' ? 4 : 3" class="rp-empty">
-                @if (vista() === 'clientes') {
-                  No hay empaques en poder de clientes. Se registran al vender con cantidad de
-                  empaque.
-                } @else {
-                  No hay saldos con proveedores. Entregue unidades desde bodega o confirme una
-                  pre-compra.
-                }
+              <td colspan="3" class="rp-empty">
+                No hay empaques en poder de clientes. Se registran al vender con cantidad de
+                empaque.
               </td>
             </tr>
           }
@@ -303,3 +341,20 @@
     }
   </section>
 </div>
+
+@if (detalleModal(); as detalle) {
+  <app-rp-modal
+    [title]="detalle.titulo + ' ' + detalle.total + ' — ' + detalle.proveedor"
+    [closeOnOverlay]="true"
+    (closed)="cerrarDetalle()"
+  >
+    <ul class="empaques-detalle-lista">
+      @for (item of detalle.items; track item.tipoEmpaqueId) {
+        <li>
+          <strong>{{ item.cantidad }}</strong>
+          <span>{{ item.tipoEmpaqueNombre }}</span>
+        </li>
+      }
+    </ul>
+  </app-rp-modal>
+}

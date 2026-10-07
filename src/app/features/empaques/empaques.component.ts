@@ -22,13 +22,36 @@ import { EmpaquesService } from '../../core/services/empaques.service';
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
+import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
 type EmpaqueVista = 'bodega' | 'proveedores' | 'clientes' | 'movimientos';
+
+interface DetalleGlobo {
+  tipoEmpaqueId: number;
+  tipoEmpaqueNombre: string;
+  cantidad: number;
+}
+
+interface SaldoProveedorGrupo {
+  contraparteId: number;
+  contraparteNombre: string;
+  ellosTienen: number;
+  yoTengo: number;
+  detalleEllos: DetalleGlobo[];
+  detalleYo: DetalleGlobo[];
+}
+
+interface DetalleGloboModal {
+  titulo: string;
+  proveedor: string;
+  total: number;
+  items: DetalleGlobo[];
+}
 
 @Component({
   selector: 'app-empaques',
   standalone: true,
-  imports: [DatePipe, ReactiveFormsModule],
+  imports: [DatePipe, ReactiveFormsModule, RpModalComponent],
   templateUrl: './empaques.component.html',
   styleUrl: './empaques.component.scss',
 })
@@ -54,6 +77,7 @@ export class EmpaquesComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
   readonly busqueda = signal('');
+  readonly detalleModal = signal<DetalleGloboModal | null>(null);
 
   readonly puedeAnular = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
 
@@ -86,6 +110,47 @@ export class EmpaquesComponent implements OnInit {
       const haystack = [saldo.contraparteNombre, saldo.tipoEmpaqueNombre].join(' ').toLowerCase();
       return haystack.includes(q);
     });
+  });
+
+  readonly saldosProveedor = computed(() => {
+    const grupos = new Map<number, SaldoProveedorGrupo>();
+    for (const saldo of this.saldosFiltrados()) {
+      let grupo = grupos.get(saldo.contraparteId);
+      if (!grupo) {
+        grupo = {
+          contraparteId: saldo.contraparteId,
+          contraparteNombre: saldo.contraparteNombre,
+          ellosTienen: 0,
+          yoTengo: 0,
+          detalleEllos: [],
+          detalleYo: [],
+        };
+        grupos.set(saldo.contraparteId, grupo);
+      }
+      grupo.ellosTienen += saldo.ellosTienen;
+      grupo.yoTengo += saldo.yoTengo;
+      if (saldo.ellosTienen > 0) {
+        grupo.detalleEllos.push({
+          tipoEmpaqueId: saldo.tipoEmpaqueId,
+          tipoEmpaqueNombre: saldo.tipoEmpaqueNombre,
+          cantidad: saldo.ellosTienen,
+        });
+      }
+      if (saldo.yoTengo > 0) {
+        grupo.detalleYo.push({
+          tipoEmpaqueId: saldo.tipoEmpaqueId,
+          tipoEmpaqueNombre: saldo.tipoEmpaqueNombre,
+          cantidad: saldo.yoTengo,
+        });
+      }
+    }
+    return [...grupos.values()]
+      .map((grupo) => ({
+        ...grupo,
+        detalleEllos: ordenarDetalle(grupo.detalleEllos),
+        detalleYo: ordenarDetalle(grupo.detalleYo),
+      }))
+      .sort((a, b) => a.contraparteNombre.localeCompare(b.contraparteNombre, 'es'));
   });
 
   readonly movimientosFiltrados = computed(() => {
@@ -141,6 +206,25 @@ export class EmpaquesComponent implements OnInit {
     this.form.controls.contraparteId.updateValueAndValidity();
     this.error.set(null);
     this.mensaje.set(null);
+    this.detalleModal.set(null);
+  }
+
+  abrirDetalle(grupo: SaldoProveedorGrupo, campo: 'ellos' | 'yo'): void {
+    const ellos = campo === 'ellos';
+    const total = ellos ? grupo.ellosTienen : grupo.yoTengo;
+    if (total <= 0) {
+      return;
+    }
+    this.detalleModal.set({
+      titulo: ellos ? 'Me tienen' : 'Tengo de ellos',
+      proveedor: grupo.contraparteNombre,
+      total,
+      items: ellos ? grupo.detalleEllos : grupo.detalleYo,
+    });
+  }
+
+  cerrarDetalle(): void {
+    this.detalleModal.set(null);
   }
 
   onBusquedaChange(value: string): void {
@@ -330,4 +414,10 @@ export class EmpaquesComponent implements OnInit {
     }
     return null;
   }
+}
+
+function ordenarDetalle(items: DetalleGlobo[]): DetalleGlobo[] {
+  return [...items].sort(
+    (a, b) => b.cantidad - a.cantidad || a.tipoEmpaqueNombre.localeCompare(b.tipoEmpaqueNombre, 'es')
+  );
 }
