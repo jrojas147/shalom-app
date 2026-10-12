@@ -127,7 +127,7 @@
               @for (tipo of tiposEmpaque(); track tipo.id) {
                 @if (!esSinEmpaque(tipo.nombre)) {
                   <option [value]="tipo.nombre">
-                    {{ tipo.nombre }} ({{ formatPeso(tipo.peso) }} KG)
+                    {{ tipo.nombre }} ({{ disponibleEmpaque(tipo.id) }}) ({{ formatPeso(tipo.peso) }} KG)
                   </option>
                 }
               }

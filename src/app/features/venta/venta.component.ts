@@ -8,6 +8,7 @@ import {
   productoImagenUrl,
 } from '../../core/models/producto.model';
 import { tipoClienteLabel } from '../../core/models/cliente.model';
+import { EmpaqueBodega } from '../../core/models/empaque.model';
 import { ExistenciaProducto } from '../../core/models/inventario.model';
 import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
 import {
@@ -17,6 +18,7 @@ import {
 import { CodigosCiiuService } from '../../core/services/codigos-ciiu.service';
 import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
+import { EmpaquesService } from '../../core/services/empaques.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { VentasService } from '../../core/services/ventas.service';
 import { BasculaService } from '../../core/services/bascula.service';
@@ -65,6 +67,7 @@ export class VentaComponent implements OnInit {
   private readonly inventarioService = inject(InventarioService);
   private readonly codigosCiiuService = inject(CodigosCiiuService);
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
+  private readonly empaquesService = inject(EmpaquesService);
   private readonly ventasService = inject(VentasService);
   private readonly basculaService = inject(BasculaService);
   private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
@@ -86,6 +89,7 @@ export class VentaComponent implements OnInit {
   readonly existenciasUnidades = signal<Map<number, number>>(new Map());
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
   readonly tiposEmpaque = signal<TipoEmpaque[]>([]);
+  readonly empaqueDisponible = signal<Map<number, number>>(new Map());
   readonly items = signal<CompraDetalleItem[]>([]);
   readonly clienteSeleccionado = signal<VentaClienteSeleccion | null>(null);
   readonly busqueda = signal('');
@@ -193,6 +197,7 @@ export class VentaComponent implements OnInit {
       next: (data) => this.tiposEmpaque.set(data),
       error: () => this.tiposEmpaque.set([]),
     });
+    this.cargarEmpaquesDisponibles();
 
     this.configuracionLecturaPesoService.get().subscribe({
       next: (data) => this.lecturaPeso.set(data.venta),
@@ -206,6 +211,10 @@ export class VentaComponent implements OnInit {
 
   onCodigoCiiuFiltro(value: number | null): void {
     this.codigoCiiuFiltro.set(value);
+  }
+
+  disponibleEmpaque(tipoId: number): number {
+    return this.empaqueDisponible().get(tipoId) ?? 0;
   }
 
   stockProducto(productoId: number): number {
@@ -793,6 +802,7 @@ export class VentaComponent implements OnInit {
               this.documentTypeId.set(null);
               this.invoiceNumber.set('');
               this.recargarExistencias();
+              this.cargarEmpaquesDisponibles();
             },
             error: (err) => {
               this.procesando.set(false);
@@ -805,6 +815,21 @@ export class VentaComponent implements OnInit {
         this.error.set('No se pudieron actualizar los precios de los productos.');
       },
     });
+  }
+
+  private cargarEmpaquesDisponibles(): void {
+    this.empaquesService
+      .bodega()
+      .pipe(catchError(() => of([] as EmpaqueBodega[])))
+      .subscribe((bodega) => {
+        const disponibles = new Map<number, number>();
+        for (const item of bodega) {
+          const enBodega = Math.max(0, Number(item.enBodega) || 0);
+          const entregarProveedores = Math.max(0, Number(item.deProveedores) || 0);
+          disponibles.set(item.tipoEmpaqueId, enBodega + entregarProveedores);
+        }
+        this.empaqueDisponible.set(disponibles);
+      });
   }
 
   private recargarExistencias(): void {

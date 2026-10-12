@@ -143,16 +143,15 @@
       </form>
       <p class="empaques__hint">
         @if (vista() === 'bodega') {
-          Ingrese los empaques que llegan a bodega. Entregar a un proveedor o vender descuenta este
-          inventario. Recibirlos de vuelta (pre-compra o devolución) lo aumenta.
+          En bodega es la reserva propia para entregar. Súbela con un ingreso y bájala al entregar
+          de esa reserva o al dar de baja. La pre-compra no entra aquí.
         } @else if (vista() === 'proveedores') {
-          Entregar sale de bodega y queda en poder del proveedor. Recibir devuelve a bodega lo
-          que ellos tienen nuestro; si la cantidad supera ese saldo, el resto queda como empaque
-          de ellos en planta. Al confirmar la pre-compra, el empaque recibido entra a bodega y
-          se registra en Tengo de ellos.
+          Entregar devuelve primero lo que está en Tengo de ellos, sin tocar bodega. Si la cantidad
+          supera ese saldo, el resto sale de la reserva de bodega y queda en Me tienen. La
+          pre-compra suma en Tengo de ellos (Entregar a proveedores) y no entra a bodega.
         } @else {
-          No se entregan empaques al cliente por aparte: al vender, el tipo seleccionado queda en
-          su poder y sale de bodega. Aquí solo registra la devolución.
+          Al vender, el empaque queda en poder del cliente. Al recibirlo, vuelve al origen: si salió
+          de proveedor en bodega, regresa ahí; si salió de la reserva, regresa a bodega.
         }
       </p>
     }
@@ -235,9 +234,9 @@
           <tr>
             <th>Tipo de empaque</th>
             <th>En bodega</th>
-            <th>De proveedores</th>
-            <th>En proveedores</th>
-            <th>En clientes</th>
+            <th>Entregar a proveedores</th>
+            <th>Prestamo a proveedores</th>
+            <th>Prestamo a clientes</th>
           </tr>
         </thead>
         <tbody>
@@ -303,8 +302,8 @@
           } @empty {
             <tr>
               <td colspan="3" class="rp-empty">
-                No hay saldos con proveedores. Entregue unidades desde bodega o confirme una
-                pre-compra.
+                No hay saldos con proveedores. Entregue unidades desde bodega o registre una
+                pre-compra con empaque.
               </td>
             </tr>
           }
