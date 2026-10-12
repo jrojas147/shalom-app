@@ -264,27 +264,14 @@
         <thead>
           <tr>
             <th>Proveedor interno</th>
-            <th>Me tienen</th>
             <th>Tengo de ellos</th>
+            <th>Me tienen</th>
           </tr>
         </thead>
         <tbody>
           @for (grupo of saldosProveedor(); track grupo.contraparteId) {
             <tr>
               <td class="cell-primary">{{ grupo.contraparteNombre }}</td>
-              <td>
-                @if (grupo.ellosTienen > 0) {
-                  <button
-                    type="button"
-                    class="empaques-detalle"
-                    (click)="abrirDetalle(grupo, 'ellos')"
-                  >
-                    {{ grupo.ellosTienen }}
-                  </button>
-                } @else {
-                  <strong>0</strong>
-                }
-              </td>
               <td>
                 @if (grupo.yoTengo > 0) {
                   <button
@@ -293,6 +280,19 @@
                     (click)="abrirDetalle(grupo, 'yo')"
                   >
                     {{ grupo.yoTengo }}
+                  </button>
+                } @else {
+                  <strong>0</strong>
+                }
+              </td>
+              <td>
+                @if (grupo.ellosTienen > 0) {
+                  <button
+                    type="button"
+                    class="empaques-detalle"
+                    (click)="abrirDetalle(grupo, 'ellos')"
+                  >
+                    {{ grupo.ellosTienen }}
                   </button>
                 } @else {
                   <strong>0</strong>
