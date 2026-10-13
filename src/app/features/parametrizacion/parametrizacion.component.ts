@@ -74,7 +74,7 @@ export class ParametrizacionComponent {
     {
       id: 'siigo',
       titulo: 'Siigo Nube',
-      descripcion: 'Activación y catálogos de Siigo. Usuario y clave van en el servidor.',
+      descripcion: 'Activación, catálogos y egresos de Siigo. Usuario y clave van en el servidor.',
     },
   ];
 

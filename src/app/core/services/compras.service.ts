@@ -12,6 +12,7 @@ import {
   CompraResumen,
   RegistrarCompraRequest,
   RegistrarCompraResponse,
+  RegistrarPagoCompraPayload,
 } from '../models/compra-registro.model';
 
 export interface RegistrarPreCompraPayload {
@@ -71,11 +72,13 @@ export class ComprasService {
     return this.http.post<RegistrarCompraResponse>(`${this.baseUrl}/${id}/anular`, null);
   }
 
-  registrarPago(id: number, medioCajaId?: number | null): Observable<RegistrarCompraResponse> {
-    return this.http.post<RegistrarCompraResponse>(
-      `${this.baseUrl}/${id}/pagar`,
-      medioCajaId != null ? { medioCajaId } : {}
-    );
+  registrarPago(id: number, payload: RegistrarPagoCompraPayload): Observable<RegistrarCompraResponse> {
+    return this.http.post<RegistrarCompraResponse>(`${this.baseUrl}/${id}/pagar`, {
+      medioCajaId: payload.medioCajaId ?? null,
+      fechaElaboracion: payload.fechaElaboracion ?? null,
+      tipoRecibo: payload.tipoRecibo ?? null,
+      paymentTypeId: payload.paymentTypeId ?? null,
+    });
   }
 
   private toRequest(payload: RegistrarPreCompraPayload): RegistrarCompraRequest {

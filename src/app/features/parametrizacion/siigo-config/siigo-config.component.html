@@ -5,7 +5,7 @@
     <a href="https://developers.siigolatam.com/docs/siigoapi/" target="_blank" rel="noopener">
       Siigo API
     </a>
-    para facturación, documento soporte de compras y contabilidad. El usuario y el access key se definen en el servidor
+    para facturación, documento soporte de compras, egresos y contabilidad. El usuario y el access key se definen en el servidor
     (<code>SIIGO_USERNAME</code> y <code>SIIGO_ACCESS_KEY</code> en <code>.env</code>), no en esta
     pantalla.
   </p>
@@ -128,6 +128,50 @@
                   <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
                 }
               </select>
+            </label>
+          }
+        </section>
+
+        <section class="siigo-section">
+          <h3 class="siigo-section__title">Egresos</h3>
+          <p class="siigo-hint">
+            Recibo de pago a proveedores que se envía a Siigo al pagar una retribución. La fecha, el tipo de recibo y
+            de dónde sale el dinero se confirman en el detalle de la compra.
+          </p>
+
+          @if (documentosRp().length) {
+            <label class="siigo-field">
+              <span>Tipo de comprobante de egreso</span>
+              <select formControlName="documentTypeRpId">
+                <option [ngValue]="null">Seleccione</option>
+                @for (item of documentosRp(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+              <small class="siigo-hint">
+                Comprobante de egreso de Siigo, por ejemplo Recibo de pago a proveedores.
+              </small>
+            </label>
+          } @else {
+            <p class="siigo-hint">No hay tipos de recibo de pago activos en Siigo.</p>
+          }
+
+          <label class="siigo-field">
+            <span>Moneda</span>
+            <select formControlName="currencyCode">
+              @for (moneda of monedas; track moneda.code) {
+                <option [value]="moneda.code">{{ moneda.label }}</option>
+              }
+            </select>
+            <small class="siigo-hint">
+              COP usa la moneda local de Siigo. USD se envía con la tasa de cambio.
+            </small>
+          </label>
+
+          @if (monedaExtranjera()) {
+            <label class="siigo-field">
+              <span>Tasa de cambio</span>
+              <input type="number" formControlName="currencyExchangeRate" min="0" step="0.0001" />
             </label>
           }
         </section>

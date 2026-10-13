@@ -68,6 +68,13 @@ export interface RegistrarCompraRequest {
   supplierReceiptNumber?: string | null;
 }
 
+export interface RegistrarPagoCompraPayload {
+  medioCajaId?: number | null;
+  fechaElaboracion?: string | null;
+  tipoRecibo?: 'DebtPayment' | 'AdvancePayment' | null;
+  paymentTypeId?: number | null;
+}
+
 export interface RegistrarCompraResponse {
   compraId: number;
   factura: string;

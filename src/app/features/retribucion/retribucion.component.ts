@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { catchError, forkJoin, of } from 'rxjs';
 import { Compra, RegistrarCompraResponse } from '../../core/models/compra-registro.model';
+import { SiigoCatalogoItem } from '../../core/models/configuracion-siigo.model';
 import { CajaSaldo } from '../../core/models/caja.model';
 import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
 import {
@@ -13,6 +15,7 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { CajaService } from '../../core/services/caja.service';
 import { ComprasService } from '../../core/services/compras.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { PagoComprobantePrintService } from '../../core/services/pago-comprobante-print.service';
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
@@ -35,6 +38,7 @@ export class RetribucionComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly pagoPrintService = inject(PagoComprobantePrintService);
   private readonly proveedoresInternosService = inject(ProveedoresInternosService);
+  private readonly configuracionSiigo = inject(ConfiguracionSiigoService);
 
   readonly tabs = PROVEEDOR_TABS;
   readonly tabActiva = signal<TipoProveedor>('INTERNO');
@@ -60,6 +64,17 @@ export class RetribucionComponent implements OnInit {
   readonly cajaSaldos = signal<CajaSaldo[]>([]);
   readonly medioPagoId = signal<number | null>(null);
   readonly anticipoInicial = signal(0);
+
+  readonly siigoActivo = signal(false);
+  readonly loadingRecibo = signal(false);
+  readonly fechaElaboracion = signal('');
+  readonly tipoRecibo = signal<'DebtPayment' | 'AdvancePayment'>('DebtPayment');
+  readonly paymentTypeId = signal<number | null>(null);
+  readonly mediosSiigo = signal<SiigoCatalogoItem[]>([]);
+  readonly tipoEgresoNombre = signal<string | null>(null);
+  readonly tipoEgresoConfigurado = signal(false);
+  readonly monedaCodigo = signal('COP');
+  readonly tasaCambio = signal<number | null>(null);
 
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
@@ -141,6 +156,7 @@ export class RetribucionComponent implements OnInit {
     this.compraDetalleResumen.set(compra);
     this.errorDetalle.set(null);
     this.syncMedioPagoPorDefecto();
+    this.cargarParametrosRecibo(compra);
 
     const lineas = compra.detalle ?? [];
     if (lineas.length > 0) {
@@ -173,6 +189,42 @@ export class RetribucionComponent implements OnInit {
     this.errorDetalle.set(null);
     this.loadingDetalle.set(false);
     this.savingPago.set(false);
+    this.loadingRecibo.set(false);
+  }
+
+  cambiarFechaElaboracion(event: Event): void {
+    this.fechaElaboracion.set((event.target as HTMLInputElement).value);
+    this.errorDetalle.set(null);
+  }
+
+  cambiarTipoRecibo(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.tipoRecibo.set(value === 'AdvancePayment' ? 'AdvancePayment' : 'DebtPayment');
+    this.errorDetalle.set(null);
+  }
+
+  cambiarPagoSiigo(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    this.paymentTypeId.set(Number.isFinite(value) && value > 0 ? value : null);
+    this.errorDetalle.set(null);
+  }
+
+  pagoBloqueado(total: number): boolean {
+    if (this.savingPago() || this.loadingRecibo() || this.loadingDetalle()) {
+      return true;
+    }
+    const neto = this.netoAPagar(total);
+    if (neto > 0 && (!this.cajaAbierta() || this.medioPagoId() == null)) {
+      return true;
+    }
+    if (!this.siigoActivo()) {
+      return false;
+    }
+    return (
+      !this.fechaElaboracion() ||
+      !this.tipoEgresoConfigurado() ||
+      (this.mediosSiigo().length > 0 && this.paymentTypeId() == null)
+    );
   }
 
   seleccionarMedioPago(id: number): void {
@@ -251,10 +303,28 @@ export class RetribucionComponent implements OnInit {
           }
         }
 
+        if (this.siigoActivo()) {
+          if (!this.tipoEgresoConfigurado()) {
+            this.errorDetalle.set(
+              'Configure el tipo de comprobante de egreso en Parametrización, Siigo Nube, Egresos.'
+            );
+            return;
+          }
+          if (!this.fechaElaboracion()) {
+            this.errorDetalle.set('Seleccione la fecha de elaboración del recibo.');
+            return;
+          }
+          if (this.mediosSiigo().length > 0 && this.paymentTypeId() == null) {
+            this.errorDetalle.set('Seleccione de dónde sale el dinero.');
+            return;
+          }
+        }
+
         const medioNombre =
           netoPago > 0
             ? (saldos.find((saldo) => saldo.medioCajaId === this.medioPagoId())?.medioNombre ?? 'caja')
             : null;
+        const pagoSiigo = this.mediosSiigo().find((medio) => medio.id === this.paymentTypeId());
         const anticipoTexto =
           anticipo > 0
             ? ` Se descontará ${this.formatCurrency(anticipo)} de anticipos.`
@@ -263,12 +333,15 @@ export class RetribucionComponent implements OnInit {
           netoPago > 0
             ? ` Se pagará ${this.formatCurrency(netoPago)} desde ${medioNombre}.`
             : ' El anticipo cubre el total; no se descuenta de caja.';
+        const reciboTexto = this.siigoActivo()
+          ? ` Recibo ${this.tipoRecibo() === 'AdvancePayment' ? 'anticipo' : 'abono a deuda'} del ${this.fechaElaboracion()}${pagoSiigo ? `, desde ${pagoSiigo.nombre}` : ''}.`
+          : '';
 
         this.confirmDialog
           .confirm({
             title: 'Registrar pago',
-            message: `¿Registrar el pago de la compra ${compra.numeroFactura}? Total ${this.formatCurrency(totalCompra)}.${anticipoTexto}${origenTexto}`,
-            confirmLabel: 'Aceptar',
+            message: `¿Registrar el pago de la compra ${compra.numeroFactura} y enviarlo a Siigo como pago al proveedor? Total ${this.formatCurrency(totalCompra)}.${anticipoTexto}${origenTexto}${reciboTexto}`,
+            confirmLabel: 'Pagar',
             cancelLabel: 'Cancelar',
           })
           .subscribe((confirmed) => {
@@ -301,7 +374,14 @@ export class RetribucionComponent implements OnInit {
     const detalle = this.compraDetalle() ?? compra;
     const proveedor = this.proveedorSeleccionado();
 
-    this.comprasService.registrarPago(compra.id, netoPago > 0 ? medioCajaId : null).subscribe({
+    this.comprasService
+      .registrarPago(compra.id, {
+        medioCajaId: netoPago > 0 ? medioCajaId : null,
+        fechaElaboracion: this.fechaElaboracion() || null,
+        tipoRecibo: this.tipoRecibo(),
+        paymentTypeId: this.paymentTypeId(),
+      })
+      .subscribe({
       next: (respuesta) => {
         this.imprimirComprobantePago(detalle, proveedor, respuesta);
         this.savingPago.set(false);
@@ -407,6 +487,53 @@ export class RetribucionComponent implements OnInit {
         this.loadingCompras.set(false);
         this.errorModal.set(this.extractErrorMessage(err, 'No se pudieron cargar las compras.'));
         this.loadTab();
+      },
+    });
+  }
+
+  private cargarParametrosRecibo(compra: Compra): void {
+    this.fechaElaboracion.set(fechaHoyBogota());
+    this.tipoRecibo.set(compra.siigoId ? 'DebtPayment' : 'AdvancePayment');
+    this.paymentTypeId.set(null);
+    this.mediosSiigo.set([]);
+    this.tipoEgresoNombre.set(null);
+    this.tipoEgresoConfigurado.set(false);
+    this.monedaCodigo.set('COP');
+    this.tasaCambio.set(null);
+    this.siigoActivo.set(false);
+    this.loadingRecibo.set(true);
+
+    this.configuracionSiigo.get().subscribe({
+      next: (config) => {
+        const activo = config.activo && config.accessKeyConfigured;
+        this.siigoActivo.set(activo);
+        this.monedaCodigo.set(config.currencyCode || 'COP');
+        this.tasaCambio.set(config.currencyExchangeRate ?? null);
+        if (!activo) {
+          this.loadingRecibo.set(false);
+          return;
+        }
+
+        forkJoin({
+          documentos: this.configuracionSiigo.documentos('RP').pipe(catchError(() => of([]))),
+          medios: this.configuracionSiigo.mediosPago('RP').pipe(catchError(() => of([]))),
+        }).subscribe({
+          next: (data) => {
+            const tipo = (data.documentos ?? []).find((item) => item.id === config.documentTypeRpId);
+            this.tipoEgresoNombre.set(tipo?.nombre ?? null);
+            this.tipoEgresoConfigurado.set(config.documentTypeRpId != null && !!tipo);
+            this.mediosSiigo.set(data.medios ?? []);
+            this.loadingRecibo.set(false);
+          },
+          error: () => {
+            this.loadingRecibo.set(false);
+            this.errorDetalle.set('No se pudieron cargar los parámetros del recibo de pago.');
+          },
+        });
+      },
+      error: () => {
+        this.siigoActivo.set(false);
+        this.loadingRecibo.set(false);
       },
     });
   }
@@ -528,4 +655,8 @@ export class RetribucionComponent implements OnInit {
     }
     return body?.message ?? fallback;
   }
+}
+
+function fechaHoyBogota(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
 }

@@ -184,9 +184,9 @@
 
     <p class="retribucion-modal__hint">
       @if (proveedor.tipo === 'EXTERNO') {
-        Compras confirmadas con pago pendiente de este proveedor externo.
+        Compras confirmadas con pago pendiente. En cada una, Pagar registra el pago al proveedor y lo envía a Siigo.
       } @else {
-        Compras confirmadas con pago pendiente de este reciclador.
+        Compras confirmadas con pago pendiente. En cada una, Pagar registra el pago al reciclador y lo envía a Siigo.
       }
     </p>
 
@@ -232,7 +232,7 @@
                   class="rp-btn rp-btn--ghost"
                   (click)="abrirDetalle(compra)"
                 >
-                  Detalle
+                  Pagar
                 </button>
               </td>
             </tr>
@@ -342,8 +342,75 @@
             }
           </div>
 
+          <div class="retribucion-detalle__recibo">
+            <h3>Recibo de pago a proveedores</h3>
+            @if (loadingRecibo()) {
+              <p class="rp-loading">Cargando parámetros del recibo...</p>
+            } @else if (!siigoActivo()) {
+              <p>Siigo no está activo. El pago se registra en caja sin enviar el recibo.</p>
+            } @else {
+              @if (!tipoEgresoConfigurado()) {
+                <div class="rp-alert rp-alert--error">
+                  Configure el tipo de comprobante en Parametrización, Siigo Nube, Egresos.
+                </div>
+              }
+              <div class="retribucion-recibo__grid">
+                <div>
+                  <span class="meta-label">Tipo</span>
+                  <strong>{{ tipoEgresoNombre() || 'Sin configurar' }}</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Moneda</span>
+                  <strong>
+                    {{ monedaCodigo() }}
+                    @if (monedaCodigo() !== 'COP' && tasaCambio() != null) {
+                      · tasa {{ tasaCambio() }}
+                    }
+                  </strong>
+                </div>
+                <label>
+                  <span class="meta-label">Fecha de elaboración</span>
+                  <input
+                    type="date"
+                    [value]="fechaElaboracion()"
+                    [disabled]="savingPago()"
+                    (input)="cambiarFechaElaboracion($event)"
+                  />
+                </label>
+                <label>
+                  <span class="meta-label">Realizar un</span>
+                  <select
+                    [value]="tipoRecibo()"
+                    [disabled]="savingPago()"
+                    (change)="cambiarTipoRecibo($event)"
+                  >
+                    <option value="DebtPayment">Abono a deuda</option>
+                    <option value="AdvancePayment">Anticipo</option>
+                  </select>
+                </label>
+                <label class="retribucion-recibo__ancho">
+                  <span class="meta-label">De dónde sale el dinero</span>
+                  @if (mediosSiigo().length) {
+                    <select
+                      [value]="paymentTypeId() ?? ''"
+                      [disabled]="savingPago()"
+                      (change)="cambiarPagoSiigo($event)"
+                    >
+                      <option value="">Seleccione</option>
+                      @for (medio of mediosSiigo(); track medio.id) {
+                        <option [value]="medio.id">{{ medio.nombre }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <strong>Sin medios de pago activos en Siigo</strong>
+                  }
+                </label>
+              </div>
+            }
+          </div>
+
           <div class="retribucion-detalle__origen">
-            <h3>Origen del pago</h3>
+            <h3>Medio de caja</h3>
             @if (netoAPagar(detalle.total) === 0) {
               <p>El anticipo cubre el total de esta compra. No se descuenta de caja.</p>
             } @else {
@@ -392,10 +459,10 @@
             <button
               type="button"
               class="rp-btn rp-btn--primary"
-              [disabled]="savingPago() || (netoAPagar(detalle.total) > 0 && (!cajaAbierta() || medioPagoId() == null))"
+              [disabled]="pagoBloqueado(detalle.total)"
               (click)="aceptarPago()"
             >
-              {{ savingPago() ? 'Registrando...' : 'Aceptar' }}
+              {{ savingPago() ? 'Registrando...' : 'Pagar y enviar a Siigo' }}
             </button>
           </div>
         </div>

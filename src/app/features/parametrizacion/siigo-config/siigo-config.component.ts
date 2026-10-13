@@ -15,6 +15,11 @@ export class SiigoConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly configuracionService = inject(ConfiguracionSiigoService);
 
+  readonly monedas = [
+    { code: 'COP', label: 'Peso colombiano (COP)' },
+    { code: 'USD', label: 'Dólar (USD)' },
+  ];
+
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly testing = signal(false);
@@ -30,6 +35,7 @@ export class SiigoConfigComponent implements OnInit {
   readonly mediosPagoDs = signal<SiigoCatalogoItem[]>([]);
   readonly vendedores = signal<SiigoCatalogoItem[]>([]);
   readonly centrosCosto = signal<SiigoCatalogoItem[]>([]);
+  readonly documentosRp = signal<SiigoCatalogoItem[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     activo: [false],
@@ -37,12 +43,21 @@ export class SiigoConfigComponent implements OnInit {
     paymentTypeId: [null as number | null],
     documentTypeDsId: [null as number | null],
     paymentTypeDsId: [null as number | null],
+    costCenterDsId: [null as number | null],
     costCenterFvId: [null as number | null],
+    documentTypeFv2Id: [null as number | null],
     sellerId: [null as number | null],
+    documentTypeRpId: [null as number | null],
+    currencyCode: ['COP'],
+    currencyExchangeRate: [null as number | null],
   });
 
   ngOnInit(): void {
     this.load();
+  }
+
+  monedaExtranjera(): boolean {
+    return this.form.controls.currencyCode.value !== 'COP';
   }
 
   load(): void {
@@ -60,8 +75,13 @@ export class SiigoConfigComponent implements OnInit {
           paymentTypeId: data.paymentTypeId ?? null,
           documentTypeDsId: data.documentTypeDsId ?? null,
           paymentTypeDsId: data.paymentTypeDsId ?? null,
+          costCenterDsId: data.costCenterDsId ?? null,
           costCenterFvId: data.costCenterFvId ?? null,
+          documentTypeFv2Id: data.documentTypeFv2Id ?? null,
           sellerId: data.sellerId ?? null,
+          documentTypeRpId: data.documentTypeRpId ?? null,
+          currencyCode: data.currencyCode || 'COP',
+          currencyExchangeRate: data.currencyExchangeRate ?? null,
         });
         this.loading.set(false);
         if (data.accessKeyConfigured) {
@@ -89,6 +109,14 @@ export class SiigoConfigComponent implements OnInit {
       return;
     }
 
+    if (this.monedaExtranjera()) {
+      const tasa = Number(raw.currencyExchangeRate);
+      if (!Number.isFinite(tasa) || tasa <= 0) {
+        this.error.set('Indique la tasa de cambio de la moneda extranjera para egresos.');
+        return;
+      }
+    }
+
     this.saving.set(true);
     this.error.set(null);
     this.mensaje.set(null);
@@ -100,8 +128,13 @@ export class SiigoConfigComponent implements OnInit {
         paymentTypeId: raw.paymentTypeId,
         documentTypeDsId: raw.documentTypeDsId,
         paymentTypeDsId: raw.paymentTypeDsId,
+        costCenterDsId: raw.costCenterDsId,
         costCenterFvId: raw.costCenterFvId,
+        documentTypeFv2Id: raw.documentTypeFv2Id,
         sellerId: raw.sellerId,
+        documentTypeRpId: raw.documentTypeRpId,
+        currencyCode: raw.currencyCode,
+        currencyExchangeRate: raw.currencyCode === 'COP' ? null : raw.currencyExchangeRate,
       })
       .subscribe({
         next: (data) => {
@@ -148,6 +181,7 @@ export class SiigoConfigComponent implements OnInit {
       mediosPagoDs: this.configuracionService.mediosPago('DS').pipe(catchError(() => empty)),
       vendedores: this.configuracionService.vendedores().pipe(catchError(() => empty)),
       centrosCosto: this.configuracionService.centrosCosto('FV').pipe(catchError(() => empty)),
+      documentosRp: this.configuracionService.documentos('RP').pipe(catchError(() => empty)),
     }).subscribe({
       next: (data) => {
         this.documentos.set(data.documentos ?? []);
@@ -156,6 +190,7 @@ export class SiigoConfigComponent implements OnInit {
         this.mediosPagoDs.set(data.mediosPagoDs ?? []);
         this.vendedores.set(data.vendedores ?? []);
         this.centrosCosto.set(data.centrosCosto ?? []);
+        this.documentosRp.set(data.documentosRp ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeId, data.mediosPago ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeDsId, data.mediosPagoDs ?? []);
         this.loadingCatalogos.set(false);

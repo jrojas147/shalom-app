@@ -12,6 +12,9 @@ export interface ConfiguracionSiigo {
   costCenterDsId?: number | null;
   costCenterFvId?: number | null;
   sellerId?: number | null;
+  documentTypeRpId?: number | null;
+  currencyCode?: string | null;
+  currencyExchangeRate?: number | null;
   tokenExpiresAt?: string | null;
   partnerId: string;
 }
@@ -26,6 +29,9 @@ export interface ConfiguracionSiigoRequest {
   costCenterDsId?: number | null;
   costCenterFvId?: number | null;
   sellerId?: number | null;
+  documentTypeRpId?: number | null;
+  currencyCode?: string | null;
+  currencyExchangeRate?: number | null;
 }
 
 export interface SiigoPrueba {
