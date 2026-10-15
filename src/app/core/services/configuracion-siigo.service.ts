@@ -38,6 +38,10 @@ export class ConfiguracionSiigoService {
     return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/medios-pago`, { params });
   }
 
+  bodegas(): Observable<SiigoCatalogoItem[]> {
+    return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/bodegas`);
+  }
+
   vendedores(): Observable<SiigoCatalogoItem[]> {
     return this.http.get<SiigoCatalogoItem[]>(`${this.baseUrl}/vendedores`);
   }

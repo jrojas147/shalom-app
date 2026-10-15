@@ -36,6 +36,8 @@ export class SiigoConfigComponent implements OnInit {
   readonly vendedores = signal<SiigoCatalogoItem[]>([]);
   readonly centrosCosto = signal<SiigoCatalogoItem[]>([]);
   readonly documentosRp = signal<SiigoCatalogoItem[]>([]);
+  readonly bodegas = signal<SiigoCatalogoItem[]>([]);
+  readonly loadingBodegas = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     activo: [false],
@@ -45,6 +47,7 @@ export class SiigoConfigComponent implements OnInit {
     paymentTypeDsId: [null as number | null],
     costCenterDsId: [null as number | null],
     costCenterFvId: [null as number | null],
+    warehouseDsId: [null as number | null],
     documentTypeFv2Id: [null as number | null],
     sellerId: [null as number | null],
     documentTypeRpId: [null as number | null],
@@ -77,6 +80,7 @@ export class SiigoConfigComponent implements OnInit {
           paymentTypeDsId: data.paymentTypeDsId ?? null,
           costCenterDsId: data.costCenterDsId ?? null,
           costCenterFvId: data.costCenterFvId ?? null,
+          warehouseDsId: data.warehouseDsId ?? null,
           documentTypeFv2Id: data.documentTypeFv2Id ?? null,
           sellerId: data.sellerId ?? null,
           documentTypeRpId: data.documentTypeRpId ?? null,
@@ -130,6 +134,7 @@ export class SiigoConfigComponent implements OnInit {
         paymentTypeDsId: raw.paymentTypeDsId,
         costCenterDsId: raw.costCenterDsId,
         costCenterFvId: raw.costCenterFvId,
+        warehouseDsId: raw.warehouseDsId,
         documentTypeFv2Id: raw.documentTypeFv2Id,
         sellerId: raw.sellerId,
         documentTypeRpId: raw.documentTypeRpId,
@@ -171,6 +176,26 @@ export class SiigoConfigComponent implements OnInit {
     });
   }
 
+  consultarBodegas(): void {
+    this.loadingBodegas.set(true);
+    this.error.set(null);
+    this.configuracionService.bodegas().subscribe({
+      next: (data) => {
+        this.bodegas.set(data ?? []);
+        this.loadingBodegas.set(false);
+      },
+      error: (err) => {
+        this.loadingBodegas.set(false);
+        this.error.set(err.error?.message ?? 'No se pudieron consultar las bodegas de Siigo.');
+      },
+    });
+  }
+
+  bodegaConfiguradaNoVigente(): boolean {
+    const id = this.form.controls.warehouseDsId.value;
+    return id != null && !this.bodegas().some((item) => item.id === id);
+  }
+
   private cargarCatalogos(): void {
     this.loadingCatalogos.set(true);
     const empty = of([] as SiigoCatalogoItem[]);
@@ -182,6 +207,7 @@ export class SiigoConfigComponent implements OnInit {
       vendedores: this.configuracionService.vendedores().pipe(catchError(() => empty)),
       centrosCosto: this.configuracionService.centrosCosto('FV').pipe(catchError(() => empty)),
       documentosRp: this.configuracionService.documentos('RP').pipe(catchError(() => empty)),
+      bodegas: this.configuracionService.bodegas().pipe(catchError(() => empty)),
     }).subscribe({
       next: (data) => {
         this.documentos.set(data.documentos ?? []);
@@ -191,6 +217,7 @@ export class SiigoConfigComponent implements OnInit {
         this.vendedores.set(data.vendedores ?? []);
         this.centrosCosto.set(data.centrosCosto ?? []);
         this.documentosRp.set(data.documentosRp ?? []);
+        this.bodegas.set(data.bodegas ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeId, data.mediosPago ?? []);
         this.aplicarCreditoPorDefecto(this.form.controls.paymentTypeDsId, data.mediosPagoDs ?? []);
         this.loadingCatalogos.set(false);

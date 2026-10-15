@@ -71,6 +71,37 @@
               </small>
             </label>
           }
+
+          <div class="siigo-field">
+            <span id="siigoBodegaDsLabel">Bodega</span>
+            <div class="siigo-field__row">
+              <select formControlName="warehouseDsId" aria-labelledby="siigoBodegaDsLabel">
+                <option [ngValue]="null">Seleccione</option>
+                @if (bodegaConfiguradaNoVigente()) {
+                  <option [ngValue]="form.controls.warehouseDsId.value">
+                    Bodega {{ form.controls.warehouseDsId.value }} (no está activa en Siigo)
+                  </option>
+                }
+                @for (item of bodegas(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.nombre }} ({{ item.id }})</option>
+                }
+              </select>
+              <button
+                type="button"
+                class="rp-btn rp-btn--secondary"
+                [disabled]="loadingBodegas()"
+                (click)="consultarBodegas()"
+              >
+                {{ loadingBodegas() ? 'Consultando...' : 'Consultar bodegas' }}
+              </button>
+            </div>
+            @if (!bodegas().length && !loadingBodegas()) {
+              <small class="siigo-hint">No hay bodegas activas en Siigo.</small>
+            }
+            <small class="siigo-hint">
+              Todos los ítems del documento soporte se envían a Siigo con esta bodega. Es obligatoria para confirmar compras.
+            </small>
+          </div>
         </section>
 
         <section class="siigo-section">

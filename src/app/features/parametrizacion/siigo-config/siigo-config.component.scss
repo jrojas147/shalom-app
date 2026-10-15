@@ -64,6 +64,21 @@
   }
 }
 
+.siigo-field__row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+
+  select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .rp-btn {
+    flex-shrink: 0;
+  }
+}
+
 .siigo-hint {
   margin: 0;
   font-size: 0.8125rem;

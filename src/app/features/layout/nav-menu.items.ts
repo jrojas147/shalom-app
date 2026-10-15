@@ -23,6 +23,7 @@ const ADMIN_DIRECCION_MENU: NavMenuItem[] = [
   { label: 'Proveedores', route: '/app/proveedores', icon: 'proveedores' },
   { label: 'Sucursales', route: '/app/sucursales', icon: 'sucursales' },
   { label: 'Clientes', route: '/app/clientes', icon: 'clientes' },
+  { label: 'Reportes', route: '/app/reportes', icon: 'reportes' },
   { label: 'Usuarios', route: '/app/usuarios', icon: 'usuarios' },
   { label: 'Parametrizacion', route: '/app/parametrizacion', icon: 'parametrizacion' },
   //{ label: 'Perfil', route: '/app/perfil', icon: 'perfil' },

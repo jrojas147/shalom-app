@@ -17,6 +17,7 @@ export type NavIconName =
   | 'aliados'
   | 'sucursales'
   | 'usuarios'
+  | 'reportes'
   | 'parametrizacion'
   | 'perfil';
 
@@ -192,6 +193,16 @@ export type NavIconName =
             stroke-linejoin="round"
           />
           <path d="M10 13h4v7h-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+        }
+        @case ('reportes') {
+          <path
+            d="M7 3h7l5 5v12a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+          <path d="M14 3v5h5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+          <path d="M9.5 17v-3M12.5 17v-5M15.5 17v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
         }
         @case ('parametrizacion') {
           <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />

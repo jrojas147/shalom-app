@@ -110,6 +110,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/clientes/clientes.component').then((m) => m.ClientesComponent),
       },
+      {
+        path: 'reportes',
+        canActivate: [adminDireccion],
+        loadComponent: () =>
+          import('./features/reportes/reportes.component').then((m) => m.ReportesComponent),
+      },
       { path: 'aliados', canActivate: [adminDireccion], loadComponent: loadInicio },
       { path: 'perfil', canActivate: [adminDireccion], loadComponent: loadInicio },
       {

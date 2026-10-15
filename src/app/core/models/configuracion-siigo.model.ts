@@ -11,6 +11,7 @@ export interface ConfiguracionSiigo {
   paymentTypeDsId?: number | null;
   costCenterDsId?: number | null;
   costCenterFvId?: number | null;
+  warehouseDsId?: number | null;
   sellerId?: number | null;
   documentTypeRpId?: number | null;
   currencyCode?: string | null;
@@ -28,6 +29,7 @@ export interface ConfiguracionSiigoRequest {
   paymentTypeDsId?: number | null;
   costCenterDsId?: number | null;
   costCenterFvId?: number | null;
+  warehouseDsId?: number | null;
   sellerId?: number | null;
   documentTypeRpId?: number | null;
   currencyCode?: string | null;

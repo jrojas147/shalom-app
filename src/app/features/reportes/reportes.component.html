@@ -1,0 +1,332 @@
+<div class="reportes">
+  <header class="rp-page-header">
+    <div>
+      <h1>Reportes</h1>
+      <p>Consulta y descarga en Excel de compras, ventas, clientes y proveedores.</p>
+    </div>
+  </header>
+
+  <nav class="reportes-steps" aria-label="Tipos de reporte">
+    @for (item of pasos; track item.id) {
+      <button
+        type="button"
+        class="reportes-step"
+        [class.active]="paso() === item.id"
+        [attr.aria-current]="paso() === item.id ? 'step' : null"
+        (click)="setPaso(item.id)"
+      >
+        <span class="reportes-step__numero">{{ item.numero }}</span>
+        <span class="reportes-step__texto">
+          <strong>{{ item.titulo }}</strong>
+          <small>{{ item.descripcion }}</small>
+        </span>
+      </button>
+    }
+  </nav>
+
+  @if (error()) {
+    <div class="rp-alert rp-alert--error">{{ error() }}</div>
+  }
+
+  <section class="rp-panel reportes-panel">
+    <div class="reportes__toolbar">
+      <div class="reportes__filters">
+        @if (usaFechas()) {
+          <label class="reportes__filter">
+            <span>Desde</span>
+            <input
+              type="date"
+              [value]="desde()"
+              [max]="hasta()"
+              (change)="onDesdeChange($any($event.target).value)"
+            />
+          </label>
+          <label class="reportes__filter">
+            <span>Hasta</span>
+            <input
+              type="date"
+              [value]="hasta()"
+              [min]="desde()"
+              (change)="onHastaChange($any($event.target).value)"
+            />
+          </label>
+        }
+
+        @if (paso() === 'compras') {
+          <label class="reportes__filter">
+            <span>Estado</span>
+            <select [value]="estadoCompra() ?? ''" (change)="onEstadoCompraChange($any($event.target).value)">
+              <option value="">Todos los estados</option>
+              @for (estado of estadosCompra; track estado.value) {
+                <option [value]="estado.value">{{ estado.label }}</option>
+              }
+            </select>
+          </label>
+        }
+
+        @if (paso() === 'proveedores') {
+          <label class="reportes__filter">
+            <span>Tipo de proveedor</span>
+            <select [value]="tipoProveedor() ?? ''" (change)="onTipoProveedorChange($any($event.target).value)">
+              <option value="">Todos los tipos</option>
+              @for (tipo of tiposProveedor; track tipo.value) {
+                <option [value]="tipo.value">{{ tipo.label }}</option>
+              }
+            </select>
+          </label>
+        }
+
+        @if (paso() === 'clientes' || paso() === 'proveedores') {
+          <label class="reportes__checkbox">
+            <input
+              type="checkbox"
+              [checked]="incluirInactivos()"
+              (change)="onIncluirInactivosChange($any($event.target).checked)"
+            />
+            Incluir inactivos
+          </label>
+        }
+      </div>
+
+      <div class="reportes__actions">
+        <button type="button" class="rp-btn rp-btn--secondary" [disabled]="loading()" (click)="cargar()">
+          Actualizar
+        </button>
+        <button
+          type="button"
+          class="rp-btn rp-btn--primary"
+          [disabled]="exporting() || loading()"
+          (click)="descargarExcel()"
+        >
+          {{ exporting() ? 'Generando...' : 'Descargar Excel' }}
+        </button>
+      </div>
+    </div>
+
+    <section class="reportes-stats">
+      <article class="reportes-stat">
+        <span class="reportes-stat__label">Registros</span>
+        <strong class="reportes-stat__value">{{ cantidadRegistros() }}</strong>
+      </article>
+      @if (paso() === 'compras') {
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Peso total</span>
+          <strong class="reportes-stat__value">{{ formatPeso(totalesCompras().peso) }} KG</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Valor total</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesCompras().total) }}</strong>
+        </article>
+      }
+      @if (paso() === 'ventas') {
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Peso total</span>
+          <strong class="reportes-stat__value">{{ formatPeso(totalesVentas().peso) }} KG</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Valor total</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesVentas().total) }}</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Saldo pendiente</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesVentas().saldo) }}</strong>
+        </article>
+      }
+    </section>
+
+    @if (loading()) {
+      <p class="rp-loading">Cargando reporte...</p>
+    } @else {
+      <div class="reportes__table-wrap">
+        @switch (paso()) {
+          @case ('compras') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Factura</th>
+                  <th>Fecha registro</th>
+                  <th>Estado</th>
+                  <th>Pago</th>
+                  <th>Proveedor</th>
+                  <th>Sucursal</th>
+                  <th class="cell-num">Productos</th>
+                  <th class="cell-num">Peso KG</th>
+                  <th class="cell-num">Total</th>
+                  <th>Registró</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (compra of compras() ?? []; track compra.id) {
+                  <tr>
+                    <td class="cell-mono">{{ compra.numeroFactura }}</td>
+                    <td class="cell-secondary">{{ compra.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--success]="compra.estado === 'CONFIRMADA'"
+                        [class.rp-badge--warning]="compra.estado === 'PENDIENTE'"
+                        [class.rp-badge--danger]="compra.estado === 'CANCELADA'"
+                      >
+                        {{ reporteCompraEstadoLabel(compra.estado) }}
+                      </span>
+                    </td>
+                    <td class="cell-secondary">{{ compra.estadoPago === 'PAGADO' ? 'Pagado' : 'Pendiente' }}</td>
+                    <td>
+                      <span class="cell-primary">{{ compra.proveedorNombre }}</span>
+                      <span class="cell-secondary cell-sub">
+                        {{ compraProveedorTipoLabel(compra.proveedorTipo) }}
+                        @if (compra.proveedorDocumento) {
+                          · {{ compra.proveedorDocumento }}
+                        }
+                      </span>
+                    </td>
+                    <td class="cell-secondary">{{ texto(compra.sucursalNombre) }}</td>
+                    <td class="cell-num">{{ compra.detalle.length }}</td>
+                    <td class="cell-num">{{ formatPeso(compra.pesoTotal) }}</td>
+                    <td class="cell-num cell-primary">{{ formatCurrency(compra.total) }}</td>
+                    <td class="cell-secondary">{{ texto(compra.usuarioRegistro) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="10" class="cell-empty">No hay compras en el rango seleccionado.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('ventas') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Factura</th>
+                  <th>Fecha</th>
+                  <th>Cliente</th>
+                  <th>Forma de pago</th>
+                  <th class="cell-num">Productos</th>
+                  <th class="cell-num">Peso KG</th>
+                  <th class="cell-num">Total</th>
+                  <th class="cell-num">Saldo</th>
+                  <th>Registró</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (venta of ventas() ?? []; track venta.id) {
+                  <tr>
+                    <td class="cell-mono">{{ venta.numeroFactura }}</td>
+                    <td class="cell-secondary">{{ venta.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <span class="cell-primary">{{ venta.clienteNombre }}</span>
+                      <span class="cell-secondary cell-sub">{{ texto(venta.clienteDocumento) }}</span>
+                    </td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--warning]="venta.pagoCredito"
+                        [class.rp-badge--success]="!venta.pagoCredito"
+                      >
+                        {{ venta.pagoCredito ? 'Crédito' : 'Contado' }}
+                      </span>
+                    </td>
+                    <td class="cell-num">{{ venta.detalle.length }}</td>
+                    <td class="cell-num">{{ formatPeso(venta.pesoTotal) }}</td>
+                    <td class="cell-num cell-primary">{{ formatCurrency(venta.total) }}</td>
+                    <td class="cell-num">{{ venta.pagoCredito ? formatCurrency(venta.saldoPendiente) : '—' }}</td>
+                    <td class="cell-secondary">{{ texto(venta.usuarioRegistro) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="9" class="cell-empty">No hay ventas en el rango seleccionado.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('clientes') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Documento</th>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Celular</th>
+                  <th>Email</th>
+                  <th>Municipio</th>
+                  <th>Pago preferido</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cliente of clientes() ?? []; track cliente.id) {
+                  <tr>
+                    <td class="cell-mono">{{ cliente.tipoDocumento }} {{ cliente.documento }}</td>
+                    <td class="cell-primary">{{ cliente.nombre }}</td>
+                    <td class="cell-secondary">{{ tipoClienteLabel(cliente.tipoCliente) }}</td>
+                    <td class="cell-secondary">{{ texto(cliente.telefonoCelular || cliente.telefonoFijo) }}</td>
+                    <td class="cell-secondary">{{ texto(cliente.email) }}</td>
+                    <td class="cell-secondary">{{ texto(cliente.municipio) }}</td>
+                    <td class="cell-secondary">{{ metodoPagoLabel(cliente.metodoPagoPreferido) }}</td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--success]="cliente.activo"
+                        [class.rp-badge--neutral]="!cliente.activo"
+                      >
+                        {{ cliente.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="cell-empty">No hay clientes registrados.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('proveedores') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Documento</th>
+                  <th>Nombre / Razón social</th>
+                  <th>Contacto</th>
+                  <th>Teléfono</th>
+                  <th>Email</th>
+                  <th>Municipio</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (proveedor of proveedores() ?? []; track proveedor.tipo + '-' + proveedor.id) {
+                  <tr>
+                    <td class="cell-secondary">{{ compraProveedorTipoLabel(proveedor.tipo) }}</td>
+                    <td class="cell-mono">{{ proveedor.tipoDocumento }} {{ proveedor.documento }}</td>
+                    <td class="cell-primary">{{ proveedor.nombre }}</td>
+                    <td class="cell-secondary">{{ texto(proveedor.contacto) }}</td>
+                    <td class="cell-secondary">{{ texto(proveedor.telefono) }}</td>
+                    <td class="cell-secondary">{{ texto(proveedor.email) }}</td>
+                    <td class="cell-secondary">{{ texto(proveedor.municipio) }}</td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--success]="proveedor.activo"
+                        [class.rp-badge--neutral]="!proveedor.activo"
+                      >
+                        {{ proveedor.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="cell-empty">No hay proveedores registrados.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        }
+      </div>
+    }
+  </section>
+</div>
