@@ -137,6 +137,16 @@ export interface ReporteGasto {
   observacion: string | null;
 }
 
+export interface ReporteStockBodega {
+  productoId: number;
+  codigoProducto: string | null;
+  nombreProducto: string;
+  codigoSui: string | null;
+  nombreSui: string | null;
+  stockKg: number;
+  unidades: number | null;
+}
+
 export interface ReporteCaja {
   id: number;
   openedAt: string;

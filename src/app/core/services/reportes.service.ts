@@ -12,6 +12,7 @@ import {
   ReporteMovimientoCaja,
   ReporteProveedor,
   ReporteRangoFechas,
+  ReporteStockBodega,
   ReporteVenta,
 } from '../models/reporte.model';
 
@@ -107,6 +108,16 @@ export class ReportesService {
   exportarGastos(rango: ReporteRangoFechas): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/gastos/excel`, {
       params: this.rangoParams(rango),
+      responseType: 'blob',
+    });
+  }
+
+  getStockBodega(): Observable<ReporteStockBodega[]> {
+    return this.http.get<ReporteStockBodega[]>(`${this.baseUrl}/inventario/stock-bodega`);
+  }
+
+  exportarStockBodega(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/inventario/stock-bodega/excel`, {
       responseType: 'blob',
     });
   }

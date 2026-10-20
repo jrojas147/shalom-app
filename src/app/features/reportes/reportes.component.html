@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Reportes</h1>
-      <p>Consulta y descarga en Excel por grupos: compras, ventas y caja.</p>
+      <p>Consulta y descarga en Excel por grupos: compras, ventas, caja e inventario.</p>
     </div>
   </header>
 
@@ -179,6 +179,16 @@
         <article class="reportes-stat">
           <span class="reportes-stat__label">Total gastos</span>
           <strong class="reportes-stat__value">{{ formatCurrency(totalGastos()) }}</strong>
+        </article>
+      }
+      @if (subreporte() === 'stock-bodega') {
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Productos con stock</span>
+          <strong class="reportes-stat__value">{{ totalesStockBodega().productos }}</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Stock total</span>
+          <strong class="reportes-stat__value">{{ formatPeso(totalesStockBodega().stockKg) }} KG</strong>
         </article>
       }
     </section>
@@ -507,6 +517,36 @@
                 } @empty {
                   <tr>
                     <td colspan="8" class="cell-empty">No hay gastos en el rango seleccionado.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('stock-bodega') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Producto</th>
+                  <th>Código SUI</th>
+                  <th>Nombre SUI</th>
+                  <th class="cell-num">Stock KG</th>
+                  <th class="cell-num">Unidades</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of stockBodega() ?? []; track item.productoId) {
+                  <tr>
+                    <td class="cell-mono">{{ texto(item.codigoProducto) }}</td>
+                    <td class="cell-primary">{{ item.nombreProducto }}</td>
+                    <td class="cell-secondary">{{ texto(item.codigoSui) }}</td>
+                    <td class="cell-secondary">{{ texto(item.nombreSui) }}</td>
+                    <td class="cell-num cell-primary">{{ formatPeso(item.stockKg) }}</td>
+                    <td class="cell-num">{{ item.unidades == null ? '—' : item.unidades }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="cell-empty">No hay stock disponible en bodega.</td>
                   </tr>
                 }
               </tbody>

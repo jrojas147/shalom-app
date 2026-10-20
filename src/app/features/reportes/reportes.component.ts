@@ -17,6 +17,7 @@ import {
   ReporteMovimientoCaja,
   ReporteProveedor,
   ReporteRangoFechas,
+  ReporteStockBodega,
   ReporteVenta,
   reporteCajaEstadoLabel,
   reporteCompraEstadoLabel,
@@ -24,8 +25,16 @@ import {
 import { ReportesService } from '../../core/services/reportes.service';
 import { formatCurrencyCo } from '../../core/utils/currency.util';
 
-type GrupoReporte = 'compras' | 'ventas' | 'caja';
-type SubreporteId = 'compras' | 'proveedores' | 'ventas' | 'clientes' | 'cajas' | 'movimientos' | 'gastos';
+type GrupoReporte = 'compras' | 'ventas' | 'caja' | 'inventario';
+type SubreporteId =
+  | 'compras'
+  | 'proveedores'
+  | 'ventas'
+  | 'clientes'
+  | 'cajas'
+  | 'movimientos'
+  | 'gastos'
+  | 'stock-bodega';
 
 interface SubreporteInfo {
   id: SubreporteId;
@@ -103,6 +112,18 @@ const GRUPOS: GrupoInfo[] = [
       },
     ],
   },
+  {
+    id: 'inventario',
+    titulo: 'Inventario',
+    descripcion: 'Stock y existencias',
+    subreportes: [
+      {
+        id: 'stock-bodega',
+        titulo: 'Stock bodega',
+        descripcion: 'Existencias disponibles en bodega',
+      },
+    ],
+  },
 ];
 
 @Component({
@@ -150,6 +171,7 @@ export class ReportesComponent implements OnInit {
   readonly cajas = signal<ReporteCaja[] | null>(null);
   readonly movimientos = signal<ReporteMovimientoCaja[] | null>(null);
   readonly gastos = signal<ReporteGasto[] | null>(null);
+  readonly stockBodega = signal<ReporteStockBodega[] | null>(null);
 
   readonly loading = signal(false);
   readonly exporting = signal(false);
@@ -196,6 +218,15 @@ export class ReportesComponent implements OnInit {
   readonly totalGastos = computed(() =>
     (this.gastos() ?? []).reduce((acc, gasto) => acc + Number(gasto.monto || 0), 0)
   );
+
+  readonly totalesStockBodega = computed(() => {
+    const items = this.stockBodega() ?? [];
+    return {
+      productos: items.length,
+      stockKg: items.reduce((acc, item) => acc + Number(item.stockKg || 0), 0),
+      unidades: items.reduce((acc, item) => acc + Number(item.unidades || 0), 0),
+    };
+  });
 
   ngOnInit(): void {
     this.cargar();
@@ -294,6 +325,9 @@ export class ReportesComponent implements OnInit {
       case 'gastos':
         this.suscribir(this.reportesService.getGastos(rango!), (data) => this.gastos.set(data));
         break;
+      case 'stock-bodega':
+        this.suscribir(this.reportesService.getStockBodega(), (data) => this.stockBodega.set(data));
+        break;
     }
   }
 
@@ -338,6 +372,10 @@ export class ReportesComponent implements OnInit {
       case 'gastos':
         descarga$ = this.reportesService.exportarGastos(rango!);
         nombre = `reporte-gastos_${rango!.desde}_${rango!.hasta}.xlsx`;
+        break;
+      case 'stock-bodega':
+        descarga$ = this.reportesService.exportarStockBodega();
+        nombre = 'reporte-stock-bodega.xlsx';
         break;
     }
 
@@ -438,6 +476,8 @@ export class ReportesComponent implements OnInit {
         return this.movimientos();
       case 'gastos':
         return this.gastos();
+      case 'stock-bodega':
+        return this.stockBodega();
     }
   }
 
