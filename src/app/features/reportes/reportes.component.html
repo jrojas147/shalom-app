@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Reportes</h1>
-      <p>Consulta y descarga en Excel por grupos: compras, ventas y cierres de caja.</p>
+      <p>Consulta y descarga en Excel por grupos: compras, ventas y caja.</p>
     </div>
   </header>
 
@@ -163,6 +163,22 @@
         <article class="reportes-stat">
           <span class="reportes-stat__label">Pagos a proveedores</span>
           <strong class="reportes-stat__value">{{ formatCurrency(totalesCajas().pagos) }}</strong>
+        </article>
+      }
+      @if (subreporte() === 'movimientos') {
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Ingresos</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesMovimientos().ingresos) }}</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Egresos</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesMovimientos().egresos) }}</strong>
+        </article>
+      }
+      @if (subreporte() === 'gastos') {
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Total gastos</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalGastos()) }}</strong>
         </article>
       }
     </section>
@@ -409,6 +425,88 @@
                 } @empty {
                   <tr>
                     <td colspan="12" class="cell-empty">No hay cierres de caja en el rango seleccionado.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('movimientos') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>ID caja</th>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Concepto</th>
+                  <th class="cell-num">Monto</th>
+                  <th>Medio</th>
+                  <th>Referencia</th>
+                  <th>Usuario</th>
+                  <th>Observación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (mov of movimientos() ?? []; track mov.id) {
+                  <tr>
+                    <td class="cell-mono">{{ mov.cajaId }}</td>
+                    <td class="cell-secondary">{{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--success]="mov.tipo === 'INGRESO'"
+                        [class.rp-badge--danger]="mov.tipo === 'EGRESO'"
+                      >
+                        {{ tipoMovimientoLabel(mov.tipo) }}
+                      </span>
+                    </td>
+                    <td>{{ conceptoMovimientoLabel(mov.concepto, mov.tipoAbonoNombre) }}</td>
+                    <td class="cell-num cell-primary">{{ formatCurrency(mov.monto) }}</td>
+                    <td class="cell-secondary">{{ texto(mov.medioCajaNombre) }}</td>
+                    <td class="cell-secondary">
+                      {{ referenciaMovimientoLabel(mov.referenciaTipo, mov.referenciaId) }}
+                    </td>
+                    <td class="cell-secondary">{{ texto(mov.usuarioRegistro) }}</td>
+                    <td class="cell-secondary">{{ texto(mov.observacion) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="9" class="cell-empty">
+                      No hay movimientos de caja en el rango seleccionado.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('gastos') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>ID caja</th>
+                  <th>Fecha</th>
+                  <th>Tipo de gasto</th>
+                  <th>Medio</th>
+                  <th class="cell-num">Monto</th>
+                  <th>Usuario</th>
+                  <th>Observación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (gasto of gastos() ?? []; track gasto.id) {
+                  <tr>
+                    <td class="cell-mono">{{ gasto.id }}</td>
+                    <td class="cell-mono">{{ gasto.cajaId }}</td>
+                    <td class="cell-secondary">{{ gasto.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ texto(gasto.tipoGastoNombre) }}</td>
+                    <td class="cell-secondary">{{ texto(gasto.medioCajaNombre) }}</td>
+                    <td class="cell-num cell-primary">{{ formatCurrency(gasto.monto) }}</td>
+                    <td class="cell-secondary">{{ texto(gasto.usuarioRegistro) }}</td>
+                    <td class="cell-secondary">{{ texto(gasto.observacion) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="cell-empty">No hay gastos en el rango seleccionado.</td>
                   </tr>
                 }
               </tbody>

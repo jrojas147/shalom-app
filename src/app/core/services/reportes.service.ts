@@ -8,6 +8,8 @@ import {
   ReporteCliente,
   ReporteCompra,
   ReporteCompraEstado,
+  ReporteGasto,
+  ReporteMovimientoCaja,
   ReporteProveedor,
   ReporteRangoFechas,
   ReporteVenta,
@@ -78,6 +80,32 @@ export class ReportesService {
 
   exportarCajas(rango: ReporteRangoFechas): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/cajas/excel`, {
+      params: this.rangoParams(rango),
+      responseType: 'blob',
+    });
+  }
+
+  getMovimientosCaja(rango: ReporteRangoFechas): Observable<ReporteMovimientoCaja[]> {
+    return this.http.get<ReporteMovimientoCaja[]>(`${this.baseUrl}/cajas/movimientos`, {
+      params: this.rangoParams(rango),
+    });
+  }
+
+  exportarMovimientosCaja(rango: ReporteRangoFechas): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/cajas/movimientos/excel`, {
+      params: this.rangoParams(rango),
+      responseType: 'blob',
+    });
+  }
+
+  getGastos(rango: ReporteRangoFechas): Observable<ReporteGasto[]> {
+    return this.http.get<ReporteGasto[]>(`${this.baseUrl}/gastos`, {
+      params: this.rangoParams(rango),
+    });
+  }
+
+  exportarGastos(rango: ReporteRangoFechas): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/gastos/excel`, {
       params: this.rangoParams(rango),
       responseType: 'blob',
     });

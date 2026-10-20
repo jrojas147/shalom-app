@@ -4,12 +4,17 @@ import { Observable } from 'rxjs';
 import { metodoPagoLabel, tipoClienteLabel } from '../../core/models/cliente.model';
 import { compraProveedorTipoLabel } from '../../core/models/compra-proveedor.model';
 import { TipoProveedor } from '../../core/models/proveedor.model';
+import { CAJA_CONCEPTO_LABEL } from '../../core/models/caja.model';
 import {
   ESTADOS_COMPRA_REPORTE,
   ReporteCaja,
+  ReporteCajaConcepto,
+  ReporteCajaMovimientoTipo,
   ReporteCliente,
   ReporteCompra,
   ReporteCompraEstado,
+  ReporteGasto,
+  ReporteMovimientoCaja,
   ReporteProveedor,
   ReporteRangoFechas,
   ReporteVenta,
@@ -19,8 +24,8 @@ import {
 import { ReportesService } from '../../core/services/reportes.service';
 import { formatCurrencyCo } from '../../core/utils/currency.util';
 
-type GrupoReporte = 'compras' | 'ventas' | 'cierres';
-type SubreporteId = 'compras' | 'proveedores' | 'ventas' | 'clientes' | 'cajas';
+type GrupoReporte = 'compras' | 'ventas' | 'caja';
+type SubreporteId = 'compras' | 'proveedores' | 'ventas' | 'clientes' | 'cajas' | 'movimientos' | 'gastos';
 
 interface SubreporteInfo {
   id: SubreporteId;
@@ -77,14 +82,24 @@ const GRUPOS: GrupoInfo[] = [
     ],
   },
   {
-    id: 'cierres',
-    titulo: 'Cierres de caja',
-    descripcion: 'Cierres de caja',
+    id: 'caja',
+    titulo: 'Caja',
+    descripcion: 'Cierres, movimientos y gastos',
     subreportes: [
       {
         id: 'cajas',
         titulo: 'Cierres',
         descripcion: 'Cierres de caja por fechas',
+      },
+      {
+        id: 'movimientos',
+        titulo: 'Movimientos caja',
+        descripcion: 'Detalle de movimientos de caja',
+      },
+      {
+        id: 'gastos',
+        titulo: 'Gastos',
+        descripcion: 'Gastos registrados por fechas',
       },
     ],
   },
@@ -133,6 +148,8 @@ export class ReportesComponent implements OnInit {
   readonly clientes = signal<ReporteCliente[] | null>(null);
   readonly proveedores = signal<ReporteProveedor[] | null>(null);
   readonly cajas = signal<ReporteCaja[] | null>(null);
+  readonly movimientos = signal<ReporteMovimientoCaja[] | null>(null);
+  readonly gastos = signal<ReporteGasto[] | null>(null);
 
   readonly loading = signal(false);
   readonly exporting = signal(false);
@@ -146,6 +163,7 @@ export class ReportesComponent implements OnInit {
       saldo: ventas.reduce((acc, v) => acc + Number(v.saldoPendiente || 0), 0),
     };
   });
+
   readonly totalesCajas = computed(() => {
     const cajas = this.cajas() ?? [];
     return cajas.reduce(
@@ -158,6 +176,26 @@ export class ReportesComponent implements OnInit {
       { ingresos: 0, egresos: 0, ventas: 0, pagos: 0 }
     );
   });
+
+  readonly totalesMovimientos = computed(() => {
+    const movimientos = this.movimientos() ?? [];
+    return movimientos.reduce(
+      (acc, mov) => {
+        const monto = Number(mov.monto || 0);
+        if (mov.tipo === 'INGRESO') {
+          acc.ingresos += monto;
+        } else {
+          acc.egresos += monto;
+        }
+        return acc;
+      },
+      { ingresos: 0, egresos: 0 }
+    );
+  });
+
+  readonly totalGastos = computed(() =>
+    (this.gastos() ?? []).reduce((acc, gasto) => acc + Number(gasto.monto || 0), 0)
+  );
 
   ngOnInit(): void {
     this.cargar();
@@ -248,6 +286,14 @@ export class ReportesComponent implements OnInit {
       case 'cajas':
         this.suscribir(this.reportesService.getCajas(rango!), (data) => this.cajas.set(data));
         break;
+      case 'movimientos':
+        this.suscribir(this.reportesService.getMovimientosCaja(rango!), (data) =>
+          this.movimientos.set(data)
+        );
+        break;
+      case 'gastos':
+        this.suscribir(this.reportesService.getGastos(rango!), (data) => this.gastos.set(data));
+        break;
     }
   }
 
@@ -285,6 +331,14 @@ export class ReportesComponent implements OnInit {
         descarga$ = this.reportesService.exportarCajas(rango!);
         nombre = `reporte-cierres-caja_${rango!.desde}_${rango!.hasta}.xlsx`;
         break;
+      case 'movimientos':
+        descarga$ = this.reportesService.exportarMovimientosCaja(rango!);
+        nombre = `reporte-movimientos-caja_${rango!.desde}_${rango!.hasta}.xlsx`;
+        break;
+      case 'gastos':
+        descarga$ = this.reportesService.exportarGastos(rango!);
+        nombre = `reporte-gastos_${rango!.desde}_${rango!.hasta}.xlsx`;
+        break;
     }
 
     this.exporting.set(true);
@@ -307,7 +361,13 @@ export class ReportesComponent implements OnInit {
   }
 
   usaFechas(paso: SubreporteId = this.subreporte()): boolean {
-    return paso === 'compras' || paso === 'ventas' || paso === 'cajas';
+    return (
+      paso === 'compras' ||
+      paso === 'ventas' ||
+      paso === 'cajas' ||
+      paso === 'movimientos' ||
+      paso === 'gastos'
+    );
   }
 
   cantidadRegistros(): number {
@@ -330,10 +390,35 @@ export class ReportesComponent implements OnInit {
     return value?.trim() || '—';
   }
 
+  tipoMovimientoLabel(tipo: ReporteCajaMovimientoTipo): string {
+    return tipo === 'INGRESO' ? 'Ingreso' : 'Egreso';
+  }
+
+  conceptoMovimientoLabel(concepto: ReporteCajaConcepto, tipoAbonoNombre?: string | null): string {
+    const label = CAJA_CONCEPTO_LABEL[concepto] ?? concepto;
+    return tipoAbonoNombre?.trim() ? `${label} · ${tipoAbonoNombre}` : label;
+  }
+
+  referenciaMovimientoLabel(tipo: string | null | undefined, id: number | null | undefined): string {
+    if (!tipo && (id == null || id === undefined)) {
+      return '—';
+    }
+    const prefijos: Record<string, string> = {
+      COMPRA: 'Compra',
+      VENTA: 'Venta',
+      GASTO: 'Gasto',
+      ANTICIPO: 'Anticipo',
+    };
+    const prefijo = (tipo && prefijos[tipo]) || 'Ref';
+    return id == null ? prefijo : `${prefijo} #${id}`;
+  }
+
   private recargarPorFechas(): void {
     this.compras.set(null);
     this.ventas.set(null);
     this.cajas.set(null);
+    this.movimientos.set(null);
+    this.gastos.set(null);
     this.cargar();
   }
 
@@ -349,6 +434,10 @@ export class ReportesComponent implements OnInit {
         return this.proveedores();
       case 'cajas':
         return this.cajas();
+      case 'movimientos':
+        return this.movimientos();
+      case 'gastos':
+        return this.gastos();
     }
   }
 

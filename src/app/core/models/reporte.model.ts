@@ -108,6 +108,35 @@ export interface ReporteCajaMovimiento {
   observacion: string | null;
 }
 
+export interface ReporteMovimientoCaja {
+  id: number;
+  cajaId: number;
+  cajaOpenedAt: string | null;
+  cajaClosedAt: string | null;
+  cajaEstado: ReporteCajaEstado | null;
+  createdAt: string;
+  tipo: ReporteCajaMovimientoTipo;
+  concepto: ReporteCajaConcepto;
+  monto: number;
+  medioCajaNombre: string | null;
+  tipoAbonoNombre: string | null;
+  referenciaTipo: string | null;
+  referenciaId: number | null;
+  usuarioRegistro: string | null;
+  observacion: string | null;
+}
+
+export interface ReporteGasto {
+  id: number;
+  cajaId: number;
+  createdAt: string;
+  tipoGastoNombre: string | null;
+  medioCajaNombre: string | null;
+  monto: number;
+  usuarioRegistro: string | null;
+  observacion: string | null;
+}
+
 export interface ReporteCaja {
   id: number;
   openedAt: string;
