@@ -2,20 +2,19 @@
   <header class="rp-page-header">
     <div>
       <h1>Reportes</h1>
-      <p>Consulta y descarga en Excel de compras, ventas, clientes, proveedores y cierres de caja.</p>
+      <p>Consulta y descarga en Excel por grupos: compras, ventas y cierres de caja.</p>
     </div>
   </header>
 
-  <nav class="reportes-steps" aria-label="Tipos de reporte">
-    @for (item of pasos; track item.id) {
+  <nav class="reportes-steps" aria-label="Grupos de reportes">
+    @for (item of grupos; track item.id) {
       <button
         type="button"
         class="reportes-step"
-        [class.active]="paso() === item.id"
-        [attr.aria-current]="paso() === item.id ? 'step' : null"
-        (click)="setPaso(item.id)"
+        [class.active]="grupo() === item.id"
+        [attr.aria-current]="grupo() === item.id ? 'true' : null"
+        (click)="setGrupo(item.id)"
       >
-       
         <span class="reportes-step__texto">
           <strong>{{ item.titulo }}</strong>
           <small>{{ item.descripcion }}</small>
@@ -29,6 +28,22 @@
   }
 
   <section class="rp-panel reportes-panel">
+    <div class="reportes-subtabs" role="tablist" aria-label="Subreportes">
+      @for (item of subreportesActuales(); track item.id) {
+        <button
+          type="button"
+          class="reportes-subtab"
+          role="tab"
+          [class.active]="subreporte() === item.id"
+          [attr.aria-selected]="subreporte() === item.id"
+          (click)="setSubreporte(item.id)"
+        >
+          {{ item.titulo }}
+        </button>
+      }
+    </div>
+    <p class="reportes-subtabs__desc">{{ subreporteActual().descripcion }}</p>
+
     <div class="reportes__toolbar">
       <div class="reportes__filters">
         @if (usaFechas()) {
@@ -52,7 +67,7 @@
           </label>
         }
 
-        @if (paso() === 'compras') {
+        @if (subreporte() === 'compras') {
           <label class="reportes__filter">
             <span>Estado</span>
             <select [value]="estadoCompra() ?? ''" (change)="onEstadoCompraChange($any($event.target).value)">
@@ -64,7 +79,7 @@
           </label>
         }
 
-        @if (paso() === 'proveedores') {
+        @if (subreporte() === 'proveedores') {
           <label class="reportes__filter">
             <span>Tipo de proveedor</span>
             <select [value]="tipoProveedor() ?? ''" (change)="onTipoProveedorChange($any($event.target).value)">
@@ -76,7 +91,7 @@
           </label>
         }
 
-        @if (paso() === 'clientes' || paso() === 'proveedores') {
+        @if (subreporte() === 'clientes' || subreporte() === 'proveedores') {
           <label class="reportes__checkbox">
             <input
               type="checkbox"
@@ -108,7 +123,7 @@
         <span class="reportes-stat__label">Registros</span>
         <strong class="reportes-stat__value">{{ cantidadRegistros() }}</strong>
       </article>
-      @if (paso() === 'compras') {
+      @if (subreporte() === 'compras') {
         <article class="reportes-stat">
           <span class="reportes-stat__label">Peso total</span>
           <strong class="reportes-stat__value">{{ formatPeso(totalesCompras().peso) }} KG</strong>
@@ -118,7 +133,7 @@
           <strong class="reportes-stat__value">{{ formatCurrency(totalesCompras().total) }}</strong>
         </article>
       }
-      @if (paso() === 'ventas') {
+      @if (subreporte() === 'ventas') {
         <article class="reportes-stat">
           <span class="reportes-stat__label">Peso total</span>
           <strong class="reportes-stat__value">{{ formatPeso(totalesVentas().peso) }} KG</strong>
@@ -132,7 +147,7 @@
           <strong class="reportes-stat__value">{{ formatCurrency(totalesVentas().saldo) }}</strong>
         </article>
       }
-      @if (paso() === 'cajas') {
+      @if (subreporte() === 'cajas') {
         <article class="reportes-stat">
           <span class="reportes-stat__label">Ingresos</span>
           <strong class="reportes-stat__value">{{ formatCurrency(totalesCajas().ingresos) }}</strong>
@@ -156,7 +171,7 @@
       <p class="rp-loading">Cargando reporte...</p>
     } @else {
       <div class="reportes__table-wrap">
-        @switch (paso()) {
+        @switch (subreporte()) {
           @case ('compras') {
             <table class="rp-table">
               <thead>

@@ -19,19 +19,75 @@ import {
 import { ReportesService } from '../../core/services/reportes.service';
 import { formatCurrencyCo } from '../../core/utils/currency.util';
 
-type PasoReporte = 'compras' | 'ventas' | 'clientes' | 'proveedores' | 'cajas';
+type GrupoReporte = 'compras' | 'ventas' | 'cierres';
+type SubreporteId = 'compras' | 'proveedores' | 'ventas' | 'clientes' | 'cajas';
 
-interface PasoInfo {
-  id: PasoReporte;
-  numero: number;
+interface SubreporteInfo {
+  id: SubreporteId;
   titulo: string;
   descripcion: string;
+}
+
+interface GrupoInfo {
+  id: GrupoReporte;
+  titulo: string;
+  descripcion: string;
+  subreportes: SubreporteInfo[];
 }
 
 const TIPOS_PROVEEDOR: { value: TipoProveedor; label: string }[] = [
   { value: 'INTERNO', label: 'Internos' },
   { value: 'EXTERNO', label: 'Externos' },
   { value: 'EMPRESA', label: 'Empresas' },
+];
+
+const GRUPOS: GrupoInfo[] = [
+  {
+    id: 'compras',
+    titulo: 'Compras',
+    descripcion: 'Compras y proveedores',
+    subreportes: [
+      {
+        id: 'compras',
+        titulo: 'Compras',
+        descripcion: 'Registro de compras realizadas',
+      },
+      {
+        id: 'proveedores',
+        titulo: 'Proveedores',
+        descripcion: 'Proveedores registrados',
+      },
+    ],
+  },
+  {
+    id: 'ventas',
+    titulo: 'Ventas',
+    descripcion: 'Ventas y clientes',
+    subreportes: [
+      {
+        id: 'ventas',
+        titulo: 'Ventas',
+        descripcion: 'Registro de ventas realizadas',
+      },
+      {
+        id: 'clientes',
+        titulo: 'Clientes',
+        descripcion: 'Registro de clientes',
+      },
+    ],
+  },
+  {
+    id: 'cierres',
+    titulo: 'Cierres de caja',
+    descripcion: 'Cierres de caja',
+    subreportes: [
+      {
+        id: 'cajas',
+        titulo: 'Cierres',
+        descripcion: 'Cierres de caja por fechas',
+      },
+    ],
+  },
 ];
 
 @Component({
@@ -44,13 +100,7 @@ const TIPOS_PROVEEDOR: { value: TipoProveedor; label: string }[] = [
 export class ReportesComponent implements OnInit {
   private readonly reportesService = inject(ReportesService);
 
-  readonly pasos: PasoInfo[] = [
-    { id: 'compras', numero: 1, titulo: 'Compras', descripcion: 'Registro de compras realizadas' },
-    { id: 'ventas', numero: 2, titulo: 'Ventas', descripcion: 'Registro de ventas realizadas' },
-    { id: 'clientes', numero: 3, titulo: 'Clientes', descripcion: 'Registro de clientes' },
-    { id: 'proveedores', numero: 4, titulo: 'Proveedores', descripcion: 'Proveedores registrados' },
-    { id: 'cajas', numero: 5, titulo: 'Cierres caja', descripcion: 'Cierres de caja por fechas' },
-  ];
+  readonly grupos = GRUPOS;
   readonly estadosCompra = ESTADOS_COMPRA_REPORTE;
   readonly tiposProveedor = TIPOS_PROVEEDOR;
   readonly reporteCompraEstadoLabel = reporteCompraEstadoLabel;
@@ -59,8 +109,18 @@ export class ReportesComponent implements OnInit {
   readonly tipoClienteLabel = tipoClienteLabel;
   readonly metodoPagoLabel = metodoPagoLabel;
 
-  readonly paso = signal<PasoReporte>('compras');
-  readonly pasoActual = computed(() => this.pasos.find((p) => p.id === this.paso())!);
+  readonly grupo = signal<GrupoReporte>('compras');
+  readonly subreporte = signal<SubreporteId>('compras');
+
+  readonly grupoActual = computed(
+    () => this.grupos.find((item) => item.id === this.grupo()) ?? this.grupos[0]
+  );
+  readonly subreportesActuales = computed(() => this.grupoActual().subreportes);
+  readonly subreporteActual = computed(
+    () =>
+      this.subreportesActuales().find((item) => item.id === this.subreporte()) ??
+      this.subreportesActuales()[0]
+  );
 
   readonly desde = signal(primerDiaMesIso());
   readonly hasta = signal(hoyIso());
@@ -103,13 +163,26 @@ export class ReportesComponent implements OnInit {
     this.cargar();
   }
 
-  setPaso(paso: PasoReporte): void {
-    if (this.paso() === paso) {
+  setGrupo(grupo: GrupoReporte): void {
+    if (this.grupo() === grupo) {
       return;
     }
-    this.paso.set(paso);
+    const info = this.grupos.find((item) => item.id === grupo);
+    if (!info) {
+      return;
+    }
+    this.grupo.set(grupo);
     this.error.set(null);
-    if (this.datosPaso(paso) === null) {
+    this.setSubreporte(info.subreportes[0].id, true);
+  }
+
+  setSubreporte(subreporte: SubreporteId, forzar = false): void {
+    if (!forzar && this.subreporte() === subreporte) {
+      return;
+    }
+    this.subreporte.set(subreporte);
+    this.error.set(null);
+    if (forzar || this.datosPaso(subreporte) === null) {
       this.cargar();
     }
   }
@@ -142,7 +215,7 @@ export class ReportesComponent implements OnInit {
   }
 
   cargar(): void {
-    const paso = this.paso();
+    const paso = this.subreporte();
     const rango = this.usaFechas(paso) ? this.rangoValido() : null;
     if (!rango && this.usaFechas(paso)) {
       return;
@@ -182,7 +255,7 @@ export class ReportesComponent implements OnInit {
     if (this.exporting()) {
       return;
     }
-    const paso = this.paso();
+    const paso = this.subreporte();
     const rango = this.usaFechas(paso) ? this.rangoValido() : null;
     if (!rango && this.usaFechas(paso)) {
       return;
@@ -233,12 +306,12 @@ export class ReportesComponent implements OnInit {
     });
   }
 
-  usaFechas(paso: PasoReporte = this.paso()): boolean {
+  usaFechas(paso: SubreporteId = this.subreporte()): boolean {
     return paso === 'compras' || paso === 'ventas' || paso === 'cajas';
   }
 
   cantidadRegistros(): number {
-    return this.datosPaso(this.paso())?.length ?? 0;
+    return this.datosPaso(this.subreporte())?.length ?? 0;
   }
 
   formatCurrency(value: number | null | undefined): string {
@@ -264,7 +337,7 @@ export class ReportesComponent implements OnInit {
     this.cargar();
   }
 
-  private datosPaso(paso: PasoReporte): unknown[] | null {
+  private datosPaso(paso: SubreporteId): unknown[] | null {
     switch (paso) {
       case 'compras':
         return this.compras();
