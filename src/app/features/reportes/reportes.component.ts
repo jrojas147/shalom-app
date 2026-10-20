@@ -6,18 +6,20 @@ import { compraProveedorTipoLabel } from '../../core/models/compra-proveedor.mod
 import { TipoProveedor } from '../../core/models/proveedor.model';
 import {
   ESTADOS_COMPRA_REPORTE,
+  ReporteCaja,
   ReporteCliente,
   ReporteCompra,
   ReporteCompraEstado,
   ReporteProveedor,
   ReporteRangoFechas,
   ReporteVenta,
+  reporteCajaEstadoLabel,
   reporteCompraEstadoLabel,
 } from '../../core/models/reporte.model';
 import { ReportesService } from '../../core/services/reportes.service';
 import { formatCurrencyCo } from '../../core/utils/currency.util';
 
-type PasoReporte = 'compras' | 'ventas' | 'clientes' | 'proveedores';
+type PasoReporte = 'compras' | 'ventas' | 'clientes' | 'proveedores' | 'cajas';
 
 interface PasoInfo {
   id: PasoReporte;
@@ -47,10 +49,12 @@ export class ReportesComponent implements OnInit {
     { id: 'ventas', numero: 2, titulo: 'Ventas', descripcion: 'Registro de ventas realizadas' },
     { id: 'clientes', numero: 3, titulo: 'Clientes', descripcion: 'Registro de clientes' },
     { id: 'proveedores', numero: 4, titulo: 'Proveedores', descripcion: 'Proveedores registrados' },
+    { id: 'cajas', numero: 5, titulo: 'Cierres caja', descripcion: 'Cierres de caja por fechas' },
   ];
   readonly estadosCompra = ESTADOS_COMPRA_REPORTE;
   readonly tiposProveedor = TIPOS_PROVEEDOR;
   readonly reporteCompraEstadoLabel = reporteCompraEstadoLabel;
+  readonly reporteCajaEstadoLabel = reporteCajaEstadoLabel;
   readonly compraProveedorTipoLabel = compraProveedorTipoLabel;
   readonly tipoClienteLabel = tipoClienteLabel;
   readonly metodoPagoLabel = metodoPagoLabel;
@@ -68,6 +72,7 @@ export class ReportesComponent implements OnInit {
   readonly ventas = signal<ReporteVenta[] | null>(null);
   readonly clientes = signal<ReporteCliente[] | null>(null);
   readonly proveedores = signal<ReporteProveedor[] | null>(null);
+  readonly cajas = signal<ReporteCaja[] | null>(null);
 
   readonly loading = signal(false);
   readonly exporting = signal(false);
@@ -80,6 +85,18 @@ export class ReportesComponent implements OnInit {
       ...sumar(ventas),
       saldo: ventas.reduce((acc, v) => acc + Number(v.saldoPendiente || 0), 0),
     };
+  });
+  readonly totalesCajas = computed(() => {
+    const cajas = this.cajas() ?? [];
+    return cajas.reduce(
+      (acc, caja) => ({
+        ingresos: acc.ingresos + Number(caja.totalIngresos || 0),
+        egresos: acc.egresos + Number(caja.totalEgresos || 0),
+        ventas: acc.ventas + Number(caja.totalVentas || 0),
+        pagos: acc.pagos + Number(caja.totalPagosProveedor || 0),
+      }),
+      { ingresos: 0, egresos: 0, ventas: 0, pagos: 0 }
+    );
   });
 
   ngOnInit(): void {
@@ -155,6 +172,9 @@ export class ReportesComponent implements OnInit {
           (data) => this.proveedores.set(data)
         );
         break;
+      case 'cajas':
+        this.suscribir(this.reportesService.getCajas(rango!), (data) => this.cajas.set(data));
+        break;
     }
   }
 
@@ -188,6 +208,10 @@ export class ReportesComponent implements OnInit {
         descarga$ = this.reportesService.exportarProveedores(this.tipoProveedor(), soloActivos);
         nombre = 'reporte-proveedores.xlsx';
         break;
+      case 'cajas':
+        descarga$ = this.reportesService.exportarCajas(rango!);
+        nombre = `reporte-cierres-caja_${rango!.desde}_${rango!.hasta}.xlsx`;
+        break;
     }
 
     this.exporting.set(true);
@@ -210,7 +234,7 @@ export class ReportesComponent implements OnInit {
   }
 
   usaFechas(paso: PasoReporte = this.paso()): boolean {
-    return paso === 'compras' || paso === 'ventas';
+    return paso === 'compras' || paso === 'ventas' || paso === 'cajas';
   }
 
   cantidadRegistros(): number {
@@ -236,6 +260,7 @@ export class ReportesComponent implements OnInit {
   private recargarPorFechas(): void {
     this.compras.set(null);
     this.ventas.set(null);
+    this.cajas.set(null);
     this.cargar();
   }
 
@@ -249,6 +274,8 @@ export class ReportesComponent implements OnInit {
         return this.clientes();
       case 'proveedores':
         return this.proveedores();
+      case 'cajas':
+        return this.cajas();
     }
   }
 

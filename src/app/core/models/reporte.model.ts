@@ -81,9 +81,61 @@ export interface ReporteProveedor {
   createdAt: string;
 }
 
+export type ReporteCajaEstado = 'ABIERTA' | 'CERRADA';
+export type ReporteCajaMovimientoTipo = 'INGRESO' | 'EGRESO';
+export type ReporteCajaConcepto =
+  | 'APERTURA'
+  | 'VENTA'
+  | 'COMPRA'
+  | 'PAGO_PROVEEDOR'
+  | 'AJUSTE'
+  | 'CIERRE'
+  | 'ABONO_CAJA'
+  | 'GASTO'
+  | 'ANTICIPO_PROVEEDOR';
+
+export interface ReporteCajaMovimiento {
+  id: number;
+  createdAt: string;
+  tipo: ReporteCajaMovimientoTipo;
+  concepto: ReporteCajaConcepto;
+  monto: number;
+  medioCajaNombre: string | null;
+  tipoAbonoNombre: string | null;
+  referenciaTipo: string | null;
+  referenciaId: number | null;
+  usuarioRegistro: string | null;
+  observacion: string | null;
+}
+
+export interface ReporteCaja {
+  id: number;
+  openedAt: string;
+  closedAt: string | null;
+  estado: ReporteCajaEstado;
+  usuarioApertura: string | null;
+  usuarioCierre: string | null;
+  saldoInicial: number;
+  totalIngresos: number;
+  totalEgresos: number;
+  totalVentas: number;
+  totalPagosProveedor: number;
+  totalGastos: number;
+  totalAbonos: number;
+  saldoTeorico: number;
+  saldoCierre: number | null;
+  diferencia: number | null;
+  observacion: string | null;
+  movimientos: ReporteCajaMovimiento[];
+}
+
 export interface ReporteRangoFechas {
   desde: string;
   hasta: string;
+}
+
+export function reporteCajaEstadoLabel(estado: ReporteCajaEstado): string {
+  return estado === 'ABIERTA' ? 'Abierta' : 'Cerrada';
 }
 
 export const ESTADOS_COMPRA_REPORTE: { value: ReporteCompraEstado; label: string }[] = [

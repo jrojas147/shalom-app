@@ -2,7 +2,7 @@
   <header class="rp-page-header">
     <div>
       <h1>Reportes</h1>
-      <p>Consulta y descarga en Excel de compras, ventas, clientes y proveedores.</p>
+      <p>Consulta y descarga en Excel de compras, ventas, clientes, proveedores y cierres de caja.</p>
     </div>
   </header>
 
@@ -15,7 +15,7 @@
         [attr.aria-current]="paso() === item.id ? 'step' : null"
         (click)="setPaso(item.id)"
       >
-        <span class="reportes-step__numero">{{ item.numero }}</span>
+       
         <span class="reportes-step__texto">
           <strong>{{ item.titulo }}</strong>
           <small>{{ item.descripcion }}</small>
@@ -130,6 +130,24 @@
         <article class="reportes-stat">
           <span class="reportes-stat__label">Saldo pendiente</span>
           <strong class="reportes-stat__value">{{ formatCurrency(totalesVentas().saldo) }}</strong>
+        </article>
+      }
+      @if (paso() === 'cajas') {
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Ingresos</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesCajas().ingresos) }}</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Egresos</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesCajas().egresos) }}</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Ventas en caja</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesCajas().ventas) }}</strong>
+        </article>
+        <article class="reportes-stat">
+          <span class="reportes-stat__label">Pagos a proveedores</span>
+          <strong class="reportes-stat__value">{{ formatCurrency(totalesCajas().pagos) }}</strong>
         </article>
       }
     </section>
@@ -320,6 +338,62 @@
                 } @empty {
                   <tr>
                     <td colspan="8" class="cell-empty">No hay proveedores registrados.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('cajas') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Apertura</th>
+                  <th>Cierre</th>
+                  <th>Estado</th>
+                  <th>Abierta por</th>
+                  <th class="cell-num">Saldo inicial</th>
+                  <th class="cell-num">Ingresos</th>
+                  <th class="cell-num">Egresos</th>
+                  <th class="cell-num">Saldo teórico</th>
+                  <th class="cell-num">Saldo cierre</th>
+                  <th class="cell-num">Diferencia</th>
+                  <th class="cell-num">Movimientos</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (caja of cajas() ?? []; track caja.id) {
+                  <tr>
+                    <td class="cell-mono">{{ caja.id }}</td>
+                    <td class="cell-secondary">{{ caja.openedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="cell-secondary">
+                      {{ caja.closedAt ? (caja.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                    </td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--success]="caja.estado === 'CERRADA'"
+                        [class.rp-badge--warning]="caja.estado === 'ABIERTA'"
+                      >
+                        {{ reporteCajaEstadoLabel(caja.estado) }}
+                      </span>
+                    </td>
+                    <td class="cell-secondary">{{ texto(caja.usuarioApertura) }}</td>
+                    <td class="cell-num">{{ formatCurrency(caja.saldoInicial) }}</td>
+                    <td class="cell-num">{{ formatCurrency(caja.totalIngresos) }}</td>
+                    <td class="cell-num">{{ formatCurrency(caja.totalEgresos) }}</td>
+                    <td class="cell-num cell-primary">{{ formatCurrency(caja.saldoTeorico) }}</td>
+                    <td class="cell-num">
+                      {{ caja.saldoCierre == null ? '—' : formatCurrency(caja.saldoCierre) }}
+                    </td>
+                    <td class="cell-num">
+                      {{ caja.diferencia == null ? '—' : formatCurrency(caja.diferencia) }}
+                    </td>
+                    <td class="cell-num">{{ caja.movimientos.length }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="12" class="cell-empty">No hay cierres de caja en el rango seleccionado.</td>
                   </tr>
                 }
               </tbody>

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
 import { TipoProveedor } from '../models/proveedor.model';
 import {
+  ReporteCaja,
   ReporteCliente,
   ReporteCompra,
   ReporteCompraEstado,
@@ -65,6 +66,19 @@ export class ReportesService {
   exportarProveedores(tipo: TipoProveedor | null, soloActivos: boolean): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/proveedores/excel`, {
       params: this.proveedoresParams(tipo, soloActivos),
+      responseType: 'blob',
+    });
+  }
+
+  getCajas(rango: ReporteRangoFechas): Observable<ReporteCaja[]> {
+    return this.http.get<ReporteCaja[]>(`${this.baseUrl}/cajas`, {
+      params: this.rangoParams(rango),
+    });
+  }
+
+  exportarCajas(rango: ReporteRangoFechas): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/cajas/excel`, {
+      params: this.rangoParams(rango),
       responseType: 'blob',
     });
   }
