@@ -110,6 +110,21 @@
   color: var(--rp-text-secondary);
 }
 
+.retribucion-construccion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  padding: var(--spacing-lg) var(--spacing-md);
+
+  &__img {
+    display: block;
+    max-width: min(100%, 420px);
+    width: 100%;
+    height: auto;
+  }
+}
+
 .cell-actions {
   display: flex;
   justify-content: flex-end;

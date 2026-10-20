@@ -82,6 +82,7 @@ export class RetribucionComponent implements OnInit {
 
   readonly esTabInterna = computed(() => this.tabActiva() === 'INTERNO');
   readonly esTabExterna = computed(() => this.tabActiva() === 'EXTERNO');
+  readonly esTabEmpresa = computed(() => this.tabActiva() === 'EMPRESA');
 
   ngOnInit(): void {
     this.cargarSaldoCaja();
