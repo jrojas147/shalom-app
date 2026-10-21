@@ -1,10 +1,93 @@
 .gestion-compras {
+  min-width: 0;
+  max-width: 100%;
+
   .panel-header h2 {
     margin: 0;
   }
 
   .rp-table tbody td .cell-secondary {
     margin-left: 0.25rem;
+  }
+
+  .rp-panel {
+    overflow: hidden;
+  }
+}
+
+.gestion-compras__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.gestion-compras__cards {
+  display: none;
+}
+
+.compra-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface-muted);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+  }
+
+  &__proveedor {
+    margin: 0;
+    font-weight: 600;
+    color: var(--rp-text);
+    word-break: break-word;
+
+    span {
+      font-weight: 500;
+      color: var(--rp-text-secondary);
+    }
+  }
+
+  &__meta {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--rp-text-secondary);
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-sm);
+    margin: var(--spacing-xs) 0 0;
+
+    div {
+      min-width: 0;
+    }
+
+    dt {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--rp-text-muted);
+    }
+
+    dd {
+      margin: 0.125rem 0 0;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--rp-text);
+      word-break: break-word;
+    }
+  }
+
+  &__action {
+    width: 100%;
+    margin-top: var(--spacing-sm);
   }
 }
 
@@ -46,6 +129,12 @@
       font-size: 1rem;
       color: var(--rp-text);
     }
+  }
+
+  &__table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
   }
 
   &__table {
@@ -234,5 +323,53 @@
     font-weight: 600;
     color: var(--rp-primary);
     border-color: var(--rp-primary);
+  }
+}
+
+@media (max-width: 768px) {
+  .gestion-compras {
+    .rp-page-header {
+      margin-bottom: var(--spacing-md);
+
+      h1 {
+        font-size: 1.25rem;
+      }
+    }
+
+    .rp-panel {
+      padding: var(--spacing-md);
+    }
+  }
+
+  .gestion-compras__table-wrap {
+    display: none;
+  }
+
+  .gestion-compras__cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .gestion-compras-modal {
+    &__totals {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--spacing-sm);
+
+      div {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+    }
+
+    &__actions {
+      flex-direction: column-reverse;
+
+      .rp-btn {
+        width: 100%;
+      }
+    }
   }
 }

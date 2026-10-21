@@ -70,14 +70,14 @@
 
 @media (max-width: 768px) {
   .rp-confirm-overlay {
-    align-items: flex-end;
-    padding: 0;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
   }
 
   .rp-confirm-panel {
     max-width: 100%;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    margin: auto;
   }
 
   .rp-confirm-actions {
