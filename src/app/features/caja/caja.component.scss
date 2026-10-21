@@ -214,3 +214,162 @@
   gap: var(--spacing-sm);
   align-items: center;
 }
+
+.caja__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.caja__cards {
+  display: none;
+}
+
+.caja-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: var(--spacing-md);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface-muted);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    margin-bottom: 0.25rem;
+
+    strong {
+      font-size: 0.9375rem;
+      color: var(--rp-text);
+    }
+  }
+
+  &__title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--rp-text);
+    word-break: break-word;
+  }
+
+  &__meta,
+  &__obs {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--rp-text-secondary);
+    word-break: break-word;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-sm);
+    margin: var(--spacing-xs) 0 0;
+
+    dt {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--rp-text-muted);
+    }
+
+    dd {
+      margin: 0.125rem 0 0;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--rp-text);
+      word-break: break-word;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .caja {
+    min-width: 0;
+    max-width: 100%;
+
+    .rp-page-header {
+      margin-bottom: var(--spacing-md);
+
+      h1 {
+        font-size: 1.25rem;
+      }
+    }
+
+    .rp-panel {
+      padding: var(--spacing-md);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  .caja__header-actions {
+    width: 100%;
+
+    .rp-btn {
+      flex: 1;
+    }
+  }
+
+  .caja__saldos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-sm);
+
+    strong {
+      font-size: 1rem;
+      word-break: break-word;
+    }
+  }
+
+  .caja__medio {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+  }
+
+  .caja__medio-montos {
+    align-items: flex-start;
+  }
+
+  .caja__form {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .caja__form-actions {
+    flex-direction: column-reverse;
+
+    .rp-btn {
+      width: 100%;
+    }
+  }
+
+  .caja-tabs {
+    margin: var(--spacing-sm) 0;
+  }
+
+  .caja-tab {
+    flex: 1 1 calc(50% - var(--spacing-sm));
+    justify-content: center;
+  }
+
+  .caja__table-wrap {
+    display: none;
+  }
+
+  .caja__cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .caja__form--saldos {
+    grid-template-columns: 1fr;
+  }
+}

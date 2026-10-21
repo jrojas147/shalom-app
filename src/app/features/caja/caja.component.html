@@ -181,44 +181,74 @@
         </div>
 
         @if (caja(); as actual) {
-          <table class="rp-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Concepto</th>
-                <th>Medio</th>
-                <th>Monto</th>
-                <th>Usuario</th>
-                <th>Observación</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (mov of actual.movimientos; track mov.id) {
+          <div class="caja__table-wrap">
+            <table class="rp-table">
+              <thead>
                 <tr>
-                  <td class="cell-secondary">{{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-                  <td>
-                    <span
-                      class="rp-badge"
-                      [class.rp-badge--success]="mov.tipo === 'INGRESO'"
-                      [class.rp-badge--warning]="mov.tipo === 'EGRESO'"
-                    >
-                      {{ mov.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
-                    </span>
-                  </td>
-                  <td class="cell-secondary">{{ conceptoDisplay(mov.concepto, mov.tipoAbonoNombre) }}</td>
-                  <td class="cell-secondary">{{ mov.medioCajaNombre || '—' }}</td>
-                  <td class="cell-secondary">{{ formatCurrency(mov.monto) }}</td>
-                  <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>
-                  <td class="cell-secondary">{{ mov.observacion || '—' }}</td>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Concepto</th>
+                  <th>Medio</th>
+                  <th>Monto</th>
+                  <th>Usuario</th>
+                  <th>Observación</th>
                 </tr>
-              } @empty {
-                <tr>
-                  <td colspan="7" class="rp-empty">Sin movimientos registrados</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @for (mov of actual.movimientos; track mov.id) {
+                  <tr>
+                    <td class="cell-secondary">{{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--success]="mov.tipo === 'INGRESO'"
+                        [class.rp-badge--warning]="mov.tipo === 'EGRESO'"
+                      >
+                        {{ mov.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+                      </span>
+                    </td>
+                    <td class="cell-secondary">{{ conceptoDisplay(mov.concepto, mov.tipoAbonoNombre) }}</td>
+                    <td class="cell-secondary">{{ mov.medioCajaNombre || '—' }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(mov.monto) }}</td>
+                    <td class="cell-secondary">{{ mov.usuarioRegistroNombre || '—' }}</td>
+                    <td class="cell-secondary">{{ mov.observacion || '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="rp-empty">Sin movimientos registrados</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="caja__cards">
+            @for (mov of actual.movimientos; track mov.id) {
+              <article class="caja-card">
+                <header class="caja-card__header">
+                  <span
+                    class="rp-badge"
+                    [class.rp-badge--success]="mov.tipo === 'INGRESO'"
+                    [class.rp-badge--warning]="mov.tipo === 'EGRESO'"
+                  >
+                    {{ mov.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+                  </span>
+                  <strong>{{ formatCurrency(mov.monto) }}</strong>
+                </header>
+                <p class="caja-card__title">{{ conceptoDisplay(mov.concepto, mov.tipoAbonoNombre) }}</p>
+                <p class="caja-card__meta">
+                  {{ mov.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                  · {{ mov.medioCajaNombre || '—' }}
+                </p>
+                <p class="caja-card__meta">{{ mov.usuarioRegistroNombre || '—' }}</p>
+                @if (mov.observacion) {
+                  <p class="caja-card__obs">{{ mov.observacion }}</p>
+                }
+              </article>
+            } @empty {
+              <p class="rp-empty">Sin movimientos registrados</p>
+            }
+          </div>
         } @else {
           <p class="rp-empty">No hay caja abierta. Abra un turno para ver movimientos.</p>
         }
@@ -233,50 +263,96 @@
         @if (loadingHistorial()) {
           <p class="rp-loading">Cargando historial...</p>
         } @else {
-          <table class="rp-table">
-            <thead>
-              <tr>
-                <th>Caja</th>
-                <th>Apertura</th>
-                <th>Cierre</th>
-                <th>Abrió</th>
-                <th>Cerró</th>
-                <th>Saldo inicial</th>
-                <th>Saldo teórico</th>
-                <th>Saldo contado</th>
-                <th>Diferencia</th>
-                <th>Observación</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of historial(); track item.id) {
+          <div class="caja__table-wrap">
+            <table class="rp-table">
+              <thead>
                 <tr>
-                  <td class="cell-secondary">#{{ item.id }}</td>
-                  <td class="cell-secondary">{{ item.openedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-                  <td class="cell-secondary">
-                    {{ item.closedAt ? (item.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
-                  </td>
-                  <td class="cell-secondary">{{ item.usuarioAperturaNombre || '—' }}</td>
-                  <td class="cell-secondary">{{ item.usuarioCierreNombre || '—' }}</td>
-                  <td class="cell-secondary">{{ formatCurrency(item.saldoInicial) }}</td>
-                  <td class="cell-secondary">{{ formatCurrency(item.saldoTeorico) }}</td>
-                  <td class="cell-secondary">{{ formatCurrency(item.saldoCierre) }}</td>
-                  <td
-                    class="cell-secondary"
+                  <th>Caja</th>
+                  <th>Apertura</th>
+                  <th>Cierre</th>
+                  <th>Abrió</th>
+                  <th>Cerró</th>
+                  <th>Saldo inicial</th>
+                  <th>Saldo teórico</th>
+                  <th>Saldo contado</th>
+                  <th>Diferencia</th>
+                  <th>Observación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of historial(); track item.id) {
+                  <tr>
+                    <td class="cell-secondary">#{{ item.id }}</td>
+                    <td class="cell-secondary">{{ item.openedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="cell-secondary">
+                      {{ item.closedAt ? (item.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                    </td>
+                    <td class="cell-secondary">{{ item.usuarioAperturaNombre || '—' }}</td>
+                    <td class="cell-secondary">{{ item.usuarioCierreNombre || '—' }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(item.saldoInicial) }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(item.saldoTeorico) }}</td>
+                    <td class="cell-secondary">{{ formatCurrency(item.saldoCierre) }}</td>
+                    <td
+                      class="cell-secondary"
+                      [class.caja__diff--ok]="!tieneDiferenciaValor(item.diferencia)"
+                      [class.caja__diff--warn]="tieneDiferenciaValor(item.diferencia)"
+                    >
+                      {{ diferenciaLabel(item.diferencia) }}
+                    </td>
+                    <td class="cell-secondary">{{ item.observacion || '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="10" class="rp-empty">Aún no hay cajas cerradas</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="caja__cards">
+            @for (item of historial(); track item.id) {
+              <article class="caja-card">
+                <header class="caja-card__header">
+                  <strong>Caja #{{ item.id }}</strong>
+                  <span
                     [class.caja__diff--ok]="!tieneDiferenciaValor(item.diferencia)"
                     [class.caja__diff--warn]="tieneDiferenciaValor(item.diferencia)"
                   >
                     {{ diferenciaLabel(item.diferencia) }}
-                  </td>
-                  <td class="cell-secondary">{{ item.observacion || '—' }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="10" class="rp-empty">Aún no hay cajas cerradas</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                  </span>
+                </header>
+                <p class="caja-card__meta">
+                  Apertura {{ item.openedAt | date: 'dd/MM/yyyy HH:mm' }}
+                  · {{ item.usuarioAperturaNombre || '—' }}
+                </p>
+                <p class="caja-card__meta">
+                  Cierre
+                  {{ item.closedAt ? (item.closedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                  · {{ item.usuarioCierreNombre || '—' }}
+                </p>
+                <dl class="caja-card__stats">
+                  <div>
+                    <dt>Inicial</dt>
+                    <dd>{{ formatCurrency(item.saldoInicial) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Teórico</dt>
+                    <dd>{{ formatCurrency(item.saldoTeorico) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Contado</dt>
+                    <dd>{{ formatCurrency(item.saldoCierre) }}</dd>
+                  </div>
+                </dl>
+                @if (item.observacion) {
+                  <p class="caja-card__obs">{{ item.observacion }}</p>
+                }
+              </article>
+            } @empty {
+              <p class="rp-empty">Aún no hay cajas cerradas</p>
+            }
+          </div>
         }
       }
     </section>
