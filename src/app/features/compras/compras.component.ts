@@ -80,6 +80,7 @@ export class ComprasComponent implements OnInit {
   readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly loading = signal(false);
   readonly showProveedorModal = signal(false);
+  readonly detalleMovilAbierto = signal(false);
   readonly procesando = signal(false);
   readonly mensaje = signal<string | null>(null);
   readonly error = signal<string | null>(null);
@@ -323,6 +324,14 @@ export class ComprasComponent implements OnInit {
     this.items.update((list) => list.filter((i) => i.productoId !== productoId));
   }
 
+  abrirDetalleMovil(): void {
+    this.detalleMovilAbierto.set(true);
+  }
+
+  cerrarDetalleMovil(): void {
+    this.detalleMovilAbierto.set(false);
+  }
+
   abrirModalProveedor(): void {
     this.showProveedorModal.set(true);
   }
@@ -446,6 +455,7 @@ export class ComprasComponent implements OnInit {
           this.proveedorSeleccionado.set(null);
           this.saldoAFavor.set(0);
           this.anticipoInicial.set(0);
+          this.detalleMovilAbierto.set(false);
         },
         error: (err) => {
           this.procesando.set(false);

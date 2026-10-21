@@ -5,7 +5,8 @@ import { Component, input, output } from '@angular/core';
   standalone: true,
   host: {
     '[style.z-index]': 'stacked() ? 1100 : 1000',
-    '[style.position]': '"relative"',
+    '[style.position]': '"fixed"',
+    '[style.inset]': '"0"',
     '[style.display]': '"block"',
   },
   template: `

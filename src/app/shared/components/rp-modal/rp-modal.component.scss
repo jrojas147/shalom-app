@@ -7,6 +7,9 @@
   justify-content: center;
   background: rgba(30, 42, 46, 0.45);
   padding: var(--spacing-md);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 
   &--stacked {
     z-index: 1100;
@@ -19,7 +22,8 @@
   flex-direction: column;
   width: 100%;
   max-width: 480px;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  min-height: 0;
   background: var(--rp-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--rp-shadow-md);
@@ -74,8 +78,11 @@
 }
 
 .rp-modal-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: var(--spacing-lg);
 
   .rp-form-actions {
@@ -86,16 +93,26 @@
 }
 
 @media (max-width: 768px) {
-  .rp-modal-overlay--stacked {
-    align-items: flex-end;
-    padding: 0;
+  .rp-modal-overlay {
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
 
     .rp-modal-panel {
       width: 100%;
       max-width: 100%;
-      max-height: min(85vh, 100%);
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
+      max-height: calc(100dvh - 2rem);
+      margin: auto;
     }
+  }
+
+  .rp-modal-overlay--stacked {
+    .rp-modal-panel {
+      max-height: min(85dvh, calc(100dvh - 2rem));
+    }
+  }
+
+  .rp-modal-body {
+    padding: var(--spacing-md);
   }
 }

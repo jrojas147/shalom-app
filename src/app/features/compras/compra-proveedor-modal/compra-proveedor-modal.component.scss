@@ -78,8 +78,10 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 320px;
+  max-height: min(40dvh, 320px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .proveedor-modal-item {
@@ -147,6 +149,26 @@
   display: flex;
   justify-content: flex-end;
   margin-top: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+  .proveedor-modal-interno {
+    gap: var(--spacing-md);
+  }
+
+  .proveedor-modal-list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .proveedor-modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) 0 calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+    background: var(--rp-surface);
+  }
 }
 
 .rp-empty {
