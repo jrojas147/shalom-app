@@ -96,6 +96,7 @@ export class VentaComponent implements OnInit {
   readonly codigoCiiuFiltro = signal<number | null>(null);
   readonly loading = signal(false);
   readonly showClienteModal = signal(false);
+  readonly detalleMovilAbierto = signal(false);
   readonly showPagoModal = signal(false);
   readonly procesando = signal(false);
   readonly loadingMediosPago = signal(false);
@@ -463,6 +464,14 @@ export class VentaComponent implements OnInit {
     this.items.update((list) => list.filter((i) => i.productoId !== productoId));
   }
 
+  abrirDetalleMovil(): void {
+    this.detalleMovilAbierto.set(true);
+  }
+
+  cerrarDetalleMovil(): void {
+    this.detalleMovilAbierto.set(false);
+  }
+
   abrirModalCliente(): void {
     this.showClienteModal.set(true);
   }
@@ -796,6 +805,7 @@ export class VentaComponent implements OnInit {
               this.mensaje.set(res.mensaje);
               this.items.set([]);
               this.clienteSeleccionado.set(null);
+              this.detalleMovilAbierto.set(false);
               this.medioPagoId.set(null);
               this.pagoCredito.set(false);
               this.fechaProyectadaPago.set('');

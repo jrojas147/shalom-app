@@ -1,4 +1,4 @@
-<div class="compras-pos">
+<div class="compras-pos" [class.compras-pos--detalle]="detalleMovilAbierto()">
   <section class="compras-main">
     <div class="compras-toolbar">
       <div class="compras-search">
@@ -32,6 +32,29 @@
           }
         </select>
       </div>
+
+      <button
+        type="button"
+        class="compras-cart-btn"
+        [attr.aria-expanded]="detalleMovilAbierto()"
+        [attr.aria-label]="'Ver venta, ' + cantidadItems() + ' ítems'"
+        (click)="abrirDetalleMovil()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="9" cy="20" r="1.5" stroke="currentColor" stroke-width="1.8" />
+          <circle cx="17" cy="20" r="1.5" stroke="currentColor" stroke-width="1.8" />
+          <path
+            d="M3 4h2l2.2 10.5a1 1 0 001 .8h8.6a1 1 0 00.98-.8L19 7H6"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        @if (cantidadItems() > 0) {
+          <span class="compras-cart-btn__badge">{{ cantidadItems() }}</span>
+        }
+      </button>
     </div>
 
     @if (error() && !showClienteModal() && !showPagoModal()) {
@@ -74,8 +97,14 @@
     }
   </section>
 
-  <aside class="compras-detail">
+  <aside class="compras-detail" [class.compras-detail--open]="detalleMovilAbierto()">
     <header class="detail-header">
+      <div class="detail-header-top">
+        <h2 class="detail-title">Detalle venta</h2>
+        <button type="button" class="detail-close" (click)="cerrarDetalleMovil()">
+          Cerrar
+        </button>
+      </div>
       <div class="detail-client">
         <span class="detail-label">Cliente:</span>
         @if (clienteSeleccionado(); as cliente) {

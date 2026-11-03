@@ -22,8 +22,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: 420px;
+  max-height: min(50dvh, 420px);
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 768px) {
+  .cliente-modal-list {
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 .cliente-modal-item {
