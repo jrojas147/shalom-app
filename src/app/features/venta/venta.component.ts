@@ -622,6 +622,9 @@ export class VentaComponent implements OnInit {
   seleccionarPagoCredito(): void {
     this.pagoCredito.set(true);
     this.medioPagoId.set(null);
+    if (!this.fechaProyectadaPago().trim()) {
+      this.fechaProyectadaPago.set(this.fechaMasDias(30));
+    }
   }
 
   onFechaProyectadaPago(value: string): void {
@@ -629,7 +632,12 @@ export class VentaComponent implements OnInit {
   }
 
   hoyIso(): string {
+    return this.fechaMasDias(0);
+  }
+
+  private fechaMasDias(dias: number): string {
     const now = new Date();
+    now.setDate(now.getDate() + dias);
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
