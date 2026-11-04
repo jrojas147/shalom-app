@@ -9,6 +9,8 @@ export interface Gasto {
   observacion?: string | null;
   usuarioRegistroId: number;
   usuarioRegistroNombre?: string;
+  siigoId?: string | null;
+  mensaje?: string | null;
   createdAt: string;
 }
 

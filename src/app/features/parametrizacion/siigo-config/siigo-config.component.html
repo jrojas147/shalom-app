@@ -206,6 +206,40 @@
             </label>
           }
         </section>
+
+        <section class="siigo-section">
+          <h3 class="siigo-section__title">Gastos</h3>
+          <p class="siigo-hint">
+            Al registrar un gasto se crea un egreso en Siigo: debita la cuenta contable y acredita el medio de caja.
+            Usa el mismo comprobante de egreso de la sección anterior.
+          </p>
+          <label class="siigo-field">
+            <span>Tercero del gasto</span>
+            <input
+              type="text"
+              formControlName="gastoIdentification"
+              maxlength="20"
+              inputmode="numeric"
+              placeholder="Identificación en Siigo"
+            />
+            <small class="siigo-hint">
+              Documento de un tercero que ya exista en Siigo. El egreso queda a nombre de ese tercero.
+            </small>
+          </label>
+          <label class="siigo-field">
+            <span>Cuenta contable del gasto</span>
+            <input
+              type="text"
+              formControlName="gastoAccountCode"
+              maxlength="20"
+              inputmode="numeric"
+              placeholder="Ej. 51959501"
+            />
+            <small class="siigo-hint">
+              Cuenta PUC de débito. Un tipo de gasto puede indicar otra cuenta en parametrización.
+            </small>
+          </label>
+        </section>
       }
 
       <div class="siigo-actions">

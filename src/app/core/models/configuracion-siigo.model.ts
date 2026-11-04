@@ -16,6 +16,8 @@ export interface ConfiguracionSiigo {
   documentTypeRpId?: number | null;
   currencyCode?: string | null;
   currencyExchangeRate?: number | null;
+  gastoIdentification?: string | null;
+  gastoAccountCode?: string | null;
   tokenExpiresAt?: string | null;
   partnerId: string;
 }
@@ -34,6 +36,8 @@ export interface ConfiguracionSiigoRequest {
   documentTypeRpId?: number | null;
   currencyCode?: string | null;
   currencyExchangeRate?: number | null;
+  gastoIdentification?: string | null;
+  gastoAccountCode?: string | null;
 }
 
 export interface SiigoPrueba {

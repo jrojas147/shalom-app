@@ -37,7 +37,9 @@
     <div class="panel-header">
       <div>
         <h2>Nuevo gasto</h2>
-        <p class="gastos__desc">El monto se descuenta del medio de pago seleccionado.</p>
+        <p class="gastos__desc">
+          El monto se descuenta del medio de pago y, si Siigo está configurado, se envía como egreso.
+        </p>
       </div>
     </div>
 
@@ -132,6 +134,7 @@
             <th>Medio</th>
             <th>Monto</th>
             <th>Observación</th>
+            <th>Siigo</th>
             <th>Usuario</th>
           </tr>
         </thead>
@@ -143,11 +146,12 @@
               <td class="cell-secondary">{{ gasto.medioCajaNombre }}</td>
               <td class="cell-secondary">{{ formatCurrency(gasto.monto) }}</td>
               <td class="cell-secondary">{{ gasto.observacion || '—' }}</td>
+              <td class="cell-secondary">{{ gasto.siigoId ? 'Enviado' : '—' }}</td>
               <td class="cell-secondary">{{ gasto.usuarioRegistroNombre || '—' }}</td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="rp-empty">No hay gastos registrados</td>
+              <td colspan="7" class="rp-empty">No hay gastos registrados</td>
             </tr>
           }
         </tbody>

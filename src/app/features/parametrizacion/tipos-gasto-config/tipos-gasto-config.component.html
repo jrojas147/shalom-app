@@ -1,8 +1,8 @@
 <section class="param-block">
   <h2 class="param-block__title">Tipos de gasto</h2>
   <p class="param-block__desc">
-    Categorías para registrar gastos operativos. El tipo General se crea por defecto y no se puede
-    modificar ni eliminar.
+    Categorías para registrar gastos operativos. La cuenta Siigo es opcional: si la deja vacía se usa
+    la cuenta de parametrización Siigo. El tipo General no se puede modificar ni eliminar.
   </p>
 
   @if (error()) {
@@ -16,6 +16,14 @@
       placeholder="Tipo de gasto"
       maxlength="100"
       aria-label="Tipo de gasto"
+    />
+    <input
+      type="text"
+      formControlName="cuentaSiigo"
+      placeholder="Cuenta Siigo"
+      maxlength="20"
+      inputmode="numeric"
+      aria-label="Cuenta contable Siigo"
     />
     <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
       {{ saving() ? 'Guardando...' : editingId() ? 'Guardar' : 'Agregar' }}
@@ -33,6 +41,9 @@
         <li class="param-block__item">
           <span class="param-block__item-text">
             <strong>{{ tipo.nombre }}</strong>
+            @if (tipo.cuentaSiigo) {
+              <span class="param-block__item-meta">Cuenta {{ tipo.cuentaSiigo }}</span>
+            }
             @if (tipo.sistema) {
               <span class="param-block__item-meta">Por defecto</span>
             }

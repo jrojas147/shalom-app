@@ -194,9 +194,9 @@ export class GastosComponent implements OnInit {
             observacion: raw.observacion.trim() || undefined,
           })
           .subscribe({
-            next: () => {
+            next: (gasto) => {
               this.saving.set(false);
-              this.mensaje.set('Gasto registrado y descontado de caja.');
+              this.mensaje.set(gasto.mensaje || 'Gasto registrado y descontado de caja.');
               this.form.patchValue({ monto: 0, observacion: '' });
               this.montoDisplay.set(formatCurrencyCo(0));
               this.loadAll();

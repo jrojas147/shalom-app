@@ -24,6 +24,7 @@ export class TiposGastoConfigComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
+    cuentaSiigo: [''],
     activo: [true],
   });
 
@@ -52,13 +53,17 @@ export class TiposGastoConfigComponent implements OnInit {
       return;
     }
     this.editingId.set(tipo.id);
-    this.form.reset({ nombre: tipo.nombre, activo: tipo.activo });
+    this.form.reset({
+      nombre: tipo.nombre,
+      cuentaSiigo: tipo.cuentaSiigo ?? '',
+      activo: tipo.activo,
+    });
     this.error.set(null);
   }
 
   cancelEdit(): void {
     this.editingId.set(null);
-    this.form.reset({ nombre: '', activo: true });
+    this.form.reset({ nombre: '', cuentaSiigo: '', activo: true });
     this.error.set(null);
   }
 
@@ -71,6 +76,7 @@ export class TiposGastoConfigComponent implements OnInit {
     const raw = this.form.getRawValue();
     const request: TipoGastoRequest = {
       nombre: raw.nombre.trim(),
+      cuentaSiigo: raw.cuentaSiigo.trim() || null,
       activo: true,
     };
 

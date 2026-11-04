@@ -53,6 +53,8 @@ export class SiigoConfigComponent implements OnInit {
     documentTypeRpId: [null as number | null],
     currencyCode: ['COP'],
     currencyExchangeRate: [null as number | null],
+    gastoIdentification: [''],
+    gastoAccountCode: [''],
   });
 
   ngOnInit(): void {
@@ -86,6 +88,8 @@ export class SiigoConfigComponent implements OnInit {
           documentTypeRpId: data.documentTypeRpId ?? null,
           currencyCode: data.currencyCode || 'COP',
           currencyExchangeRate: data.currencyExchangeRate ?? null,
+          gastoIdentification: data.gastoIdentification ?? '',
+          gastoAccountCode: data.gastoAccountCode ?? '',
         });
         this.loading.set(false);
         if (data.accessKeyConfigured) {
@@ -140,6 +144,8 @@ export class SiigoConfigComponent implements OnInit {
         documentTypeRpId: raw.documentTypeRpId,
         currencyCode: raw.currencyCode,
         currencyExchangeRate: raw.currencyCode === 'COP' ? null : raw.currencyExchangeRate,
+        gastoIdentification: raw.gastoIdentification.trim() || null,
+        gastoAccountCode: raw.gastoAccountCode.trim() || null,
       })
       .subscribe({
         next: (data) => {
