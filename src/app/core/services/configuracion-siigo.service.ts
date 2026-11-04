@@ -8,6 +8,7 @@ import {
   SiigoCatalogoItem,
   SiigoPrueba,
   SiigoProductoStock,
+  SiigoProveedor,
   SiigoTerceroIdentificacion,
 } from '../models/configuracion-siigo.model';
 
@@ -68,6 +69,10 @@ export class ConfiguracionSiigoService {
       params = params.append('codes', code);
     }
     return this.http.get<SiigoProductoStock[]>(`${this.baseUrl}/productos/stock`, { params });
+  }
+
+  proveedores(): Observable<SiigoProveedor[]> {
+    return this.http.get<SiigoProveedor[]>(`${this.baseUrl}/proveedores`);
   }
 
   consultarIdentificacion(identification: string): Observable<SiigoTerceroIdentificacion> {

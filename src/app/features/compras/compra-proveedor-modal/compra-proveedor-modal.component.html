@@ -1,4 +1,4 @@
-<app-rp-modal title="Seleccionar proveedor" [wide]="true" (closed)="cerrar()">
+<app-rp-modal [title]="titulo()" [wide]="true" (closed)="cerrar()">
   @if (error()) {
     <div class="rp-alert rp-alert--error">{{ error() }}</div>
   }
@@ -22,7 +22,7 @@
     @if (esTabInterna()) {
       Seleccione el reciclador interno y la sucursal asociada.
     } @else if (esTabExterna()) {
-      Seleccione el proveedor externo para la compra.
+      Seleccione el proveedor externo para {{ proposito() }}.
     } @else {
       Seleccione la empresa proveedora asociada.
     }

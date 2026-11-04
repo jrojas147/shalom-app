@@ -27,6 +27,8 @@ export class CompraProveedorModalComponent implements OnInit {
   private readonly empresasService = inject(ProveedoresEmpresasService);
 
   readonly seleccionActual = input<CompraProveedorSeleccion | null>(null);
+  readonly titulo = input('Seleccionar proveedor');
+  readonly proposito = input('la compra');
 
   readonly closed = output<void>();
   readonly seleccionado = output<CompraProveedorSeleccion>();

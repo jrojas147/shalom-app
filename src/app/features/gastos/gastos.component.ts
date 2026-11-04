@@ -2,9 +2,11 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CajaSaldo } from '../../core/models/caja.model';
+import { SiigoProveedor } from '../../core/models/configuracion-siigo.model';
 import { Gasto } from '../../core/models/gasto.model';
 import { TipoGasto } from '../../core/models/tipo-gasto.model';
 import { CajaService } from '../../core/services/caja.service';
+import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { GastosService } from '../../core/services/gastos.service';
 import { TiposGastoService } from '../../core/services/tipos-gasto.service';
 import {
@@ -26,6 +28,7 @@ export class GastosComponent implements OnInit {
   private readonly gastosService = inject(GastosService);
   private readonly tiposGastoService = inject(TiposGastoService);
   private readonly cajaService = inject(CajaService);
+  private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tiposGasto = signal<TipoGasto[]>([]);
@@ -37,11 +40,14 @@ export class GastosComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
   readonly busqueda = signal('');
+  readonly proveedoresSiigo = signal<SiigoProveedor[]>([]);
+  readonly loadingProveedores = signal(false);
   readonly montoDisplay = signal(formatCurrencyCo(0));
 
   readonly form = this.fb.nonNullable.group({
     tipoGastoId: [null as number | null, Validators.required],
     medioCajaId: [null as number | null, Validators.required],
+    terceroKey: ['', Validators.required],
     monto: [0, [Validators.required, Validators.min(1)]],
     observacion: ['', Validators.maxLength(500)],
   });
@@ -93,6 +99,24 @@ export class GastosComponent implements OnInit {
       },
       error: (err) =>
         this.error.set(err.error?.message ?? 'No se pudieron cargar los tipos de gasto.'),
+    });
+
+    this.loadingProveedores.set(true);
+    this.configuracionSiigoService.proveedores().subscribe({
+      next: (data) => {
+        const lista = data ?? [];
+        this.proveedoresSiigo.set(lista);
+        this.loadingProveedores.set(false);
+        const actual = this.form.controls.terceroKey.value;
+        if (actual && !lista.some((item) => this.proveedorKey(item) === actual)) {
+          this.form.controls.terceroKey.setValue('');
+        }
+      },
+      error: (err) => {
+        this.proveedoresSiigo.set([]);
+        this.loadingProveedores.set(false);
+        this.error.set(this.extractErrorMessage(err, 'No se pudieron cargar los proveedores de Siigo.'));
+      },
     });
 
     this.cajaService.obtenerActual().subscribe({
@@ -170,12 +194,20 @@ export class GastosComponent implements OnInit {
       return;
     }
 
-    const tipo = this.tiposGasto().find((item) => item.id === raw.tipoGastoId);
+    const proveedor = this.proveedoresSiigo().find(
+      (item) => this.proveedorKey(item) === raw.terceroKey
+    );
+    if (!proveedor) {
+      this.error.set('Seleccione un proveedor de Siigo.');
+      return;
+    }
 
+    this.error.set(null);
+    const tipo = this.tiposGasto().find((item) => item.id === raw.tipoGastoId);
     this.confirmDialog
       .confirm({
         title: 'Registrar gasto',
-        message: `¿Registrar ${this.formatCurrency(raw.monto)} en ${tipo?.nombre ?? 'gasto'} desde ${medio?.medioNombre ?? 'caja'}?`,
+        message: `¿Registrar ${this.formatCurrency(raw.monto)} en ${tipo?.nombre ?? 'gasto'} desde ${medio?.medioNombre ?? 'caja'} a nombre de ${proveedor.nombre}?`,
         confirmLabel: 'Registrar',
         cancelLabel: 'Cancelar',
       })
@@ -192,12 +224,15 @@ export class GastosComponent implements OnInit {
             medioCajaId: raw.medioCajaId!,
             monto: raw.monto,
             observacion: raw.observacion.trim() || undefined,
+            terceroIdentificacion: proveedor.identificacion,
+            terceroNombre: proveedor.nombre,
+            terceroSucursal: proveedor.sucursal ?? 0,
           })
           .subscribe({
             next: (gasto) => {
               this.saving.set(false);
               this.mensaje.set(gasto.mensaje || 'Gasto registrado y descontado de caja.');
-              this.form.patchValue({ monto: 0, observacion: '' });
+              this.form.patchValue({ monto: 0, observacion: '', terceroKey: '' });
               this.montoDisplay.set(formatCurrencyCo(0));
               this.loadAll();
             },
@@ -207,6 +242,15 @@ export class GastosComponent implements OnInit {
             },
           });
       });
+  }
+
+  proveedorKey(item: SiigoProveedor): string {
+    return `${item.identificacion}|${item.sucursal ?? 0}`;
+  }
+
+  etiquetaProveedor(item: SiigoProveedor): string {
+    const sucursal = item.sucursal > 0 ? ` — sucursal ${item.sucursal}` : '';
+    return `${item.nombre} — ${item.identificacion}${sucursal}`;
   }
 
   formatCurrency(value: number | null | undefined): string {

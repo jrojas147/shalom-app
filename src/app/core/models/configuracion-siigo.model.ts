@@ -18,6 +18,7 @@ export interface ConfiguracionSiigo {
   currencyExchangeRate?: number | null;
   gastoIdentification?: string | null;
   gastoAccountCode?: string | null;
+  gastoCajaAccountCode?: string | null;
   tokenExpiresAt?: string | null;
   partnerId: string;
 }
@@ -38,6 +39,7 @@ export interface ConfiguracionSiigoRequest {
   currencyExchangeRate?: number | null;
   gastoIdentification?: string | null;
   gastoAccountCode?: string | null;
+  gastoCajaAccountCode?: string | null;
 }
 
 export interface SiigoPrueba {
@@ -61,6 +63,12 @@ export interface SiigoProductoStock {
   existe: boolean;
   disponible?: number | null;
   nombre?: string | null;
+}
+
+export interface SiigoProveedor {
+  identificacion: string;
+  nombre: string;
+  sucursal: number;
 }
 
 export interface SiigoTerceroIdentificacion {

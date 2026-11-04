@@ -7,6 +7,8 @@ export interface Gasto {
   medioCajaNombre: string;
   monto: number;
   observacion?: string | null;
+  terceroIdentificacion?: string | null;
+  terceroNombre?: string | null;
   usuarioRegistroId: number;
   usuarioRegistroNombre?: string;
   siigoId?: string | null;
@@ -19,4 +21,7 @@ export interface RegistrarGastoRequest {
   medioCajaId: number;
   monto: number;
   observacion?: string;
+  terceroIdentificacion: string;
+  terceroNombre?: string;
+  terceroSucursal?: number;
 }
