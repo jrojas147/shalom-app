@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CierreMesConfigComponent } from './cierre-mes-config/cierre-mes-config.component';
+import { IvaConfigComponent } from './iva-config/iva-config.component';
 import { LecturaPesoConfigComponent } from './lectura-peso-config/lectura-peso-config.component';
 import { MediosCajaConfigComponent } from './medios-caja-config/medios-caja-config.component';
 import { SiigoConfigComponent } from './siigo-config/siigo-config.component';
@@ -15,6 +16,7 @@ export type CatalogoParamId =
   | 'medios'
   | 'lectura-peso'
   | 'cierre-mes'
+  | 'iva'
   | 'siigo';
 
 interface CatalogoParam {
@@ -33,6 +35,7 @@ interface CatalogoParam {
     TiposAbonoConfigComponent,
     LecturaPesoConfigComponent,
     CierreMesConfigComponent,
+    IvaConfigComponent,
     SiigoConfigComponent,
     RpModalComponent,
   ],
@@ -70,6 +73,11 @@ export class ParametrizacionComponent {
       id: 'cierre-mes',
       titulo: 'Cierre de mes',
       descripcion: 'Día sugerido para revisar inventario. El cierre se puede ejecutar en cualquier momento.',
+    },
+    {
+      id: 'iva',
+      titulo: 'IVA',
+      descripcion: 'Porcentaje que se suma al producto cuando el cliente aplica IVA.',
     },
     {
       id: 'siigo',

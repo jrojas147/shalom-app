@@ -6,6 +6,7 @@ export interface VentaClienteSeleccion {
   nombre: string;
   documento: string;
   tipoCliente: Cliente['tipoCliente'];
+  aplicaIva: boolean;
 }
 
 export interface RegistrarVentaPayload {

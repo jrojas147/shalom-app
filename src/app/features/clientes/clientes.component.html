@@ -64,6 +64,9 @@
                 @if (cliente.siigoId) {
                   <span class="rp-badge rp-badge--success">Siigo</span>
                 }
+                @if (cliente.aplicaIva) {
+                  <span class="rp-badge">IVA</span>
+                }
               </td>
               <td class="cell-secondary">{{ tipoClienteLabel(cliente.tipoCliente) }}</td>
               <td class="cell-secondary">
@@ -289,6 +292,13 @@
         <div class="rp-field rp-field--full">
           <label for="observaciones">Observaciones</label>
           <textarea id="observaciones" formControlName="observaciones" rows="3" maxlength="500"></textarea>
+        </div>
+
+        <div class="rp-field clientes-estado-field">
+          <label class="clientes-estado-field__control" for="clienteAplicaIva">
+            <input id="clienteAplicaIva" type="checkbox" formControlName="aplicaIva" />
+            Aplicar IVA en las ventas
+          </label>
         </div>
 
         @if (puedeGestionar() && !soloLectura()) {

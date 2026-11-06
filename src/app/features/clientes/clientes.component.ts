@@ -98,6 +98,7 @@ export class ClientesComponent implements OnInit {
     municipioId: [null as number | null],
     metodoPagoPreferido: [null as MetodoPagoPreferido | null],
     observaciones: ['', Validators.maxLength(500)],
+    aplicaIva: [false],
     activo: [true],
   });
 
@@ -359,6 +360,7 @@ export class ClientesComponent implements OnInit {
         direccion: cliente.direccion ?? '',
         metodoPagoPreferido: cliente.metodoPagoPreferido ?? null,
         observaciones: cliente.observaciones ?? '',
+        aplicaIva: !!cliente.aplicaIva,
         activo: cliente.activo,
       },
       { emitEvent: false }
@@ -425,6 +427,7 @@ export class ClientesComponent implements OnInit {
       municipio: municipio?.nombre,
       metodoPagoPreferido: raw.metodoPagoPreferido,
       observaciones: raw.observaciones.trim() || undefined,
+      aplicaIva: raw.aplicaIva,
       activo: raw.activo,
     };
   }
@@ -473,6 +476,7 @@ export class ClientesComponent implements OnInit {
       municipioId: null,
       metodoPagoPreferido: null,
       observaciones: '',
+      aplicaIva: false,
       activo: true,
     });
     this.form.enable();

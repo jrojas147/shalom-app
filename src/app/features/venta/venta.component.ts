@@ -22,6 +22,7 @@ import { EmpaquesService } from '../../core/services/empaques.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
 import { VentasService } from '../../core/services/ventas.service';
 import { BasculaService } from '../../core/services/bascula.service';
+import { ConfiguracionIvaService } from '../../core/services/configuracion-iva.service';
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
 import {
   permiteIngresoManual,
@@ -71,6 +72,7 @@ export class VentaComponent implements OnInit {
   private readonly ventasService = inject(VentasService);
   private readonly basculaService = inject(BasculaService);
   private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
+  private readonly configuracionIvaService = inject(ConfiguracionIvaService);
   private readonly cajaService = inject(CajaService);
   private readonly mediosCajaService = inject(MediosCajaService);
   private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
@@ -113,6 +115,7 @@ export class VentaComponent implements OnInit {
   readonly loadingSiigoVenta = signal(false);
   readonly leyendoPesoId = signal<number | null>(null);
   readonly lecturaPeso = signal<TipoLecturaPeso | null>(null);
+  readonly porcentajeIva = signal(0);
 
   readonly permiteManual = computed(() => permiteIngresoManual(this.lecturaPeso()));
   readonly permiteBascula = computed(() =>
@@ -159,6 +162,12 @@ export class VentaComponent implements OnInit {
     this.items().reduce((sum, item) => sum + this.itemTotal(item), 0)
   );
 
+  readonly valorIva = computed(() =>
+    this.items().reduce((sum, item) => sum + this.ivaItem(item), 0)
+  );
+
+  readonly totalCobrar = computed(() => this.subtotal() + this.valorIva());
+
   readonly pesoBrutoTotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
   );
@@ -187,6 +196,11 @@ export class VentaComponent implements OnInit {
         this.error.set('No se pudieron cargar los productos con inventario.');
         this.loading.set(false);
       },
+    });
+
+    this.configuracionIvaService.get().subscribe({
+      next: (data) => this.porcentajeIva.set(Number(data.porcentaje) || 0),
+      error: () => this.porcentajeIva.set(0),
     });
 
     this.codigosCiiuService.getAll().subscribe({
@@ -503,6 +517,13 @@ export class VentaComponent implements OnInit {
     return totalLineaMedida(item.producto, this.pesoNetoItem(item), item.unidades, 'venta');
   }
 
+  ivaItem(item: CompraDetalleItem): number {
+    if (!this.clienteSeleccionado()?.aplicaIva || this.porcentajeIva() <= 0) {
+      return 0;
+    }
+    return Math.round(this.itemTotal(item) * this.porcentajeIva()) / 100;
+  }
+
   formatPrecioKg(value: number): string {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -797,7 +818,7 @@ export class VentaComponent implements OnInit {
           .registrar({
             cliente,
             items: this.items(),
-            total: this.subtotal(),
+            total: this.totalCobrar(),
             pesoTotal: this.pesoNetoTotal(),
             medioCajaId,
             pagoCredito,

@@ -45,6 +45,7 @@ export interface Cliente {
   metodoPagoPreferido?: MetodoPagoPreferido | null;
   observaciones?: string | null;
   siigoId?: string | null;
+  aplicaIva: boolean;
   activo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -68,6 +69,7 @@ export interface ClienteRequest {
   metodoPagoPreferido?: MetodoPagoPreferido | null;
   observaciones?: string | null;
   activo?: boolean;
+  aplicaIva?: boolean;
 }
 
 export function tipoClienteLabel(tipo: TipoCliente): string {

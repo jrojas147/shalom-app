@@ -61,6 +61,7 @@ export class VentaClienteModalComponent implements OnInit {
       nombre: cliente.nombre,
       documento: cliente.documento,
       tipoCliente: cliente.tipoCliente,
+      aplicaIva: !!cliente.aplicaIva,
     });
   }
 

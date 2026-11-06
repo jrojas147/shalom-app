@@ -258,6 +258,12 @@
         <span>Subtotal</span>
         <span>{{ formatCurrency(subtotal()) }}</span>
       </div>
+      @if (valorIva() > 0) {
+        <div class="summary-row">
+          <span>IVA {{ porcentajeIva() }}%</span>
+          <span>{{ formatCurrency(valorIva()) }}</span>
+        </div>
+      }
       <div class="summary-row">
         <span>Peso bruto total</span>
         <span>{{ formatPeso(pesoBrutoTotal()) }} KG</span>
@@ -268,7 +274,7 @@
       </div>
       <div class="summary-total">
         <span>Total a Cobrar</span>
-        <strong>{{ formatCurrency(subtotal()) }}</strong>
+        <strong>{{ formatCurrency(totalCobrar()) }}</strong>
       </div>
 
       <button
@@ -302,7 +308,7 @@
     }
 
     <p class="venta-pago__desc">
-      Total a cobrar: <strong>{{ formatCurrency(subtotal()) }}</strong>
+      Total a cobrar: <strong>{{ formatCurrency(totalCobrar()) }}</strong>
     </p>
     <p class="venta-pago__desc">Seleccione el medio con el que se recibe el pago o marque crédito.</p>
 
