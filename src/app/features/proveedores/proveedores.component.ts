@@ -49,13 +49,14 @@ import { EntidadArl } from '../../core/models/entidad-arl.model';
 import { EntidadEps } from '../../core/models/entidad-eps.model';
 import { Sucursal } from '../../core/models/sucursal.model';
 import { CajaService } from '../../core/services/caja.service';
+import { SiigoCatalogoItem } from '../../core/models/configuracion-siigo.model';
 import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import {
   formatCurrencyCo,
   parseCurrencyCo,
   resolveCurrencyCoCursor,
 } from '../../core/utils/currency.util';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -118,11 +119,18 @@ export class ProveedoresComponent implements OnInit {
   readonly savingAnticipo = signal(false);
   readonly errorAnticipos = signal<string | null>(null);
   readonly anticipoMontoDisplay = signal(formatCurrencyCo(0));
+  readonly anticipoSiigoActivo = signal(false);
+  readonly loadingAnticipoSiigo = signal(false);
+  readonly mediosSiigoAnticipo = signal<SiigoCatalogoItem[]>([]);
+  readonly tipoEgresoAnticipo = signal('');
 
   readonly anticipoForm = this.fb.nonNullable.group({
     medioCajaId: [null as number | null, Validators.required],
     monto: [0, [Validators.required, Validators.min(1)]],
     observacion: ['', Validators.maxLength(500)],
+    sucursalId: [null as number | null],
+    fechaElaboracion: [fechaHoyBogota()],
+    paymentTypeId: [null as number | null],
   });
   readonly editingId = signal<number | null>(null);
   readonly puedeGestionar = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
@@ -538,10 +546,19 @@ export class ProveedoresComponent implements OnInit {
   openAnticipos(proveedor: ProveedorInterno): void {
     this.anticiposProveedor.set(proveedor);
     this.errorAnticipos.set(null);
-    this.anticipoForm.reset({ medioCajaId: null, monto: 0, observacion: '' });
+    this.anticipoForm.reset({
+      medioCajaId: null,
+      monto: 0,
+      observacion: '',
+      sucursalId: null,
+      fechaElaboracion: fechaHoyBogota(),
+      paymentTypeId: null,
+    });
     this.anticipoMontoDisplay.set(formatCurrencyCo(0));
+    this.loadingAnticipoSiigo.set(true);
     this.cargarAnticipos(proveedor.id);
     this.cargarCajaAnticipos();
+    this.cargarParametrosAnticipoSiigo(proveedor);
   }
 
   closeAnticipos(): void {
@@ -598,6 +615,15 @@ export class ProveedoresComponent implements OnInit {
         if (!confirmed) {
           return;
         }
+        const sucursales = (proveedor.sucursalesAsociadas ?? []).filter((item) => item.activo);
+        if (this.anticipoSiigoActivo() && sucursales.length === 0) {
+          this.errorAnticipos.set('Asocie el reciclador a una sucursal para enviarlo a Siigo.');
+          return;
+        }
+        if (this.anticipoSiigoActivo() && !this.tipoEgresoAnticipo()) {
+          this.errorAnticipos.set('Configure el tipo de egreso en Parametrización Siigo.');
+          return;
+        }
         this.savingAnticipo.set(true);
         this.errorAnticipos.set(null);
         this.proveedoresInternosService
@@ -605,11 +631,19 @@ export class ProveedoresComponent implements OnInit {
             medioCajaId: raw.medioCajaId!,
             monto: raw.monto,
             observacion: raw.observacion.trim() || undefined,
+            sucursalId: raw.sucursalId,
+            fechaElaboracion: raw.fechaElaboracion || null,
+            paymentTypeId: raw.paymentTypeId,
           })
           .subscribe({
             next: () => {
               this.savingAnticipo.set(false);
-              this.anticipoForm.patchValue({ monto: 0, observacion: '' });
+              this.anticipoForm.patchValue({
+                monto: 0,
+                observacion: '',
+                fechaElaboracion: fechaHoyBogota(),
+                paymentTypeId: null,
+              });
               this.anticipoMontoDisplay.set(formatCurrencyCo(0));
               this.cargarAnticipos(proveedor.id);
               this.cargarCajaAnticipos();
@@ -645,6 +679,51 @@ export class ProveedoresComponent implements OnInit {
         );
       },
     });
+  }
+
+  private cargarParametrosAnticipoSiigo(proveedor: ProveedorInterno): void {
+    this.loadingAnticipoSiigo.set(true);
+    this.mediosSiigoAnticipo.set([]);
+    this.tipoEgresoAnticipo.set('');
+    forkJoin({
+      config: this.configuracionSiigoService.get().pipe(catchError(() => of(null))),
+      documentos: this.configuracionSiigoService
+        .documentos('RP')
+        .pipe(catchError(() => of([] as SiigoCatalogoItem[]))),
+      medios: this.configuracionSiigoService
+        .mediosPago('RP')
+        .pipe(catchError(() => of([] as SiigoCatalogoItem[]))),
+    }).subscribe(({ config, documentos, medios }) => {
+      const activo = !!config?.activo && !!config.accessKeyConfigured;
+      this.anticipoSiigoActivo.set(activo);
+      const tipo = documentos.find((item) => item.id === config?.documentTypeRpId);
+      this.tipoEgresoAnticipo.set(tipo ? `${tipo.codigo ?? ''} ${tipo.nombre}`.trim() : '');
+      this.mediosSiigoAnticipo.set(medios.filter((item) => item.activo));
+      const sucursales = (proveedor.sucursalesAsociadas ?? []).filter((item) => item.activo);
+      this.aplicarValidacionAnticipoSiigo(activo);
+      if (sucursales.length === 1) {
+        this.anticipoForm.controls.sucursalId.setValue(sucursales[0].sucursalId);
+      }
+      this.loadingAnticipoSiigo.set(false);
+    });
+  }
+
+  private aplicarValidacionAnticipoSiigo(activo: boolean): void {
+    const fecha = this.anticipoForm.controls.fechaElaboracion;
+    const pago = this.anticipoForm.controls.paymentTypeId;
+    const sucursal = this.anticipoForm.controls.sucursalId;
+    if (activo) {
+      fecha.setValidators(Validators.required);
+      pago.setValidators(Validators.required);
+      sucursal.setValidators(Validators.required);
+    } else {
+      fecha.clearValidators();
+      pago.clearValidators();
+      sucursal.clearValidators();
+    }
+    fecha.updateValueAndValidity();
+    pago.updateValueAndValidity();
+    sucursal.updateValueAndValidity();
   }
 
   private cargarCajaAnticipos(): void {
@@ -1718,4 +1797,8 @@ export class ProveedoresComponent implements OnInit {
     }
     return err.error?.message ?? fallback;
   }
+}
+
+function fechaHoyBogota(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
 }

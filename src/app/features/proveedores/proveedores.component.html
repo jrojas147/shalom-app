@@ -1234,11 +1234,47 @@
           />
         </div>
 
+        @if (anticipoSiigoActivo()) {
+          <div class="rp-field">
+            <label for="anticipoSucursalId">Sucursal</label>
+            <select id="anticipoSucursalId" formControlName="sucursalId">
+              <option [ngValue]="null">Seleccione la sucursal</option>
+              @for (sucursal of proveedor.sucursalesAsociadas ?? []; track sucursal.sucursalId) {
+                @if (sucursal.activo) {
+                  <option [ngValue]="sucursal.sucursalId">{{ sucursal.nombre }}</option>
+                }
+              }
+            </select>
+          </div>
+
+          <div class="rp-field">
+            <label for="anticipoFecha">Fecha de elaboración</label>
+            <input id="anticipoFecha" type="date" formControlName="fechaElaboracion" />
+          </div>
+
+          <div class="rp-field">
+            <label for="anticipoPagoSiigo">De dónde sale el dinero</label>
+            <select id="anticipoPagoSiigo" formControlName="paymentTypeId">
+              <option [ngValue]="null">Seleccione la forma de pago</option>
+              @for (medio of mediosSiigoAnticipo(); track medio.id) {
+                <option [ngValue]="medio.id">{{ medio.nombre }}</option>
+              }
+            </select>
+            @if (loadingAnticipoSiigo()) {
+              <p class="rp-hint">Cargando parámetros de Siigo...</p>
+            } @else if (tipoEgresoAnticipo()) {
+              <p class="rp-hint">Comprobante de egreso: {{ tipoEgresoAnticipo() }}</p>
+            } @else {
+              <p class="rp-hint">Configure el tipo de egreso en Parametrización Siigo.</p>
+            }
+          </div>
+        }
+
         <div class="rp-form-actions">
           <button
             type="submit"
             class="rp-btn rp-btn--primary"
-            [disabled]="savingAnticipo() || anticipoForm.invalid || !anticiposCajaAbierta()"
+            [disabled]="savingAnticipo() || loadingAnticipoSiigo() || anticipoForm.invalid || !anticiposCajaAbierta()"
           >
             {{ savingAnticipo() ? 'Registrando...' : 'Registrar anticipo' }}
           </button>
@@ -1257,6 +1293,7 @@
             <th>Aplicado</th>
             <th>Saldo</th>
             <th>Medio</th>
+            <th>Siigo</th>
             <th>Observación</th>
           </tr>
         </thead>
@@ -1268,11 +1305,12 @@
               <td class="cell-secondary">{{ formatCurrency(anticipo.montoAplicado) }}</td>
               <td class="cell-secondary">{{ formatCurrency(anticipo.saldoPendiente) }}</td>
               <td class="cell-secondary">{{ anticipo.medioCajaNombre || '—' }}</td>
+              <td class="cell-secondary">{{ anticipo.siigoId ? 'Enviado' : '—' }}</td>
               <td class="cell-secondary">{{ anticipo.observacion || '—' }}</td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="rp-empty">Este proveedor no tiene anticipos registrados</td>
+              <td colspan="7" class="rp-empty">Este proveedor no tiene anticipos registrados</td>
             </tr>
           }
         </tbody>

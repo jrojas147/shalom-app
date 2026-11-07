@@ -8,6 +8,7 @@ export interface AnticipoProveedorInterno {
   montoAplicado: number;
   saldoPendiente: number;
   observacion?: string | null;
+  siigoId?: string | null;
   usuarioRegistroId: number;
   usuarioRegistroNombre?: string;
   activo: boolean;
@@ -23,4 +24,7 @@ export interface RegistrarAnticipoRequest {
   medioCajaId: number;
   monto: number;
   observacion?: string;
+  fechaElaboracion?: string | null;
+  paymentTypeId?: number | null;
+  sucursalId?: number | null;
 }
