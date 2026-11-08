@@ -68,7 +68,6 @@ export class RetribucionComponent implements OnInit {
   readonly siigoActivo = signal(false);
   readonly loadingRecibo = signal(false);
   readonly fechaElaboracion = signal('');
-  readonly tipoRecibo = signal<'DebtPayment' | 'AdvancePayment'>('DebtPayment');
   readonly paymentTypeId = signal<number | null>(null);
   readonly mediosSiigo = signal<SiigoCatalogoItem[]>([]);
   readonly tipoEgresoNombre = signal<string | null>(null);
@@ -157,7 +156,7 @@ export class RetribucionComponent implements OnInit {
     this.compraDetalleResumen.set(compra);
     this.errorDetalle.set(null);
     this.syncMedioPagoPorDefecto();
-    this.cargarParametrosRecibo(compra);
+    this.cargarParametrosRecibo();
 
     const lineas = compra.detalle ?? [];
     if (lineas.length > 0) {
@@ -195,12 +194,6 @@ export class RetribucionComponent implements OnInit {
 
   cambiarFechaElaboracion(event: Event): void {
     this.fechaElaboracion.set((event.target as HTMLInputElement).value);
-    this.errorDetalle.set(null);
-  }
-
-  cambiarTipoRecibo(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.tipoRecibo.set(value === 'AdvancePayment' ? 'AdvancePayment' : 'DebtPayment');
     this.errorDetalle.set(null);
   }
 
@@ -335,7 +328,7 @@ export class RetribucionComponent implements OnInit {
             ? ` Se pagará ${this.formatCurrency(netoPago)} desde ${medioNombre}.`
             : ' El anticipo cubre el total; no se descuenta de caja.';
         const reciboTexto = this.siigoActivo()
-          ? ` Recibo ${this.tipoRecibo() === 'AdvancePayment' ? 'anticipo' : 'abono a deuda'} del ${this.fechaElaboracion()}${pagoSiigo ? `, desde ${pagoSiigo.nombre}` : ''}.`
+          ? ` Recibo de pago del ${this.fechaElaboracion()}${pagoSiigo ? `, desde ${pagoSiigo.nombre}` : ''}.`
           : '';
 
         this.confirmDialog
@@ -379,7 +372,6 @@ export class RetribucionComponent implements OnInit {
       .registrarPago(compra.id, {
         medioCajaId: netoPago > 0 ? medioCajaId : null,
         fechaElaboracion: this.fechaElaboracion() || null,
-        tipoRecibo: this.tipoRecibo(),
         paymentTypeId: this.paymentTypeId(),
       })
       .subscribe({
@@ -492,9 +484,8 @@ export class RetribucionComponent implements OnInit {
     });
   }
 
-  private cargarParametrosRecibo(compra: Compra): void {
+  private cargarParametrosRecibo(): void {
     this.fechaElaboracion.set(fechaHoyBogota());
-    this.tipoRecibo.set(compra.siigoId ? 'DebtPayment' : 'AdvancePayment');
     this.paymentTypeId.set(null);
     this.mediosSiigo.set([]);
     this.tipoEgresoNombre.set(null);

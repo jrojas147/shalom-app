@@ -385,17 +385,6 @@
                     (input)="cambiarFechaElaboracion($event)"
                   />
                 </label>
-                <label>
-                  <span class="meta-label">Realizar un</span>
-                  <select
-                    [value]="tipoRecibo()"
-                    [disabled]="savingPago()"
-                    (change)="cambiarTipoRecibo($event)"
-                  >
-                    <option value="DebtPayment">Abono a deuda</option>
-                    <option value="AdvancePayment">Anticipo</option>
-                  </select>
-                </label>
                 <label class="retribucion-recibo__ancho">
                   <span class="meta-label">De dónde sale el dinero</span>
                   @if (mediosSiigo().length) {

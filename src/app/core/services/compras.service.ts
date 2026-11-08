@@ -76,7 +76,6 @@ export class ComprasService {
     return this.http.post<RegistrarCompraResponse>(`${this.baseUrl}/${id}/pagar`, {
       medioCajaId: payload.medioCajaId ?? null,
       fechaElaboracion: payload.fechaElaboracion ?? null,
-      tipoRecibo: payload.tipoRecibo ?? null,
       paymentTypeId: payload.paymentTypeId ?? null,
     });
   }

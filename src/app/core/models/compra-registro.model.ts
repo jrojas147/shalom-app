@@ -71,7 +71,6 @@ export interface RegistrarCompraRequest {
 export interface RegistrarPagoCompraPayload {
   medioCajaId?: number | null;
   fechaElaboracion?: string | null;
-  tipoRecibo?: 'DebtPayment' | 'AdvancePayment' | null;
   paymentTypeId?: number | null;
 }
 
