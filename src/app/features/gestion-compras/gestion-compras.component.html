@@ -164,17 +164,32 @@
       <div class="gestion-compras-modal__section">
         <div class="section-header">
           <h3>Proveedor</h3>
-          @if (editMode()) {
-            <button type="button" class="rp-btn rp-btn--ghost" (click)="abrirModalProveedor()">
-              Cambiar proveedor
-            </button>
-          }
+          <div class="section-header__actions">
+            @if (proveedorEdit()?.tipo === 'EXTERNO') {
+              <button
+                type="button"
+                class="rp-btn rp-btn--secondary"
+                [disabled]="saving() || asignandoAleatorio()"
+                (click)="asignarProveedorAleatorio()"
+              >
+                {{ asignandoAleatorio() ? 'Asignando...' : 'Aleatorio' }}
+              </button>
+            }
+            @if (editMode()) {
+              <button type="button" class="rp-btn rp-btn--ghost" (click)="abrirModalProveedor()">
+                Cambiar proveedor
+              </button>
+            }
+          </div>
         </div>
         @if (proveedorEdit(); as proveedor) {
           <p class="proveedor-resumen">
             <strong>{{ compraProveedorEtiqueta(proveedor) }}</strong>
             <span>{{ compraProveedorTipoLabel(proveedor.tipo) }}</span>
           </p>
+          @if (avisoProveedor()) {
+            <p class="rp-hint">{{ avisoProveedor() }}</p>
+          }
         }
       </div>
 
@@ -381,6 +396,7 @@
           class="rp-btn rp-btn--primary"
           [disabled]="
             saving()
+            || asignandoAleatorio()
             || loadingCentrosCosto()
             || (centrosCosto().length > 0 && costCenterId() == null)
             || !receiptPrefix().trim()

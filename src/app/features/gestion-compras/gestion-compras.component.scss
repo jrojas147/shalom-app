@@ -122,6 +122,13 @@
       justify-content: space-between;
       gap: var(--spacing-sm);
       margin-bottom: var(--spacing-sm);
+
+      &__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: var(--spacing-sm);
+      }
     }
 
     h3 {

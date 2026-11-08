@@ -60,6 +60,10 @@ export class ComprasService {
     return this.http.put<Compra>(`${this.baseUrl}/${id}`, this.toRequest(payload));
   }
 
+  asignarProveedorAleatorio(id: number): Observable<Compra> {
+    return this.http.post<Compra>(`${this.baseUrl}/${id}/proveedor-aleatorio`, null);
+  }
+
   confirmar(id: number, payload?: RegistrarPreCompraPayload): Observable<RegistrarCompraResponse> {
     const url = `${this.baseUrl}/${id}/confirmar`;
     if (payload) {

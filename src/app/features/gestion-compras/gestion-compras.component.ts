@@ -76,6 +76,8 @@ export class GestionComprasComponent implements OnInit {
   readonly loading = signal(false);
   readonly loadingEdicion = signal(false);
   readonly saving = signal(false);
+  readonly asignandoAleatorio = signal(false);
+  readonly avisoProveedor = signal<string | null>(null);
   private readonly parametrizacionEdicionCargada = signal(false);
   readonly error = signal<string | null>(null);
   readonly mensaje = signal<string | null>(null);
@@ -132,6 +134,7 @@ export class GestionComprasComponent implements OnInit {
   abrirDetalle(compra: Compra): void {
     this.error.set(null);
     this.mensaje.set(null);
+    this.avisoProveedor.set(null);
     this.editMode.set(false);
     this.costCenterId.set(null);
     this.receiptPrefix.set('');
@@ -161,6 +164,7 @@ export class GestionComprasComponent implements OnInit {
 
   cerrarDetalle(): void {
     this.compraSeleccionada.set(null);
+    this.avisoProveedor.set(null);
     this.editMode.set(false);
     this.showProveedorModal.set(false);
     this.costCenterId.set(null);
@@ -221,6 +225,32 @@ export class GestionComprasComponent implements OnInit {
 
   cerrarModalProveedor(): void {
     this.showProveedorModal.set(false);
+  }
+
+  asignarProveedorAleatorio(): void {
+    const compra = this.compraSeleccionada();
+    if (!compra || this.proveedorEdit()?.tipo !== 'EXTERNO' || this.asignandoAleatorio()) {
+      return;
+    }
+
+    this.asignandoAleatorio.set(true);
+    this.error.set(null);
+    this.avisoProveedor.set(null);
+    this.comprasService.asignarProveedorAleatorio(compra.id).subscribe({
+      next: (actualizada) => {
+        this.asignandoAleatorio.set(false);
+        this.compraSeleccionada.set(actualizada);
+        this.syncEditState(actualizada);
+        this.avisoProveedor.set(
+          `Proveedor asignado: ${actualizada.proveedorNombre}. Se equilibra el número de compras del mes.`
+        );
+        this.loadCompras();
+      },
+      error: (err) => {
+        this.asignandoAleatorio.set(false);
+        this.error.set(this.extractErrorMessage(err, 'No se pudo asignar un proveedor externo.'));
+      },
+    });
   }
 
   seleccionarProveedor(proveedor: CompraProveedorSeleccion): void {
