@@ -39,6 +39,8 @@ export interface RegistrarVentaResponse {
   factura: string;
   mensaje: string;
   total: number;
+  anticipoAplicado?: number;
+  montoCobrado?: number;
   pesoTotal: number;
   pagoCredito?: boolean;
   saldoPendiente?: number;

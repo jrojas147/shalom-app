@@ -2,6 +2,8 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TipoDocumento } from '../../core/models/administrador-conjunto.model';
+import { AnticipoCliente } from '../../core/models/anticipo-cliente.model';
+import { CajaSaldo } from '../../core/models/caja.model';
 import {
   Cliente,
   ClienteRequest,
@@ -19,9 +21,15 @@ import {
 } from '../../core/models/cliente.model';
 import { Departamento, Municipio } from '../../core/models/ubicacion.model';
 import { AuthService } from '../../core/services/auth.service';
+import { CajaService } from '../../core/services/caja.service';
 import { ClientesService } from '../../core/services/clientes.service';
 import { ConfiguracionSiigoService } from '../../core/services/configuracion-siigo.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
+import {
+  formatCurrencyCo,
+  parseCurrencyCo,
+  resolveCurrencyCoCursor,
+} from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -35,6 +43,7 @@ import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.comp
 export class ClientesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly clientesService = inject(ClientesService);
+  private readonly cajaService = inject(CajaService);
   private readonly ubicacionesService = inject(UbicacionesService);
   private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
   private readonly auth = inject(AuthService);
@@ -63,6 +72,20 @@ export class ClientesComponent implements OnInit {
   readonly editingSiigoId = signal<string | null>(null);
   readonly siigoActivo = signal(false);
   readonly documentoSiigoExistente = signal<string | null>(null);
+  readonly anticiposCliente = signal<Cliente | null>(null);
+  readonly anticipos = signal<AnticipoCliente[]>([]);
+  readonly anticiposSaldo = signal(0);
+  readonly anticiposCajaAbierta = signal(false);
+  readonly anticiposSaldosCaja = signal<CajaSaldo[]>([]);
+  readonly loadingAnticipos = signal(false);
+  readonly savingAnticipo = signal(false);
+  readonly errorAnticipos = signal<string | null>(null);
+  readonly anticipoMontoDisplay = signal(formatCurrencyCo(0));
+  readonly anticipoForm = this.fb.nonNullable.group({
+    medioCajaId: [null as number | null, Validators.required],
+    monto: [0, [Validators.required, Validators.min(1)]],
+    observacion: ['', Validators.maxLength(500)],
+  });
 
   readonly puedeGestionar = computed(() => this.auth.hasRole('ADMIN', 'DIRECCION'));
 
@@ -547,6 +570,134 @@ export class ClientesComponent implements OnInit {
     direccion.updateValueAndValidity({ emitEvent: false });
     departamento.updateValueAndValidity({ emitEvent: false });
     municipio.updateValueAndValidity({ emitEvent: false });
+  }
+
+  openAnticipos(cliente: Cliente): void {
+    this.anticiposCliente.set(cliente);
+    this.errorAnticipos.set(null);
+    this.anticipoForm.reset({ medioCajaId: null, monto: 0, observacion: '' });
+    this.anticipoMontoDisplay.set(formatCurrencyCo(0));
+    this.cargarAnticipos(cliente.id);
+    this.cargarCajaAnticipos();
+  }
+
+  closeAnticipos(): void {
+    this.anticiposCliente.set(null);
+    this.anticipos.set([]);
+    this.errorAnticipos.set(null);
+    this.savingAnticipo.set(false);
+  }
+
+  onAnticipoMontoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const selectionStart = input.selectionStart ?? input.value.length;
+    const digitsBefore = input.value.slice(0, selectionStart).replace(/\D/g, '').length;
+    const parsed = parseCurrencyCo(input.value) ?? 0;
+    const formatted = formatCurrencyCo(parsed);
+    this.anticipoForm.controls.monto.setValue(parsed);
+    this.anticipoMontoDisplay.set(formatted);
+    input.value = formatted;
+    const cursor = resolveCurrencyCoCursor(formatted, digitsBefore);
+    requestAnimationFrame(() => input.setSelectionRange(cursor, cursor));
+  }
+
+  registrarAnticipo(): void {
+    const cliente = this.anticiposCliente();
+    if (!cliente || !this.puedeGestionar()) {
+      return;
+    }
+    if (!this.anticiposCajaAbierta()) {
+      this.errorAnticipos.set('Debe abrir la caja antes de registrar un anticipo.');
+      return;
+    }
+    if (this.anticipoForm.invalid) {
+      this.anticipoForm.markAllAsTouched();
+      return;
+    }
+    const raw = this.anticipoForm.getRawValue();
+    this.confirmDialog
+      .confirm({
+        title: 'Registrar anticipo',
+        message: `¿Registrar anticipo de ${formatCurrencyCo(raw.monto)} de ${cliente.nombre}? El valor ingresa a la caja seleccionada.`,
+        confirmLabel: 'Registrar',
+        cancelLabel: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed || raw.medioCajaId == null) {
+          return;
+        }
+        this.savingAnticipo.set(true);
+        this.errorAnticipos.set(null);
+        this.clientesService
+          .registrarAnticipo(cliente.id, {
+            medioCajaId: raw.medioCajaId,
+            monto: raw.monto,
+            observacion: raw.observacion.trim() || undefined,
+          })
+          .subscribe({
+            next: () => {
+              this.savingAnticipo.set(false);
+              this.anticipoForm.patchValue({ monto: 0, observacion: '' });
+              this.anticipoMontoDisplay.set(formatCurrencyCo(0));
+              this.cargarAnticipos(cliente.id);
+              this.cargarCajaAnticipos();
+            },
+            error: (err) => {
+              this.savingAnticipo.set(false);
+              this.errorAnticipos.set(this.extractErrorMessage(err));
+            },
+          });
+      });
+  }
+
+  formatCurrency(value: number | null | undefined): string {
+    return formatCurrencyCo(value ?? 0);
+  }
+
+  private cargarAnticipos(clienteId: number): void {
+    this.loadingAnticipos.set(true);
+    this.clientesService.listarAnticipos(clienteId).subscribe({
+      next: (data) => {
+        this.anticipos.set(data ?? []);
+        this.anticiposSaldo.set(
+          (data ?? []).reduce((sum, item) => sum + (Number(item.saldoPendiente) || 0), 0)
+        );
+        this.loadingAnticipos.set(false);
+      },
+      error: (err) => {
+        this.loadingAnticipos.set(false);
+        this.errorAnticipos.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  private cargarCajaAnticipos(): void {
+    this.cajaService.obtenerActual().subscribe({
+      next: (caja) => {
+        if (caja) {
+          this.anticiposCajaAbierta.set(true);
+          const saldos = caja.saldos ?? [];
+          this.anticiposSaldosCaja.set(saldos);
+          this.anticipoForm.controls.medioCajaId.enable({ emitEvent: false });
+          const actual = this.anticipoForm.controls.medioCajaId.value;
+          if (!actual || !saldos.some((saldo) => saldo.medioCajaId === actual)) {
+            const efectivo = saldos.find((saldo) => saldo.medioTipo === 'EFECTIVO');
+            this.anticipoForm.controls.medioCajaId.setValue(
+              efectivo?.medioCajaId ?? saldos[0]?.medioCajaId ?? null
+            );
+          }
+        } else {
+          this.anticiposCajaAbierta.set(false);
+          this.anticiposSaldosCaja.set([]);
+          this.anticipoForm.controls.medioCajaId.setValue(null);
+          this.anticipoForm.controls.medioCajaId.disable({ emitEvent: false });
+        }
+      },
+      error: () => {
+        this.anticiposCajaAbierta.set(false);
+        this.anticiposSaldosCaja.set([]);
+      },
+    });
   }
 
   private matchesSearch(cliente: Cliente, q: string): boolean {

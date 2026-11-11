@@ -2,6 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_CORE_URL } from '../config/api.config';
+import {
+  AnticipoCliente,
+  AnticipoClienteSaldo,
+  RegistrarAnticipoClienteRequest,
+} from '../models/anticipo-cliente.model';
 import { Cliente, ClienteRequest } from '../models/cliente.model';
 
 @Injectable({ providedIn: 'root' })
@@ -28,5 +33,20 @@ export class ClientesService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  listarAnticipos(clienteId: number): Observable<AnticipoCliente[]> {
+    return this.http.get<AnticipoCliente[]>(`${this.baseUrl}/${clienteId}/anticipos`);
+  }
+
+  saldoAnticipos(clienteId: number): Observable<AnticipoClienteSaldo> {
+    return this.http.get<AnticipoClienteSaldo>(`${this.baseUrl}/${clienteId}/anticipos/saldo`);
+  }
+
+  registrarAnticipo(
+    clienteId: number,
+    request: RegistrarAnticipoClienteRequest
+  ): Observable<AnticipoCliente> {
+    return this.http.post<AnticipoCliente>(`${this.baseUrl}/${clienteId}/anticipos`, request);
   }
 }

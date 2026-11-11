@@ -111,6 +111,7 @@
           <div class="detail-proveedor">
             <strong>{{ ventaClienteEtiqueta(cliente) }}</strong>
             <span class="detail-proveedor__tipo">{{ tipoClienteLabel(cliente.tipoCliente) }}</span>
+            <span class="detail-proveedor__tipo">Saldo de anticipos: {{ formatCurrency(anticipoSaldo()) }}</span>
           </div>
         } @else {
           <strong class="muted">Sin cliente</strong>
@@ -272,9 +273,15 @@
         <span>Peso neto total</span>
         <span>{{ formatPeso(pesoNetoTotal()) }} KG</span>
       </div>
+      @if (anticipoAplicable() > 0) {
+        <div class="summary-row">
+          <span>(-) Anticipos</span>
+          <span>{{ formatCurrency(anticipoAplicable()) }}</span>
+        </div>
+      }
       <div class="summary-total">
         <span>Total a Cobrar</span>
-        <strong>{{ formatCurrency(totalCobrar()) }}</strong>
+        <strong>{{ formatCurrency(netoCobrar()) }}</strong>
       </div>
 
       <button
@@ -308,9 +315,25 @@
     }
 
     <p class="venta-pago__desc">
-      Total a cobrar: <strong>{{ formatCurrency(totalCobrar()) }}</strong>
+      Saldo de anticipos de {{ clienteSeleccionado()?.nombre }}:
+      <strong>{{ formatCurrency(anticipoSaldo()) }}</strong>
     </p>
-    <p class="venta-pago__desc">Seleccione el medio con el que se recibe el pago o marque crédito.</p>
+    <p class="venta-pago__desc">
+      Total venta: <strong>{{ formatCurrency(totalCobrar()) }}</strong>
+    </p>
+    @if (anticipoAplicable() > 0) {
+      <p class="venta-pago__desc">
+        Se descuenta de anticipos: <strong>{{ formatCurrency(anticipoAplicable()) }}</strong>
+      </p>
+      <p class="venta-pago__desc">
+        Neto a cobrar: <strong>{{ formatCurrency(netoCobrar()) }}</strong>
+      </p>
+    }
+    @if (netoCobrar() === 0) {
+      <p class="venta-pago__desc">El anticipo cubre el total de esta venta. No ingresa dinero adicional a caja.</p>
+    } @else {
+      <p class="venta-pago__desc">Seleccione el medio con el que se recibe el pago o marque crédito. En Siigo la factura queda a crédito con vencimiento a 30 días.</p>
+    }
 
     @if (loadingMediosPago()) {
       <p class="compras-loading">Cargando medios de pago...</p>
@@ -325,7 +348,7 @@
           <span class="venta-pago__radio" aria-hidden="true"></span>
           <span>
             <strong>Pago a crédito</strong>
-            <em>El saldo queda en cartera. En Siigo queda a crédito y la caja se mueve al cobrar.</em>
+            <em>El saldo queda en cartera. En Siigo la factura queda a crédito a 30 días y la caja se mueve al cobrar.</em>
           </span>
         </button>
         @for (opcion of mediosPago(); track opcion.id) {
@@ -404,7 +427,7 @@
           [disabled]="
             procesando()
             || loadingSiigoVenta()
-            || (!pagoCredito() && medioPagoId() == null)
+            || (!pagoCredito() && netoCobrar() > 0 && medioPagoId() == null)
             || (pagoCredito() && !fechaProyectadaPago())
             || (resolucionesFv().length > 0 && documentTypeId() == null)
             || (resolucionesFv().length > 0 && !numeracionAutomatica() && !invoiceNumber().trim())

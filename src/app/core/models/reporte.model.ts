@@ -92,7 +92,8 @@ export type ReporteCajaConcepto =
   | 'CIERRE'
   | 'ABONO_CAJA'
   | 'GASTO'
-  | 'ANTICIPO_PROVEEDOR';
+  | 'ANTICIPO_PROVEEDOR'
+  | 'ANTICIPO_CLIENTE';
 
 export interface ReporteCajaMovimiento {
   id: number;

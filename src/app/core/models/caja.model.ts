@@ -11,7 +11,8 @@ export type CajaMovimientoConcepto =
   | 'CIERRE'
   | 'ABONO_CAJA'
   | 'GASTO'
-  | 'ANTICIPO_PROVEEDOR';
+  | 'ANTICIPO_PROVEEDOR'
+  | 'ANTICIPO_CLIENTE';
 
 export interface CajaMovimiento {
   id: number;
@@ -105,4 +106,5 @@ export const CAJA_CONCEPTO_LABEL: Record<CajaMovimientoConcepto, string> = {
   ABONO_CAJA: 'Abono a caja',
   GASTO: 'Gasto',
   ANTICIPO_PROVEEDOR: 'Anticipo proveedor',
+  ANTICIPO_CLIENTE: 'Anticipo cliente',
 };

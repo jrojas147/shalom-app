@@ -12,6 +12,7 @@ import { EmpaqueBodega } from '../../core/models/empaque.model';
 import { ExistenciaProducto } from '../../core/models/inventario.model';
 import { TipoEmpaque } from '../../core/models/tipo-empaque.model';
 import {
+  RegistrarVentaResponse,
   VentaClienteSeleccion,
   ventaClienteEtiqueta,
 } from '../../core/models/venta.model';
@@ -20,7 +21,10 @@ import { InventarioService } from '../../core/services/inventario.service';
 import { ProductosService } from '../../core/services/productos.service';
 import { EmpaquesService } from '../../core/services/empaques.service';
 import { TiposEmpaqueService } from '../../core/services/tipos-empaque.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ClientesService } from '../../core/services/clientes.service';
 import { VentasService } from '../../core/services/ventas.service';
+import { VentaFacturaPrintService } from '../../core/services/venta-factura-print.service';
 import { BasculaService } from '../../core/services/bascula.service';
 import { ConfiguracionIvaService } from '../../core/services/configuracion-iva.service';
 import { ConfiguracionLecturaPesoService } from '../../core/services/configuracion-lectura-peso.service';
@@ -70,6 +74,9 @@ export class VentaComponent implements OnInit {
   private readonly tiposEmpaqueService = inject(TiposEmpaqueService);
   private readonly empaquesService = inject(EmpaquesService);
   private readonly ventasService = inject(VentasService);
+  private readonly clientesService = inject(ClientesService);
+  private readonly ventaPrintService = inject(VentaFacturaPrintService);
+  private readonly auth = inject(AuthService);
   private readonly basculaService = inject(BasculaService);
   private readonly configuracionLecturaPesoService = inject(ConfiguracionLecturaPesoService);
   private readonly configuracionIvaService = inject(ConfiguracionIvaService);
@@ -167,6 +174,13 @@ export class VentaComponent implements OnInit {
   );
 
   readonly totalCobrar = computed(() => this.subtotal() + this.valorIva());
+  readonly anticipoSaldo = signal(0);
+  readonly anticipoAplicable = computed(() =>
+    Math.min(Math.max(0, this.anticipoSaldo()), Math.max(0, this.totalCobrar()))
+  );
+  readonly netoCobrar = computed(() =>
+    Math.max(0, this.totalCobrar() - this.anticipoAplicable())
+  );
 
   readonly pesoBrutoTotal = computed(() =>
     this.items().reduce((sum, item) => sum + this.pesoBrutoItem(item), 0)
@@ -498,6 +512,7 @@ export class VentaComponent implements OnInit {
     this.clienteSeleccionado.set(cliente);
     this.showClienteModal.set(false);
     this.error.set(null);
+    this.cargarAnticipoCliente(cliente.clienteId);
   }
 
   /** Peso del producto (sin tara). */
@@ -678,6 +693,10 @@ export class VentaComponent implements OnInit {
       this.error.set('Confirme el número de factura.');
       return;
     }
+    if (!this.pagoCredito() && this.netoCobrar() === 0) {
+      this.ejecutarRegistroVenta(null, false);
+      return;
+    }
     if (this.pagoCredito()) {
       const fecha = this.fechaProyectadaPago().trim();
       if (!fecha) {
@@ -828,10 +847,12 @@ export class VentaComponent implements OnInit {
           })
           .subscribe({
             next: (res) => {
+              this.imprimirFactura(res);
               this.procesando.set(false);
               this.showPagoModal.set(false);
               this.factura.set(res.factura);
               this.mensaje.set(res.mensaje);
+              this.anticipoSaldo.set(0);
               this.items.set([]);
               this.clienteSeleccionado.set(null);
               this.detalleMovilAbierto.set(false);
@@ -869,6 +890,47 @@ export class VentaComponent implements OnInit {
         }
         this.empaqueDisponible.set(disponibles);
       });
+  }
+
+  private cargarAnticipoCliente(clienteId: number): void {
+    this.anticipoSaldo.set(0);
+    this.clientesService.saldoAnticipos(clienteId).subscribe({
+      next: (saldo) => this.anticipoSaldo.set(Number(saldo.saldoPendiente) || 0),
+      error: () => this.anticipoSaldo.set(0),
+    });
+  }
+
+  private imprimirFactura(res: RegistrarVentaResponse): void {
+    const anticipo = Number(res.anticipoAplicado) || 0;
+    if (anticipo <= 0) {
+      return;
+    }
+    const cliente = this.clienteSeleccionado();
+    const user = this.auth.currentUser();
+    const nombreUsuario = [user?.nombre, user?.apellido].filter(Boolean).join(' ').trim();
+    this.ventaPrintService.imprimir({
+      factura: res.factura,
+      fecha: new Date(),
+      comercioNombre: user?.comercioNombre ?? 'Comercio',
+      usuarioNombre: nombreUsuario || user?.username || 'Usuario',
+      clienteNombre: cliente?.nombre ?? 'Cliente',
+      clienteDocumento: cliente?.documento ?? '',
+      items: this.items().map((item) => ({
+        nombre: item.producto.nombreInterno,
+        detalle: productoEsUnidad(item.producto)
+          ? `${unidadesItem(item.unidades)} und`
+          : `${this.formatPeso(this.pesoNetoItem(item))} kg`,
+        total: this.itemTotal(item) + this.ivaItem(item),
+      })),
+      subtotal: this.subtotal(),
+      valorIva: this.valorIva(),
+      porcentajeIva: this.porcentajeIva(),
+      total: Number(res.total) || this.totalCobrar(),
+      anticipoAplicado: anticipo,
+      montoCobrado: Number(res.montoCobrado) || this.netoCobrar(),
+      pagoCredito: !!res.pagoCredito,
+      saldoPendiente: Number(res.saldoPendiente) || 0,
+    });
   }
 
   private recargarExistencias(): void {
