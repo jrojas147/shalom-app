@@ -150,14 +150,7 @@ export class PagoComprobantePrintService {
 
     <div class="ticket__divider"></div>
     <div class="ticket__row"><span>Peso bruto total</span><strong>${this.formatPeso(data.pesoTotal)} KG</strong></div>
-    ${
-      data.anticipoAplicado && data.anticipoAplicado > 0
-        ? `<div class="ticket__row"><span>Total compra</span><strong>${this.formatMoney(
-            data.totalCompra ?? data.total + data.anticipoAplicado
-          )}</strong></div>
-    <div class="ticket__row"><span>(-) Anticipos</span><strong>${this.formatMoney(data.anticipoAplicado)}</strong></div>`
-        : ''
-    }
+    ${this.descuentosTicket(data)}
     <div class="ticket__row ticket__total"><span>TOTAL PAGADO</span><strong>${this.formatMoney(data.total)}</strong></div>
 
     <div class="ticket__divider"></div>
@@ -173,6 +166,36 @@ export class PagoComprobantePrintService {
   </script>
 </body>
 </html>`;
+  }
+
+  private descuentosTicket(data: PagoComprobanteData): string {
+    const ambiental = Number(data.bonoAmbiental) || 0;
+    const transporte = Number(data.bonoTransporte) || 0;
+    const anticipo = Number(data.anticipoAplicado) || 0;
+    if (ambiental <= 0 && transporte <= 0 && anticipo <= 0) {
+      return '';
+    }
+    const filas = [
+      `<div class="ticket__row"><span>Total compra</span><strong>${this.formatMoney(
+        data.totalCompra ?? data.total + ambiental + transporte + anticipo
+      )}</strong></div>`,
+    ];
+    if (ambiental > 0) {
+      filas.push(
+        `<div class="ticket__row"><span>(-) Bono ambiental</span><strong>${this.formatMoney(ambiental)}</strong></div>`
+      );
+    }
+    if (transporte > 0) {
+      filas.push(
+        `<div class="ticket__row"><span>(-) Bono transporte</span><strong>${this.formatMoney(transporte)}</strong></div>`
+      );
+    }
+    if (anticipo > 0) {
+      filas.push(
+        `<div class="ticket__row"><span>(-) Anticipos</span><strong>${this.formatMoney(anticipo)}</strong></div>`
+      );
+    }
+    return filas.join('');
   }
 
   private styles(): string {

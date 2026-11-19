@@ -341,12 +341,46 @@
             </table>
           </div>
 
+          <div class="retribucion-bonos">
+            <label>
+              <span class="meta-label">Bono ambiental</span>
+              <input
+                type="text"
+                inputmode="numeric"
+                [value]="bonoAmbientalDisplay()"
+                [disabled]="savingPago()"
+                (input)="onBonoInput($event, 'ambiental')"
+              />
+            </label>
+            <label>
+              <span class="meta-label">Bono transporte</span>
+              <input
+                type="text"
+                inputmode="numeric"
+                [value]="bonoTransporteDisplay()"
+                [disabled]="savingPago()"
+                (input)="onBonoInput($event, 'transporte')"
+              />
+            </label>
+          </div>
+          @if (bonosExceden(detalle.total)) {
+            <div class="rp-alert rp-alert--error">Los bonos superan el total de la compra.</div>
+          }
+
           <div class="retribucion-detalle__totals">
             <div><span>Peso total</span><strong>{{ formatPeso(detalle.pesoTotal) }} KG</strong></div>
             <div><span>Total</span><strong>{{ formatCurrency(detalle.total) }}</strong></div>
-            @if (anticipoAplicable(detalle.total) > 0) {
-              <div><span>(-) Anticipos</span><strong>{{ formatCurrency(anticipoAplicable(detalle.total)) }}</strong></div>
-              <div><span>Neto a pagar</span><strong>{{ formatCurrency(netoAPagar(detalle.total)) }}</strong></div>
+            @if (bonoAmbiental() > 0) {
+              <div><span>(-) Bono ambiental</span><strong>{{ formatCurrency(bonoAmbiental()) }}</strong></div>
+            }
+            @if (bonoTransporte() > 0) {
+              <div><span>(-) Bono transporte</span><strong>{{ formatCurrency(bonoTransporte()) }}</strong></div>
+            }
+            @if (anticipoAplicable(detalle.total, true) > 0) {
+              <div><span>(-) Anticipos</span><strong>{{ formatCurrency(anticipoAplicable(detalle.total, true)) }}</strong></div>
+            }
+            @if (bonoAmbiental() > 0 || bonoTransporte() > 0 || anticipoAplicable(detalle.total, true) > 0) {
+              <div><span>Neto a pagar</span><strong>{{ formatCurrency(netoAPagar(detalle.total, true)) }}</strong></div>
             }
           </div>
 
@@ -408,16 +442,16 @@
 
           <div class="retribucion-detalle__origen">
             <h3>Medio de caja</h3>
-            @if (netoAPagar(detalle.total) === 0) {
-              <p>El anticipo cubre el total de esta compra. No se descuenta de caja.</p>
+            @if (netoAPagar(detalle.total, true) === 0) {
+              <p>Los descuentos cubren el total de esta compra. No se descuenta de caja.</p>
             } @else {
               <p>Seleccione el medio de caja desde el que se descontará el neto a pagar.</p>
             }
-            @if (netoAPagar(detalle.total) > 0 && !cajaAbierta()) {
+            @if (netoAPagar(detalle.total, true) > 0 && !cajaAbierta()) {
               <div class="rp-alert rp-alert--error">Debe abrir la caja para registrar el pago.</div>
-            } @else if (netoAPagar(detalle.total) > 0 && !cajaSaldos().length) {
+            } @else if (netoAPagar(detalle.total, true) > 0 && !cajaSaldos().length) {
               <div class="rp-alert rp-alert--error">No hay medios de pago en la caja abierta.</div>
-            } @else if (netoAPagar(detalle.total) > 0) {
+            } @else if (netoAPagar(detalle.total, true) > 0) {
               <div class="retribucion-pago__list" role="radiogroup" aria-label="Origen de caja">
                 @for (saldo of cajaSaldos(); track saldo.medioCajaId) {
                   <button

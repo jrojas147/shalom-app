@@ -21,5 +21,7 @@ export interface PagoComprobanteData {
   total: number;
   totalCompra?: number;
   anticipoAplicado?: number;
+  bonoAmbiental?: number;
+  bonoTransporte?: number;
   pesoTotal: number;
 }

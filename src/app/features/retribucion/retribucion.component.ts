@@ -20,6 +20,11 @@ import { PagoComprobantePrintService } from '../../core/services/pago-comprobant
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
 import { RetribucionService } from '../../core/services/retribucion.service';
 import { esSinEmpaque } from '../../core/utils/empaque-peso.util';
+import {
+  formatCurrencyCo,
+  parseCurrencyCo,
+  resolveCurrencyCoCursor,
+} from '../../core/utils/currency.util';
 import { RpConfirmDialogService } from '../../shared/components/rp-confirm-dialog/rp-confirm-dialog.service';
 import { RpModalComponent } from '../../shared/components/rp-modal/rp-modal.component';
 
@@ -64,6 +69,10 @@ export class RetribucionComponent implements OnInit {
   readonly cajaSaldos = signal<CajaSaldo[]>([]);
   readonly medioPagoId = signal<number | null>(null);
   readonly anticipoInicial = signal(0);
+  readonly bonoAmbiental = signal(0);
+  readonly bonoTransporte = signal(0);
+  readonly bonoAmbientalDisplay = signal(formatCurrencyCo(0));
+  readonly bonoTransporteDisplay = signal(formatCurrencyCo(0));
 
   readonly siigoActivo = signal(false);
   readonly loadingRecibo = signal(false);
@@ -155,6 +164,7 @@ export class RetribucionComponent implements OnInit {
   abrirDetalle(compra: Compra): void {
     this.compraDetalleResumen.set(compra);
     this.errorDetalle.set(null);
+    this.resetBonos();
     this.syncMedioPagoPorDefecto();
     this.cargarParametrosRecibo();
 
@@ -187,6 +197,7 @@ export class RetribucionComponent implements OnInit {
     this.compraDetalleResumen.set(null);
     this.compraDetalle.set(null);
     this.errorDetalle.set(null);
+    this.resetBonos();
     this.loadingDetalle.set(false);
     this.savingPago.set(false);
     this.loadingRecibo.set(false);
@@ -207,7 +218,10 @@ export class RetribucionComponent implements OnInit {
     if (this.savingPago() || this.loadingRecibo() || this.loadingDetalle()) {
       return true;
     }
-    const neto = this.netoAPagar(total);
+    if (this.bonosExceden(total)) {
+      return true;
+    }
+    const neto = this.netoAPagar(total, true);
     if (neto > 0 && (!this.cajaAbierta() || this.medioPagoId() == null)) {
       return true;
     }
@@ -227,21 +241,58 @@ export class RetribucionComponent implements OnInit {
   }
 
   saldoMedioInsuficiente(saldo: CajaSaldo, total: number): boolean {
-    return Number(saldo.saldoActual ?? 0) + 0.009 < this.netoAPagar(total);
+    return Number(saldo.saldoActual ?? 0) + 0.009 < this.netoAPagar(total, true);
   }
 
-  anticipoAplicable(total: number): number {
+  onBonoInput(event: Event, tipo: 'ambiental' | 'transporte'): void {
+    const input = event.target as HTMLInputElement;
+    const selectionStart = input.selectionStart ?? input.value.length;
+    const digitsBefore = input.value.slice(0, selectionStart).replace(/\D/g, '').length;
+    const parsed = parseCurrencyCo(input.value) ?? 0;
+    const formatted = formatCurrencyCo(parsed);
+    if (tipo === 'ambiental') {
+      this.bonoAmbiental.set(parsed);
+      this.bonoAmbientalDisplay.set(formatted);
+    } else {
+      this.bonoTransporte.set(parsed);
+      this.bonoTransporteDisplay.set(formatted);
+    }
+    input.value = formatted;
+    const cursor = resolveCurrencyCoCursor(formatted, digitsBefore);
+    requestAnimationFrame(() => input.setSelectionRange(cursor, cursor));
+    this.errorDetalle.set(null);
+  }
+
+  bonosExceden(total: number): boolean {
+    return this.bonos() > (Number(total) || 0) + 0.009;
+  }
+
+  anticipoAplicable(total: number, conBonos = false): number {
     const proveedor = this.proveedorSeleccionado();
     if (!proveedor || proveedor.tipo !== 'INTERNO') {
       return 0;
     }
     const saldo = Number(proveedor.totalAnticiposPendientes) || 0;
     const compra = Number(total) || 0;
-    return Math.min(compra, saldo);
+    const base = conBonos ? Math.max(0, compra - this.bonos()) : compra;
+    return Math.min(base, saldo);
   }
 
-  netoAPagar(total: number): number {
-    return Math.max(0, (Number(total) || 0) - this.anticipoAplicable(total));
+  netoAPagar(total: number, conBonos = false): number {
+    const compra = Number(total) || 0;
+    const bonos = conBonos ? this.bonos() : 0;
+    return Math.max(0, compra - bonos - this.anticipoAplicable(total, conBonos));
+  }
+
+  private bonos(): number {
+    return Math.max(0, this.bonoAmbiental()) + Math.max(0, this.bonoTransporte());
+  }
+
+  private resetBonos(): void {
+    this.bonoAmbiental.set(0);
+    this.bonoTransporte.set(0);
+    this.bonoAmbientalDisplay.set(formatCurrencyCo(0));
+    this.bonoTransporteDisplay.set(formatCurrencyCo(0));
   }
 
   aceptarPago(): void {
@@ -258,8 +309,15 @@ export class RetribucionComponent implements OnInit {
         this.savingPago.set(false);
 
         const totalCompra = Number(compra.total) || 0;
-        const anticipo = this.anticipoAplicable(totalCompra);
-        const netoPago = this.netoAPagar(totalCompra);
+        const anticipo = this.anticipoAplicable(totalCompra, true);
+        const netoPago = this.netoAPagar(totalCompra, true);
+        const bonoAmbiental = this.bonoAmbiental();
+        const bonoTransporte = this.bonoTransporte();
+
+        if (this.bonosExceden(totalCompra)) {
+          this.errorDetalle.set('Los bonos superan el total de la compra.');
+          return;
+        }
 
         if (!caja) {
           this.cajaAbierta.set(false);
@@ -323,10 +381,16 @@ export class RetribucionComponent implements OnInit {
           anticipo > 0
             ? ` Se descontará ${this.formatCurrency(anticipo)} de anticipos.`
             : '';
+        const bonosTexto =
+          bonoAmbiental + bonoTransporte > 0
+            ? ` Se descontará ${this.formatCurrency(bonoAmbiental)} de bono ambiental y ${this.formatCurrency(bonoTransporte)} de bono transporte.`
+            : '';
         const origenTexto =
           netoPago > 0
             ? ` Se pagará ${this.formatCurrency(netoPago)} desde ${medioNombre}.`
-            : ' El anticipo cubre el total; no se descuenta de caja.';
+            : anticipo > 0 && bonoAmbiental + bonoTransporte === 0
+              ? ' El anticipo cubre el total; no se descuenta de caja.'
+              : ' Los descuentos cubren el total; no se descuenta de caja.';
         const reciboTexto = this.siigoActivo()
           ? ` Recibo de pago del ${this.fechaElaboracion()}${pagoSiigo ? `, desde ${pagoSiigo.nombre}` : ''}.`
           : '';
@@ -334,7 +398,7 @@ export class RetribucionComponent implements OnInit {
         this.confirmDialog
           .confirm({
             title: 'Registrar pago',
-            message: `¿Registrar el pago de la compra ${compra.numeroFactura} y enviarlo a Siigo como pago al proveedor? Total ${this.formatCurrency(totalCompra)}.${anticipoTexto}${origenTexto}${reciboTexto}`,
+            message: `¿Registrar el pago de la compra ${compra.numeroFactura} y enviarlo a Siigo como pago al proveedor? Total ${this.formatCurrency(totalCompra)}.${bonosTexto}${anticipoTexto}${origenTexto}${reciboTexto}`,
             confirmLabel: 'Pagar',
             cancelLabel: 'Cancelar',
           })
@@ -355,7 +419,7 @@ export class RetribucionComponent implements OnInit {
   }
 
   private ejecutarRegistroPago(compra: Compra): void {
-    const netoPago = this.netoAPagar(Number(compra.total) || 0);
+    const netoPago = this.netoAPagar(Number(compra.total) || 0, true);
     const medioCajaId = this.medioPagoId();
     if (netoPago > 0 && medioCajaId == null) {
       this.errorDetalle.set('Seleccione el medio de caja desde el que se realizará el pago.');
@@ -373,6 +437,8 @@ export class RetribucionComponent implements OnInit {
         medioCajaId: netoPago > 0 ? medioCajaId : null,
         fechaElaboracion: this.fechaElaboracion() || null,
         paymentTypeId: this.paymentTypeId(),
+        bonoAmbiental: this.bonoAmbiental(),
+        bonoTransporte: this.bonoTransporte(),
       })
       .subscribe({
       next: (respuesta) => {
@@ -452,9 +518,13 @@ export class RetribucionComponent implements OnInit {
           unidades,
         };
       }),
-      total: Number(pago?.montoPagadoCaja ?? this.netoAPagar(Number(compra.total) || 0)),
+      total: Number(pago?.montoPagadoCaja ?? this.netoAPagar(Number(compra.total) || 0, true)),
       totalCompra: Number(pago?.totalCompra ?? compra.total) || 0,
-      anticipoAplicado: Number(pago?.anticipoAplicado ?? this.anticipoAplicable(Number(compra.total) || 0)),
+      anticipoAplicado: Number(
+        pago?.anticipoAplicado ?? this.anticipoAplicable(Number(compra.total) || 0, true)
+      ),
+      bonoAmbiental: Number(pago?.bonoAmbiental ?? this.bonoAmbiental()) || 0,
+      bonoTransporte: Number(pago?.bonoTransporte ?? this.bonoTransporte()) || 0,
       pesoTotal: Number(compra.pesoTotal) || 0,
     });
   }

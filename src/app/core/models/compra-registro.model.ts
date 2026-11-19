@@ -38,6 +38,8 @@ export interface Compra {
   sucursalId?: number | null;
   sucursalNombre?: string | null;
   total: number;
+  bonoAmbiental?: number | null;
+  bonoTransporte?: number | null;
   pesoTotal: number;
   usuarioRegistroId: number;
   usuarioRegistroNombre?: string;
@@ -72,6 +74,8 @@ export interface RegistrarPagoCompraPayload {
   medioCajaId?: number | null;
   fechaElaboracion?: string | null;
   paymentTypeId?: number | null;
+  bonoAmbiental?: number | null;
+  bonoTransporte?: number | null;
 }
 
 export interface RegistrarCompraResponse {
@@ -82,6 +86,8 @@ export interface RegistrarCompraResponse {
   estadoPago: CompraEstadoPago;
   totalCompra?: number;
   anticipoAplicado?: number;
+  bonoAmbiental?: number;
+  bonoTransporte?: number;
   montoPagadoCaja?: number;
 }
 
