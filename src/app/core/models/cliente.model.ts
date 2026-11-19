@@ -51,6 +51,24 @@ export interface Cliente {
   updatedAt: string;
 }
 
+export interface ClienteSiigo {
+  siigoId: string;
+  identificacion: string;
+  nombre: string;
+  tipoDocumento: TipoDocumento;
+  tipoCliente: TipoCliente;
+  telefono?: string | null;
+  email?: string | null;
+  ciudad?: string | null;
+  yaEnShalom: boolean;
+}
+
+export interface ImportarClientesSiigoResultado {
+  importados: number;
+  omitidos: number;
+  mensajes: string[];
+}
+
 export interface ClienteRequest {
   tipoCliente: TipoCliente;
   tipoDocumento: TipoDocumento;

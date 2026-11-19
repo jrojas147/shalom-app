@@ -7,6 +7,7 @@ import { CajaSaldo } from '../../core/models/caja.model';
 import {
   Cliente,
   ClienteRequest,
+  ClienteSiigo,
   documentoClienteLabel,
   METODOS_PAGO_CLIENTE,
   metodoPagoLabel,
@@ -81,6 +82,14 @@ export class ClientesComponent implements OnInit {
   readonly savingAnticipo = signal(false);
   readonly errorAnticipos = signal<string | null>(null);
   readonly anticipoMontoDisplay = signal(formatCurrencyCo(0));
+  readonly showImportarSiigo = signal(false);
+  readonly loadingImportar = signal(false);
+  readonly savingImportar = signal(false);
+  readonly errorImportar = signal<string | null>(null);
+  readonly avisoImportar = signal<string | null>(null);
+  readonly busquedaSiigo = signal('');
+  readonly clientesSiigo = signal<ClienteSiigo[]>([]);
+  readonly seleccionSiigo = signal<ReadonlySet<string>>(new Set());
   readonly anticipoForm = this.fb.nonNullable.group({
     medioCajaId: [null as number | null, Validators.required],
     monto: [0, [Validators.required, Validators.min(1)]],
@@ -94,6 +103,25 @@ export class ClientesComponent implements OnInit {
       return 'Detalle del cliente';
     }
     return this.editingId() ? 'Editar cliente' : 'Nuevo cliente';
+  });
+
+  readonly clientesSiigoFiltrados = computed(() => {
+    const q = this.busquedaSiigo().trim().toLowerCase();
+    const items = this.clientesSiigo();
+    if (!q) {
+      return items;
+    }
+    return items.filter((item) =>
+      [item.nombre, item.identificacion, item.tipoDocumento, item.telefono, item.email, item.ciudad]
+        .some((value) => value?.toLowerCase().includes(q))
+    );
+  });
+
+  readonly seleccionSiigoCount = computed(() => this.seleccionSiigo().size);
+
+  readonly todosSiigoVisiblesSeleccionados = computed(() => {
+    const visibles = this.clientesSiigoFiltrados().filter((item) => !item.yaEnShalom);
+    return visibles.length > 0 && visibles.every((item) => this.seleccionSiigo().has(item.siigoId));
   });
 
   readonly clientesFiltrados = computed(() => {
@@ -570,6 +598,105 @@ export class ClientesComponent implements OnInit {
     direccion.updateValueAndValidity({ emitEvent: false });
     departamento.updateValueAndValidity({ emitEvent: false });
     municipio.updateValueAndValidity({ emitEvent: false });
+  }
+
+  abrirImportarSiigo(): void {
+    if (!this.puedeGestionar()) {
+      return;
+    }
+    this.showImportarSiigo.set(true);
+    this.errorImportar.set(null);
+    this.avisoImportar.set(null);
+    this.busquedaSiigo.set('');
+    this.seleccionSiigo.set(new Set());
+    this.cargarClientesSiigo();
+  }
+
+  cerrarImportarSiigo(): void {
+    if (this.savingImportar()) {
+      return;
+    }
+    this.showImportarSiigo.set(false);
+    this.clientesSiigo.set([]);
+    this.seleccionSiigo.set(new Set());
+    this.errorImportar.set(null);
+  }
+
+  onBusquedaSiigoChange(value: string): void {
+    this.busquedaSiigo.set(value);
+  }
+
+  toggleClienteSiigo(item: ClienteSiigo, checked: boolean): void {
+    if (item.yaEnShalom) {
+      return;
+    }
+    const next = new Set(this.seleccionSiigo());
+    if (checked) {
+      next.add(item.siigoId);
+    } else {
+      next.delete(item.siigoId);
+    }
+    this.seleccionSiigo.set(next);
+  }
+
+  toggleTodosSiigoVisibles(checked: boolean): void {
+    const next = new Set(this.seleccionSiigo());
+    for (const item of this.clientesSiigoFiltrados()) {
+      if (item.yaEnShalom) {
+        continue;
+      }
+      if (checked) {
+        next.add(item.siigoId);
+      } else {
+        next.delete(item.siigoId);
+      }
+    }
+    this.seleccionSiigo.set(next);
+  }
+
+  importarSeleccionados(): void {
+    const ids = [...this.seleccionSiigo()];
+    if (!ids.length || this.savingImportar()) {
+      return;
+    }
+    this.savingImportar.set(true);
+    this.errorImportar.set(null);
+    this.avisoImportar.set(null);
+    this.clientesService.importarSiigo(ids).subscribe({
+      next: (resultado) => {
+        this.savingImportar.set(false);
+        this.seleccionSiigo.set(new Set());
+        const partes = [`Se importaron ${resultado.importados} clientes.`];
+        if (resultado.omitidos > 0) {
+          partes.push(`Se omitieron ${resultado.omitidos}.`);
+        }
+        if (resultado.mensajes?.length) {
+          partes.push(resultado.mensajes.slice(0, 5).join(' '));
+        }
+        this.avisoImportar.set(partes.join(' '));
+        this.loadClientes();
+        this.cargarClientesSiigo();
+      },
+      error: (err) => {
+        this.savingImportar.set(false);
+        this.errorImportar.set(this.extractErrorMessage(err));
+      },
+    });
+  }
+
+  private cargarClientesSiigo(): void {
+    this.loadingImportar.set(true);
+    this.clientesService.listarSiigo().subscribe({
+      next: (data) => {
+        this.clientesSiigo.set(data);
+        this.loadingImportar.set(false);
+      },
+      error: (err) => {
+        this.loadingImportar.set(false);
+        this.clientesSiigo.set([]);
+        this.errorImportar.set(this.extractErrorMessage(err));
+      },
+    });
   }
 
   openAnticipos(cliente: Cliente): void {

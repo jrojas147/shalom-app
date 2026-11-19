@@ -7,7 +7,12 @@ import {
   AnticipoClienteSaldo,
   RegistrarAnticipoClienteRequest,
 } from '../models/anticipo-cliente.model';
-import { Cliente, ClienteRequest } from '../models/cliente.model';
+import {
+  Cliente,
+  ClienteRequest,
+  ClienteSiigo,
+  ImportarClientesSiigoResultado,
+} from '../models/cliente.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClientesService {
@@ -21,6 +26,16 @@ export class ClientesService {
 
   getById(id: number): Observable<Cliente> {
     return this.http.get<Cliente>(`${this.baseUrl}/${id}`);
+  }
+
+  listarSiigo(): Observable<ClienteSiigo[]> {
+    return this.http.get<ClienteSiigo[]>(`${this.baseUrl}/siigo`);
+  }
+
+  importarSiigo(siigoIds: string[]): Observable<ImportarClientesSiigoResultado> {
+    return this.http.post<ImportarClientesSiigoResultado>(`${this.baseUrl}/siigo/importar`, {
+      siigoIds,
+    });
   }
 
   create(request: ClienteRequest): Observable<Cliente> {
