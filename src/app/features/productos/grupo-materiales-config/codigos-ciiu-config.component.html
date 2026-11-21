@@ -66,12 +66,22 @@
     </p>
   }
 
+  <div class="param-block__search">
+    <input
+      type="search"
+      placeholder="Buscar grupo por código, nombre o categoría..."
+      [value]="busqueda()"
+      (input)="onBusquedaChange($any($event.target).value)"
+      aria-label="Buscar grupo de materiales"
+    />
+  </div>
+
   <div class="param-block__list-scroll">
     @if (loading()) {
       <p class="rp-loading">Cargando...</p>
     } @else {
       <ul class="param-block__list">
-        @for (item of codigosCiiu(); track item.id) {
+        @for (item of gruposFiltrados(); track item.id) {
           <li class="param-block__item">
             <span class="param-block__item-text">
               <strong>{{ item.codigo }}</strong>
@@ -121,7 +131,13 @@
             </span>
           </li>
         } @empty {
-          <li class="rp-empty">No hay códigos CIIU registrados</li>
+          <li class="rp-empty">
+            @if (busqueda().trim()) {
+              Ningún grupo coincide con la búsqueda
+            } @else {
+              No hay códigos CIIU registrados
+            }
+          </li>
         }
       </ul>
     }

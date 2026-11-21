@@ -33,6 +33,7 @@ export class CodigosCiiuConfigComponent implements OnInit {
   readonly categorias = signal<Categoria[]>([]);
   readonly unidades = signal<UnidadMedida[]>([]);
   readonly codigosCiiu = signal<CodigoCiiu[]>([]);
+  readonly busqueda = signal('');
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -52,6 +53,24 @@ export class CodigosCiiuConfigComponent implements OnInit {
   readonly loadingSiigoMas = signal(false);
   readonly showExisteModal = signal(false);
   readonly existeEnSiigo = signal<CodigoCiiuSiigoCodigo | null>(null);
+
+  readonly gruposFiltrados = computed(() => {
+    const q = this.busqueda().trim().toLowerCase();
+    const items = this.codigosCiiu();
+    if (!q) {
+      return items;
+    }
+    return items.filter((item) =>
+      [
+        item.codigo,
+        item.nombre,
+        item.categoriaCodigo,
+        item.categoriaNombre,
+        item.unidadMedidaCodigo,
+        item.unidadMedidaNombre,
+      ].some((value) => value?.toLowerCase().includes(q))
+    );
+  });
 
   readonly form = this.fb.nonNullable.group({
     codigo: ['', [Validators.required, Validators.maxLength(20)]],
@@ -93,6 +112,10 @@ export class CodigosCiiuConfigComponent implements OnInit {
     this.loadCodigosCiiu();
     this.loadCategorias();
     this.loadUnidades();
+  }
+
+  onBusquedaChange(value: string): void {
+    this.busqueda.set(value);
   }
 
   loadCodigosCiiu(): void {
