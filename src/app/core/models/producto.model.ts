@@ -44,6 +44,7 @@ export interface ProductoExcelFilaError {
 export interface ProductoExcelImportResult {
   creados: number;
   actualizados: number;
+  omitidos: number;
   errores: number;
   detalleErrores: ProductoExcelFilaError[];
 }

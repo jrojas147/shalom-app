@@ -237,6 +237,9 @@
 @if (showForm() && tabActiva() === 'conjuntos') {
   <app-rp-modal [title]="conjuntoModalTitle()" [wide]="true" (closed)="cancelForm()">
     <form class="conjunto-modal-form" [formGroup]="conjuntoForm" (ngSubmit)="saveConjunto()">
+      @if (error()) {
+        <div class="rp-alert rp-alert--error">{{ error() }}</div>
+      }
       <div class="rp-form-grid">
         <div class="rp-field rp-field--full">
           <label for="administradorId">Administrador</label>
@@ -265,7 +268,11 @@
           <label for="nit">NIT del conjunto</label>
           <input id="nit" type="text" formControlName="nit" maxlength="20" />
           @if (conjuntoForm.controls.nit.touched && conjuntoForm.controls.nit.invalid) {
-            <span class="rp-hint err">El NIT es obligatorio</span>
+            @if (conjuntoForm.controls.nit.hasError('nitDuplicado')) {
+              <span class="rp-hint err">Ya existe una sucursal con ese NIT</span>
+            } @else {
+              <span class="rp-hint err">El NIT es obligatorio</span>
+            }
           }
         </div>
         <div class="rp-field">

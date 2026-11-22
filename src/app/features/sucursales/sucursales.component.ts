@@ -155,6 +155,7 @@ export class SucursalesComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.conjuntoForm.controls.nit.valueChanges.subscribe(() => this.limpiarNitDuplicado());
     this.loadData();
     this.loadDepartamentos();
     this.loadEntidadesBancarias();
@@ -371,6 +372,11 @@ export class SucursalesComponent implements OnInit {
     this.sucursalesService.getAll(false).subscribe({
       next: (todas) => {
         this.actualizarIdsOcupados(todas, this.editingId());
+        if (this.nitYaExiste(todas, request.nit, this.editingId())) {
+          this.saving.set(false);
+          this.marcarNitDuplicado();
+          return;
+        }
         if (this.conjuntoForm.controls.idSucursal.hasError('idSucursalDuplicado')) {
           this.saving.set(false);
           this.conjuntoForm.controls.idSucursal.markAsTouched();
@@ -397,7 +403,12 @@ export class SucursalesComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        this.error.set(err.error?.message ?? 'No se pudo guardar el conjunto.');
+        const message = err.error?.message ?? 'No se pudo guardar el conjunto.';
+        if (typeof message === 'string' && /nit/i.test(message)) {
+          this.marcarNitDuplicado();
+          return;
+        }
+        this.error.set(message);
       },
     });
   }
@@ -655,6 +666,36 @@ export class SucursalesComponent implements OnInit {
     });
     this.conjuntoForm.controls.municipioId.disable();
     this.conjuntoForm.controls.idSucursal.updateValueAndValidity();
+  }
+
+  private nitYaExiste(sucursales: Sucursal[], nit: string, excludeId: number | null): boolean {
+    const normalizado = nit.trim().toLowerCase();
+    if (!normalizado) {
+      return false;
+    }
+    return sucursales.some(
+      (sucursal) =>
+        sucursal.id !== excludeId && sucursal.nit.trim().toLowerCase() === normalizado
+    );
+  }
+
+  private marcarNitDuplicado(): void {
+    this.error.set('Ya existe una sucursal con ese NIT');
+    this.conjuntoForm.controls.nit.setErrors({ nitDuplicado: true });
+    this.conjuntoForm.controls.nit.markAsTouched();
+  }
+
+  private limpiarNitDuplicado(): void {
+    const control = this.conjuntoForm.controls.nit;
+    if (!control.hasError('nitDuplicado')) {
+      return;
+    }
+    const resto = { ...(control.errors ?? {}) };
+    delete resto['nitDuplicado'];
+    control.setErrors(Object.keys(resto).length > 0 ? resto : null);
+    if (this.error() === 'Ya existe una sucursal con ese NIT') {
+      this.error.set(null);
+    }
   }
 
   private actualizarIdsOcupados(sucursales: Sucursal[], excludeId: number | null): void {

@@ -414,12 +414,12 @@
       <div class="productos-excel-result">
         <p>
           Se procesó el archivo:
-          <strong>{{ result.creados }}</strong> creado(s),
-          <strong>{{ result.actualizados }}</strong> actualizado(s)
-          @if (result.errores) {
-            y <strong>{{ result.errores }}</strong> error(es).
-          } @else {
-            sin errores.
+          <strong>{{ result.creados }}</strong> creado(s).
+          @if (result.omitidos) {
+            <strong>{{ result.omitidos }}</strong> no se crearon porque el id ya existe.
+          }
+          @if (result.errores > result.omitidos) {
+            <strong>{{ result.errores - result.omitidos }}</strong> error(es).
           }
         </p>
         @if (result.detalleErrores.length) {
@@ -445,8 +445,12 @@
 
     <div class="productos-excel-help">
       <p>
-        Descargue el Excel, complete o edite las los campos que se deseen ediitar y vuelva a cargarlo.
-        <strong>id vacío</strong> crea un producto; <strong>id existente</strong> lo actualiza.
+        Descargue el Excel, edite las filas y vuelva a cargarlo.
+        Si el <strong>id_interno</strong> ya existe, no se crea y se informa en el resultado.
+        El id de la base de datos no va en el archivo.
+        En <strong>unidad</strong> escriba SI para un producto por unidad, o NO para uno por kilogramo.
+        El <strong>id_interno</strong> puede ser decimal, con punto o coma: 1.5 o 1,5.
+        El <strong>codigo_sui</strong> acepta el código del grupo con coma o punto: 101,1 o 101.1.
       </p>
       <!--
       <ul>
