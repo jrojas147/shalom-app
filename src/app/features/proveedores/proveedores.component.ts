@@ -30,7 +30,13 @@ import {
   Sexo,
   SEXOS,
 } from '../../core/models/proveedor-interno.model';
-import { PROVEEDOR_TABS, ProveedorTabConfig, TipoProveedor } from '../../core/models/proveedor.model';
+import {
+  ImportarProveedoresSiigoResultado,
+  PROVEEDOR_TABS,
+  ProveedorSiigo,
+  ProveedorTabConfig,
+  TipoProveedor,
+} from '../../core/models/proveedor.model';
 import { TIPOS_CUENTA, TipoCuenta } from '../../core/models/sucursal.model';
 import { Departamento, Municipio } from '../../core/models/ubicacion.model';
 import { AuthService } from '../../core/services/auth.service';
@@ -40,6 +46,7 @@ import { EntidadesEpsService } from '../../core/services/entidades-eps.service';
 import { ProveedoresEmpresasService } from '../../core/services/proveedores-empresas.service';
 import { ProveedoresExternosService } from '../../core/services/proveedores-externos.service';
 import { ProveedoresInternosService } from '../../core/services/proveedores-internos.service';
+import { ProveedoresSiigoService } from '../../core/services/proveedores-siigo.service';
 import { SucursalesService } from '../../core/services/sucursales.service';
 import { UbicacionesService } from '../../core/services/ubicaciones.service';
 import { AnticipoProveedorInterno } from '../../core/models/anticipo.model';
@@ -80,6 +87,7 @@ export class ProveedoresComponent implements OnInit {
   private readonly sucursalesService = inject(SucursalesService);
   private readonly cajaService = inject(CajaService);
   private readonly configuracionSiigoService = inject(ConfiguracionSiigoService);
+  private readonly proveedoresSiigoService = inject(ProveedoresSiigoService);
   private readonly confirmDialog = inject(RpConfirmDialogService);
 
   readonly tabs = PROVEEDOR_TABS;
@@ -142,6 +150,14 @@ export class ProveedoresComponent implements OnInit {
   readonly empresaMunicipios = signal<Municipio[]>([]);
   readonly externoMunicipios = signal<Municipio[]>([]);
   readonly siigoActivo = signal(false);
+  readonly showImportarSiigo = signal(false);
+  readonly loadingImportar = signal(false);
+  readonly savingImportar = signal(false);
+  readonly errorImportar = signal<string | null>(null);
+  readonly avisoImportar = signal<string | null>(null);
+  readonly busquedaSiigo = signal('');
+  readonly proveedoresSiigo = signal<ProveedorSiigo[]>([]);
+  readonly seleccionSiigo = signal<ReadonlySet<string>>(new Set());
 
   readonly tabConfig = computed(
     () => this.tabs.find((tab) => tab.id === this.tabActiva()) ?? this.tabs[0]
@@ -153,6 +169,25 @@ export class ProveedoresComponent implements OnInit {
   readonly esTabIntegrada = computed(
     () => this.esTabInterna() || this.esTabExterna() || this.esTabEmpresa()
   );
+
+  readonly proveedoresSiigoFiltrados = computed(() => {
+    const q = this.busquedaSiigo().trim().toLowerCase();
+    const items = this.proveedoresSiigo();
+    if (!q) {
+      return items;
+    }
+    return items.filter((item) =>
+      [item.nombre, item.identificacion, item.tipoDocumento, item.telefono, item.email, item.ciudad]
+        .some((value) => value?.toLowerCase().includes(q))
+    );
+  });
+
+  readonly seleccionSiigoCount = computed(() => this.seleccionSiigo().size);
+
+  readonly todosSiigoVisiblesSeleccionados = computed(() => {
+    const visibles = this.proveedoresSiigoFiltrados().filter((item) => !item.yaEnShalom);
+    return visibles.length > 0 && visibles.every((item) => this.seleccionSiigo().has(item.siigoId));
+  });
 
   readonly internosActivos = computed(() => this.internos().filter((p) => p.activo));
 
@@ -504,6 +539,87 @@ export class ProveedoresComponent implements OnInit {
   toggleInactivos(): void {
     this.mostrarInactivos.update((value) => !value);
     this.busqueda.set('');
+  }
+
+  abrirImportarSiigo(): void {
+    if (!this.puedeGestionar() || !this.siigoActivo()) {
+      return;
+    }
+    this.showImportarSiigo.set(true);
+    this.busquedaSiigo.set('');
+    this.seleccionSiigo.set(new Set());
+    this.errorImportar.set(null);
+    this.avisoImportar.set(null);
+    this.cargarProveedoresSiigo();
+  }
+
+  cerrarImportarSiigo(): void {
+    if (this.savingImportar()) {
+      return;
+    }
+    this.showImportarSiigo.set(false);
+    this.proveedoresSiigo.set([]);
+    this.seleccionSiigo.set(new Set());
+    this.errorImportar.set(null);
+  }
+
+  onBusquedaSiigoChange(value: string): void {
+    this.busquedaSiigo.set(value);
+  }
+
+  toggleProveedorSiigo(item: ProveedorSiigo, checked: boolean): void {
+    if (item.yaEnShalom) {
+      return;
+    }
+    const next = new Set(this.seleccionSiigo());
+    if (checked) {
+      next.add(item.siigoId);
+    } else {
+      next.delete(item.siigoId);
+    }
+    this.seleccionSiigo.set(next);
+  }
+
+  toggleTodosSiigoVisibles(checked: boolean): void {
+    const next = new Set(this.seleccionSiigo());
+    for (const item of this.proveedoresSiigoFiltrados()) {
+      if (item.yaEnShalom) {
+        continue;
+      }
+      if (checked) {
+        next.add(item.siigoId);
+      } else {
+        next.delete(item.siigoId);
+      }
+    }
+    this.seleccionSiigo.set(next);
+  }
+
+  tipoProveedorSiigoLabel(tipo: ProveedorSiigo['tipoProveedor']): string {
+    return tipo === 'EMPRESA' ? 'Empresa' : 'Interno';
+  }
+
+  importarSeleccionados(): void {
+    const ids = [...this.seleccionSiigo()];
+    if (!ids.length || this.savingImportar()) {
+      return;
+    }
+    this.savingImportar.set(true);
+    this.errorImportar.set(null);
+    this.avisoImportar.set(null);
+    this.proveedoresSiigoService.importar(ids).subscribe({
+      next: (resultado) => {
+        this.savingImportar.set(false);
+        this.seleccionSiigo.set(new Set());
+        this.avisoImportar.set(this.mensajeImportacion(resultado));
+        this.refrescarProveedoresImportados();
+        this.cargarProveedoresSiigo();
+      },
+      error: (err) => {
+        this.savingImportar.set(false);
+        this.errorImportar.set(this.extractErrorMessage(err, 'No se pudieron importar los proveedores.'));
+      },
+    });
   }
 
   toggleHijosSection(): void {
@@ -1591,6 +1707,42 @@ export class ProveedoresComponent implements OnInit {
         }
       },
     });
+  }
+
+  private cargarProveedoresSiigo(): void {
+    this.loadingImportar.set(true);
+    this.proveedoresSiigoService.listar().subscribe({
+      next: (data) => {
+        this.proveedoresSiigo.set(data);
+        this.loadingImportar.set(false);
+      },
+      error: (err) => {
+        this.loadingImportar.set(false);
+        this.proveedoresSiigo.set([]);
+        this.errorImportar.set(this.extractErrorMessage(err, 'No se pudieron consultar los proveedores de Siigo.'));
+      },
+    });
+  }
+
+  private refrescarProveedoresImportados(): void {
+    this.proveedoresInternosService.getAll(false).subscribe({
+      next: (data) => this.internos.set(data),
+    });
+    this.proveedoresEmpresasService.getAll(false).subscribe({
+      next: (data) => this.empresas.set(data),
+    });
+  }
+
+  private mensajeImportacion(resultado: ImportarProveedoresSiigoResultado): string {
+    const partes = [`Se importaron ${resultado.importados} proveedores.`];
+    if (resultado.omitidos > 0) {
+      partes.push(`Se omitieron ${resultado.omitidos}.`);
+    }
+    partes.push('Las personas quedan en Internos y las empresas en Empresa.');
+    if (resultado.mensajes?.length) {
+      partes.push(resultado.mensajes.slice(0, 5).join(' '));
+    }
+    return partes.join(' ');
   }
 
   private loadSiigo(): void {

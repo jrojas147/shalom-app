@@ -50,6 +50,11 @@
             }
           </button>
           @if (puedeGestionar()) {
+            @if (siigoActivo()) {
+              <button type="button" class="rp-btn rp-btn--secondary" (click)="abrirImportarSiigo()">
+                Traer de Siigo
+              </button>
+            }
             <button type="button" class="rp-btn rp-btn--primary" (click)="openCreate()">
               {{ esTabEmpresa() ? '+ Nueva empresa' : '+ Nuevo proveedor' }}
             </button>
@@ -1319,6 +1324,97 @@
     <div class="rp-form-actions proveedores-modal-actions">
       <button type="button" class="rp-btn rp-btn--primary" (click)="closeAnticipos()">
         Cerrar
+      </button>
+    </div>
+  </app-rp-modal>
+}
+
+@if (showImportarSiigo()) {
+  <app-rp-modal title="Proveedores de Siigo" [wide]="true" (closed)="cerrarImportarSiigo()">
+    <p class="rp-hint">
+      Seleccione los proveedores que desea crear en Shalom. Las personas se registran como internos
+      y las empresas como empresas proveedoras. Los que ya existen en este comercio no se pueden volver a importar.
+    </p>
+    @if (errorImportar()) {
+      <div class="rp-alert rp-alert--error">{{ errorImportar() }}</div>
+    }
+    @if (avisoImportar()) {
+      <div class="rp-alert rp-alert--success">{{ avisoImportar() }}</div>
+    }
+    <div class="proveedores-import__search">
+      <input
+        type="search"
+        placeholder="Buscar por nombre, documento, teléfono o ciudad..."
+        [value]="busquedaSiigo()"
+        (input)="onBusquedaSiigoChange($any($event.target).value)"
+      />
+    </div>
+    @if (loadingImportar()) {
+      <p class="rp-loading">Cargando proveedores de Siigo...</p>
+    } @else if (proveedoresSiigo().length === 0) {
+      <p class="rp-hint">Siigo no devolvió proveedores activos.</p>
+    } @else {
+      <div class="proveedores-import__tools">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="todosSiigoVisiblesSeleccionados()"
+            (change)="toggleTodosSiigoVisibles($any($event.target).checked)"
+          />
+          Seleccionar visibles
+        </label>
+        <span>{{ seleccionSiigoCount() }} seleccionados</span>
+      </div>
+      <div class="proveedores-import__table">
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Documento</th>
+              <th>Proveedor</th>
+              <th>Queda en</th>
+              <th>Contacto</th>
+              <th>Ciudad</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of proveedoresSiigoFiltrados(); track item.siigoId) {
+              <tr [class.proveedores-import__row--existente]="item.yaEnShalom">
+                <td>
+                  <input
+                    type="checkbox"
+                    [checked]="seleccionSiigo().has(item.siigoId)"
+                    [disabled]="item.yaEnShalom || savingImportar()"
+                    (change)="toggleProveedorSiigo(item, $any($event.target).checked)"
+                  />
+                </td>
+                <td class="cell-secondary">{{ item.tipoDocumento }} {{ item.identificacion }}</td>
+                <td class="cell-primary">
+                  {{ item.nombre }}
+                  @if (item.yaEnShalom) {
+                    <span class="rp-badge">Ya en Shalom</span>
+                  }
+                </td>
+                <td class="cell-secondary">{{ tipoProveedorSiigoLabel(item.tipoProveedor) }}</td>
+                <td class="cell-secondary">{{ item.telefono || item.email || '—' }}</td>
+                <td class="cell-secondary">{{ item.ciudad || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <div class="rp-form-actions">
+      <button type="button" class="rp-btn rp-btn--ghost" [disabled]="savingImportar()" (click)="cerrarImportarSiigo()">
+        Cerrar
+      </button>
+      <button
+        type="button"
+        class="rp-btn rp-btn--primary"
+        [disabled]="savingImportar() || seleccionSiigoCount() === 0"
+        (click)="importarSeleccionados()"
+      >
+        {{ savingImportar() ? 'Importando...' : 'Importar seleccionados' }}
       </button>
     </div>
   </app-rp-modal>

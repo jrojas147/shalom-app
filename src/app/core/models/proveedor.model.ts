@@ -1,5 +1,23 @@
 export type TipoProveedor = 'INTERNO' | 'EXTERNO' | 'EMPRESA';
 
+export interface ProveedorSiigo {
+  siigoId: string;
+  identificacion: string;
+  nombre: string;
+  tipoDocumento: string;
+  tipoProveedor: 'INTERNO' | 'EMPRESA';
+  telefono?: string | null;
+  email?: string | null;
+  ciudad?: string | null;
+  yaEnShalom: boolean;
+}
+
+export interface ImportarProveedoresSiigoResultado {
+  importados: number;
+  omitidos: number;
+  mensajes: string[];
+}
+
 export interface ProveedorTabConfig {
   id: TipoProveedor;
   label: string;
