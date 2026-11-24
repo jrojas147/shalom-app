@@ -580,7 +580,11 @@
             {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
           </button>
           @if (puedeGestionar() && !soloLectura()) {
-            <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            <button
+              type="submit"
+              class="rp-btn rp-btn--primary"
+              [disabled]="saving() || !puedeGuardarEmpresa()"
+            >
               {{ saving() ? 'Guardando...' : 'Guardar' }}
             </button>
           }
@@ -683,7 +687,11 @@
             {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
           </button>
           @if (puedeGestionar() && !soloLectura()) {
-            <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+            <button
+              type="submit"
+              class="rp-btn rp-btn--primary"
+              [disabled]="saving() || !puedeGuardarExterno()"
+            >
               {{ saving() ? 'Guardando...' : 'Guardar' }}
             </button>
           }
@@ -978,7 +986,11 @@
           {{ soloLectura() ? 'Cerrar' : 'Cancelar' }}
         </button>
         @if (puedeGestionar() && !soloLectura()) {
-          <button type="submit" class="rp-btn rp-btn--primary" [disabled]="saving()">
+          <button
+            type="submit"
+            class="rp-btn rp-btn--primary"
+            [disabled]="saving() || !puedeGuardarInterno()"
+          >
             {{ saving() ? 'Guardando...' : 'Guardar' }}
           </button>
         }

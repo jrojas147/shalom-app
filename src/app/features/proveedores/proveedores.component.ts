@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormGroup,
@@ -1796,12 +1797,62 @@ export class ProveedoresComponent implements OnInit {
     municipio.updateValueAndValidity({ emitEvent: false });
   }
 
+  puedeGuardarInterno(): boolean {
+    return this.puedeGuardar(this.internoForm);
+  }
+
+  puedeGuardarExterno(): boolean {
+    return this.puedeGuardar(this.externoForm);
+  }
+
+  puedeGuardarEmpresa(): boolean {
+    return this.puedeGuardar(this.empresaForm);
+  }
+
+  private puedeGuardar(form: FormGroup): boolean {
+    if (!this.controlesHabilitadosValidos(form)) {
+      return false;
+    }
+    const raw = form.getRawValue() as {
+      direccion?: string;
+      departamentoId?: number | null;
+      municipioId?: number | null;
+    };
+    return this.ubicacionCompleta(
+      raw.direccion ?? '',
+      raw.departamentoId ?? null,
+      raw.municipioId ?? null
+    );
+  }
+
+  /** Un control deshabilitado no vuelve inválido al formulario, aunque sea obligatorio. */
+  private controlesHabilitadosValidos(control: AbstractControl): boolean {
+    if (control instanceof FormGroup) {
+      return Object.values(control.controls).every((child) => this.controlesHabilitadosValidos(child));
+    }
+    if (control instanceof FormArray) {
+      return control.controls.every((child) => this.controlesHabilitadosValidos(child));
+    }
+    return control.disabled || control.valid;
+  }
+
+  private ubicacionCompleta(
+    direccion: string,
+    departamentoId: number | null,
+    municipioId: number | null
+  ): boolean {
+    if (!this.siigoActivo()) {
+      return true;
+    }
+    return !!direccion.trim() && departamentoId != null && municipioId != null;
+  }
+
   private validarUbicacionSiigo(
     direccion: string,
     departamentoId: number | null,
     municipioId: number | null
   ): boolean {
-    if (this.siigoActivo() && (!direccion.trim() || !departamentoId || !municipioId)) {
+    if (!this.ubicacionCompleta(direccion, departamentoId, municipioId)) {
       this.error.set('Con Siigo activo debe indicar dirección, departamento y ciudad.');
       return false;
     }
