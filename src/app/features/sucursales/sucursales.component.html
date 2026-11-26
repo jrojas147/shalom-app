@@ -322,7 +322,7 @@
             id="numApartamentos"
             type="text"
             formControlName="numApartamentos"
-            maxlength="3"
+            maxlength="4"
             inputmode="numeric"
             pattern="[0-9]*"
             (input)="limitarNumApartamentos($event)"
@@ -336,7 +336,7 @@
             } @else if (conjuntoForm.controls.numApartamentos.hasError('min')) {
               <span class="rp-hint err">Debe ser al menos 1</span>
             } @else {
-              <span class="rp-hint err">Máximo 999 apartamentos (3 dígitos)</span>
+              <span class="rp-hint err">Máximo 9999 apartamentos (4 dígitos)</span>
             }
           }
         </div>

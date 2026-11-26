@@ -129,7 +129,7 @@ export class SucursalesComponent implements OnInit {
     nombre: ['', [Validators.required, Validators.maxLength(50)]],
     numApartamentos: [
       null as number | null,
-      [Validators.required, Validators.min(1), Validators.max(999)],
+      [Validators.required, Validators.min(1), Validators.max(9999)],
     ],
     email: ['', Validators.email],
     departamentoId: [null as number | null, Validators.required],
@@ -486,7 +486,7 @@ export class SucursalesComponent implements OnInit {
 
   limitarNumApartamentos(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const soloDigitos = input.value.replace(/\D/g, '').slice(0, 3);
+    const soloDigitos = input.value.replace(/\D/g, '').slice(0, 4);
     if (soloDigitos !== input.value) {
       input.value = soloDigitos;
     }
