@@ -1111,15 +1111,25 @@
     [stacked]="true"
     (closed)="closeSucursalesModal()"
   >
-    <p class="proveedores-hijos__desc">
+    <p class="proveedores-hijos__desc proveedores-sucursales-modal__desc">
       Seleccione las sucursales vinculadas a este reciclador. Cada sucursal admite máximo 2 recicladores.
     </p>
 
+    <input
+      type="search"
+      class="proveedores-sucursales-modal__search"
+      placeholder="Buscar por nombre, id, NIT o municipio..."
+      [value]="busquedaSucursal()"
+      (input)="busquedaSucursal.set($any($event.target).value)"
+    />
+
     @if (sucursalesActivas().length === 0) {
       <p class="proveedores-hijos__empty">No hay sucursales activas disponibles.</p>
+    } @else if (sucursalesModalFiltradas().length === 0) {
+      <p class="proveedores-hijos__empty">No hay sucursales que coincidan con la búsqueda.</p>
     } @else {
-      <ul class="proveedores-hijos-list">
-        @for (sucursal of sucursalesActivas(); track sucursal.id) {
+      <ul class="proveedores-hijos-list proveedores-sucursales-modal__list">
+        @for (sucursal of sucursalesModalFiltradas(); track sucursal.id) {
           <li class="proveedores-hijos-list__item">
             <label class="proveedores-reciclador-check">
               <input

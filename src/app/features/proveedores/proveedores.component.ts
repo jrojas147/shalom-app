@@ -118,6 +118,7 @@ export class ProveedoresComponent implements OnInit {
   readonly showHijoForm = signal(false);
   readonly showRecicladoresModal = signal(false);
   readonly showSucursalesModal = signal(false);
+  readonly busquedaSucursal = signal('');
   readonly sucursalesVista = signal<ProveedorInterno | null>(null);
   readonly anticiposProveedor = signal<ProveedorInterno | null>(null);
   readonly anticipos = signal<AnticipoProveedorInterno[]>([]);
@@ -203,6 +204,22 @@ export class ProveedoresComponent implements OnInit {
   });
 
   readonly sucursalesActivas = computed(() => this.sucursales().filter((s) => s.activo));
+
+  readonly sucursalesModalFiltradas = computed(() => {
+    const q = this.busquedaSucursal().trim().toLowerCase();
+    const activas = this.sucursalesActivas();
+    if (!q) {
+      return activas;
+    }
+    return activas.filter(
+      (sucursal) =>
+        sucursal.nombre.toLowerCase().includes(q) ||
+        String(sucursal.idSucursal).includes(q) ||
+        sucursal.nit.toLowerCase().includes(q) ||
+        sucursal.municipio.toLowerCase().includes(q) ||
+        sucursal.direccion.toLowerCase().includes(q)
+    );
+  });
 
   readonly sucursalesSeleccionadas = computed(() => {
     const ids = new Set(this.selectedSucursalIds());
@@ -645,10 +662,12 @@ export class ProveedoresComponent implements OnInit {
     if (this.sucursales().length === 0) {
       this.loadSucursales();
     }
+    this.busquedaSucursal.set('');
     this.showSucursalesModal.set(true);
   }
 
   closeSucursalesModal(): void {
+    this.busquedaSucursal.set('');
     this.showSucursalesModal.set(false);
   }
 

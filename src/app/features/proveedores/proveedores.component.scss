@@ -341,6 +341,37 @@
   margin-top: var(--spacing-sm);
 }
 
+.proveedores-sucursales-modal__desc {
+  margin-bottom: var(--spacing-sm);
+}
+
+.proveedores-sucursales-modal__search {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--radius-md);
+  background: var(--rp-surface);
+  color: var(--rp-text);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+
+  &::placeholder {
+    color: var(--rp-text-muted);
+  }
+
+  &:focus {
+    outline: 2px solid var(--rp-primary-light);
+    border-color: var(--rp-primary);
+  }
+}
+
+.proveedores-sucursales-modal__list {
+  max-height: 11.5rem;
+  margin-bottom: var(--spacing-sm);
+  overflow-y: auto;
+}
+
 .proveedores-anticipos-form {
   margin: var(--spacing-md) 0 var(--spacing-lg);
 }
