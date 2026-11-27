@@ -20,6 +20,7 @@ export interface RetribucionExterno {
   telefono?: string | null;
   email?: string | null;
   activo: boolean;
+  aplicaFacturacionDian: boolean;
   cantidadCompras: number;
   totalPendiente: number;
   pesoTotalPendiente: number;
@@ -40,6 +41,7 @@ export interface RetribucionProveedorPendiente {
   totalNetoPendiente: number;
   pesoTotalPendiente: number;
   tipo: 'INTERNO' | 'EXTERNO';
+  aplicaFacturacionDian?: boolean;
 }
 
 export function mapInternoPendiente(item: RetribucionInterno): RetribucionProveedorPendiente {
@@ -57,6 +59,7 @@ export function mapInternoPendiente(item: RetribucionInterno): RetribucionProvee
     totalNetoPendiente: Number(item.totalNetoPendiente ?? item.totalPendiente),
     pesoTotalPendiente: item.pesoTotalPendiente,
     tipo: 'INTERNO',
+    aplicaFacturacionDian: true,
   };
 }
 
@@ -75,5 +78,6 @@ export function mapExternoPendiente(item: RetribucionExterno): RetribucionProvee
     totalNetoPendiente: item.totalPendiente,
     pesoTotalPendiente: item.pesoTotalPendiente,
     tipo: 'EXTERNO',
+    aplicaFacturacionDian: item.aplicaFacturacionDian,
   };
 }

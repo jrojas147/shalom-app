@@ -339,6 +339,7 @@ export class ProveedoresComponent implements OnInit {
     direccion: [''],
     departamentoId: [null as number | null],
     municipioId: [null as number | null],
+    aplicaFacturacionDian: [false],
     activo: [true],
   });
 
@@ -1186,6 +1187,7 @@ export class ProveedoresComponent implements OnInit {
       direccion: raw.direccion.trim() || undefined,
       departamento: departamento?.nombre,
       municipio: municipio?.nombre,
+      aplicaFacturacionDian: raw.aplicaFacturacionDian,
       activo: raw.activo,
     };
 
@@ -1488,6 +1490,7 @@ export class ProveedoresComponent implements OnInit {
       nombreContacto: proveedor.nombreContacto ?? '',
       telefonoContacto: proveedor.telefonoContacto ?? '',
       direccion: proveedor.direccion ?? '',
+      aplicaFacturacionDian: proveedor.aplicaFacturacionDian,
       activo: proveedor.activo,
     });
     this.patchExternoUbicacion(proveedor.departamento, proveedor.municipio);
@@ -1577,6 +1580,7 @@ export class ProveedoresComponent implements OnInit {
       direccion: '',
       departamentoId: null,
       municipioId: null,
+      aplicaFacturacionDian: false,
       activo: true,
     });
     this.externoForm.controls.municipioId.disable();

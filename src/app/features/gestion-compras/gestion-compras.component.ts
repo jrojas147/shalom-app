@@ -412,17 +412,19 @@ export class GestionComprasComponent implements OnInit {
       this.error.set('La pre-compra debe tener al menos un producto.');
       return;
     }
-    if (this.centrosCosto().length > 0 && this.costCenterId() == null) {
-      this.error.set('Seleccione el centro de costo para el documento soporte.');
-      return;
-    }
-    if (!this.receiptPrefix().trim()) {
-      this.error.set('Ingrese el prefijo del comprobante del proveedor.');
-      return;
-    }
-    if (!this.receiptNumber().trim()) {
-      this.error.set('Ingrese el consecutivo del comprobante del proveedor.');
-      return;
+    if (this.requiereDocumentoSoporte()) {
+      if (this.centrosCosto().length > 0 && this.costCenterId() == null) {
+        this.error.set('Seleccione el centro de costo para el documento soporte.');
+        return;
+      }
+      if (!this.receiptPrefix().trim()) {
+        this.error.set('Ingrese el prefijo del comprobante del proveedor.');
+        return;
+      }
+      if (!this.receiptNumber().trim()) {
+        this.error.set('Ingrese el consecutivo del comprobante del proveedor.');
+        return;
+      }
     }
 
     this.confirmDialog
@@ -557,6 +559,26 @@ export class GestionComprasComponent implements OnInit {
 
   private empaquePorDefecto(): string {
     return EMPAQUE_SIN_NOMBRE;
+  }
+
+  requiereDocumentoSoporte(): boolean {
+    const proveedor = this.proveedorEdit();
+    if (!proveedor || proveedor.tipo !== 'EXTERNO') {
+      return true;
+    }
+    return !!proveedor.aplicaFacturacionDian;
+  }
+
+  documentoSoportePendiente(): boolean {
+    if (!this.requiereDocumentoSoporte()) {
+      return false;
+    }
+    return (
+      this.loadingCentrosCosto() ||
+      (this.centrosCosto().length > 0 && this.costCenterId() == null) ||
+      !this.receiptPrefix().trim() ||
+      !this.receiptNumber().trim()
+    );
   }
 
   private syncEditState(compra: Compra): void {

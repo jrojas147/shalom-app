@@ -13,6 +13,7 @@ export interface ProveedorExterno {
   departamento?: string;
   municipio?: string;
   siigoId?: string | null;
+  aplicaFacturacionDian: boolean;
   activo: boolean;
 }
 
@@ -26,5 +27,6 @@ export interface ProveedorExternoRequest {
   direccion?: string;
   departamento?: string;
   municipio?: string;
+  aplicaFacturacionDian?: boolean;
   activo?: boolean;
 }

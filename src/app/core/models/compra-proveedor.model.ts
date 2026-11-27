@@ -5,6 +5,7 @@ export interface CompraProveedorSeleccion {
   proveedorId: number;
   nombre: string;
   documento?: string;
+  aplicaFacturacionDian?: boolean;
   sucursalId?: number;
   sucursalNombre?: string;
   sucursalNit?: string;

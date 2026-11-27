@@ -316,6 +316,7 @@
         <div><span>Total</span><strong>{{ formatCurrency(subtotalEdit()) }}</strong></div>
       </div>
 
+      @if (requiereDocumentoSoporte()) {
       <div class="gestion-compras-modal__siigo">
         <h3>Documento soporte</h3>
         <p class="gestion-compras-modal__siigo-hint">
@@ -367,6 +368,7 @@
           </label>
         </div>
       </div>
+      }
 
       <div class="gestion-compras-modal__actions">
         @if (!editMode()) {
@@ -394,14 +396,7 @@
         <button
           type="button"
           class="rp-btn rp-btn--primary"
-          [disabled]="
-            saving()
-            || asignandoAleatorio()
-            || loadingCentrosCosto()
-            || (centrosCosto().length > 0 && costCenterId() == null)
-            || !receiptPrefix().trim()
-            || !receiptNumber().trim()
-          "
+          [disabled]="saving() || asignandoAleatorio() || documentoSoportePendiente()"
           (click)="confirmarCompra()"
         >
           {{ saving() ? 'Confirmando...' : 'Confirmar compra' }}

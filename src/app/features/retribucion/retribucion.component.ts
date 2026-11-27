@@ -225,7 +225,7 @@ export class RetribucionComponent implements OnInit {
     if (neto > 0 && (!this.cajaAbierta() || this.medioPagoId() == null)) {
       return true;
     }
-    if (!this.siigoActivo()) {
+    if (!this.siigoActivo() || !this.aplicaFacturacionDian()) {
       return false;
     }
     return (
@@ -269,6 +269,14 @@ export class RetribucionComponent implements OnInit {
 
   aplicaBonos(): boolean {
     return this.proveedorSeleccionado()?.tipo !== 'EXTERNO';
+  }
+
+  aplicaFacturacionDian(): boolean {
+    const proveedor = this.proveedorSeleccionado();
+    if (!proveedor || proveedor.tipo !== 'EXTERNO') {
+      return true;
+    }
+    return !!proveedor.aplicaFacturacionDian;
   }
 
   anticipoAplicable(total: number, conBonos = false): number {
@@ -362,7 +370,7 @@ export class RetribucionComponent implements OnInit {
           }
         }
 
-        if (this.siigoActivo()) {
+        if (this.siigoActivo() && this.aplicaFacturacionDian()) {
           if (!this.tipoEgresoConfigurado()) {
             this.errorDetalle.set(
               'Configure el tipo de comprobante de egreso en Parametrización, Siigo Nube, Egresos.'
@@ -405,7 +413,9 @@ export class RetribucionComponent implements OnInit {
         this.confirmDialog
           .confirm({
             title: 'Registrar pago',
-            message: `¿Registrar el pago de la compra ${compra.numeroFactura} y enviarlo a Siigo como pago al proveedor? Total ${this.formatCurrency(totalCompra)}.${bonosTexto}${anticipoTexto}${origenTexto}${reciboTexto}`,
+            message: this.aplicaFacturacionDian()
+              ? `¿Registrar el pago de la compra ${compra.numeroFactura} y enviarlo a Siigo como pago al proveedor? Total ${this.formatCurrency(totalCompra)}.${bonosTexto}${anticipoTexto}${origenTexto}${reciboTexto}`
+              : `¿Registrar el pago de la compra ${compra.numeroFactura}? Total ${this.formatCurrency(totalCompra)}.${origenTexto}`,
             confirmLabel: 'Pagar',
             cancelLabel: 'Cancelar',
           })

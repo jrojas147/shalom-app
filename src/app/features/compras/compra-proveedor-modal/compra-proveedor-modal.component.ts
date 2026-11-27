@@ -141,6 +141,7 @@ export class CompraProveedorModalComponent implements OnInit {
       proveedorId: externo.id,
       nombre: externo.nombre,
       documento: externo.documento,
+      aplicaFacturacionDian: externo.aplicaFacturacionDian,
     });
   }
 

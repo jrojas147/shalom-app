@@ -386,6 +386,7 @@
             }
           </div>
 
+          @if (aplicaFacturacionDian()) {
           <div class="retribucion-detalle__recibo">
             <h3>Recibo de pago a proveedores</h3>
             @if (loadingRecibo()) {
@@ -441,6 +442,7 @@
               </div>
             }
           </div>
+          }
 
           <div class="retribucion-detalle__origen">
             <h3>Medio de caja</h3>
@@ -495,7 +497,13 @@
               [disabled]="pagoBloqueado(detalle.total)"
               (click)="aceptarPago()"
             >
-              {{ savingPago() ? 'Registrando...' : 'Pagar y enviar a Siigo' }}
+              {{
+                savingPago()
+                  ? 'Registrando...'
+                  : aplicaFacturacionDian()
+                    ? 'Pagar y enviar a Siigo'
+                    : 'Pagar'
+              }}
             </button>
           </div>
         </div>

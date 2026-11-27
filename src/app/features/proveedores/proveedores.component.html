@@ -226,6 +226,9 @@
                 <td>
                   <span class="row-icon">👤</span>
                   <span class="cell-primary">{{ proveedor.nombre }}</span>
+                  @if (proveedor.aplicaFacturacionDian) {
+                    <span class="rp-badge rp-badge--success">DIAN</span>
+                  }
                   @if (proveedor.siigoId) {
                     <span class="rp-badge rp-badge--success">Siigo</span>
                   }
@@ -671,6 +674,18 @@
                 Sincronizacion Siggo habilitada
               </span>
             }
+          </div>
+
+          <div class="rp-field proveedores-estado-field">
+            <label for="externoFacturacionDian">Facturación DIAN</label>
+            <label class="proveedores-estado-field__control" for="externoFacturacionDian">
+              <input
+                id="externoFacturacionDian"
+                type="checkbox"
+                formControlName="aplicaFacturacionDian"
+              />
+              Aplica facturación DIAN
+            </label>
           </div>
 
           <div class="rp-field proveedores-estado-field">

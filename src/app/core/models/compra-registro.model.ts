@@ -35,6 +35,7 @@ export interface Compra {
   proveedorTipo: CompraProveedorSeleccion['tipo'];
   proveedorId: number;
   proveedorNombre?: string;
+  aplicaFacturacionDian?: boolean;
   sucursalId?: number | null;
   sucursalNombre?: string | null;
   total: number;
@@ -96,6 +97,7 @@ export function compraProveedorFromCompra(compra: Compra): CompraProveedorSelecc
     tipo: compra.proveedorTipo,
     proveedorId: compra.proveedorId,
     nombre: compra.proveedorNombre ?? 'Proveedor',
+    aplicaFacturacionDian: compra.aplicaFacturacionDian,
     sucursalId: compra.sucursalId ?? undefined,
     sucursalNombre: compra.sucursalNombre ?? undefined,
   };
