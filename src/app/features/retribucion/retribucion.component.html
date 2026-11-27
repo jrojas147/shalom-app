@@ -341,30 +341,32 @@
             </table>
           </div>
 
-          <div class="retribucion-bonos">
-            <label>
-              <span class="meta-label">Bono ambiental</span>
-              <input
-                type="text"
-                inputmode="numeric"
-                [value]="bonoAmbientalDisplay()"
-                [disabled]="savingPago()"
-                (input)="onBonoInput($event, 'ambiental')"
-              />
-            </label>
-            <label>
-              <span class="meta-label">Bono transporte</span>
-              <input
-                type="text"
-                inputmode="numeric"
-                [value]="bonoTransporteDisplay()"
-                [disabled]="savingPago()"
-                (input)="onBonoInput($event, 'transporte')"
-              />
-            </label>
-          </div>
-          @if (bonosExceden(detalle.total)) {
-            <div class="rp-alert rp-alert--error">Los bonos superan el total de la compra.</div>
+          @if (aplicaBonos()) {
+            <div class="retribucion-bonos">
+              <label>
+                <span class="meta-label">Bono ambiental</span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  [value]="bonoAmbientalDisplay()"
+                  [disabled]="savingPago()"
+                  (input)="onBonoInput($event, 'ambiental')"
+                />
+              </label>
+              <label>
+                <span class="meta-label">Bono transporte</span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  [value]="bonoTransporteDisplay()"
+                  [disabled]="savingPago()"
+                  (input)="onBonoInput($event, 'transporte')"
+                />
+              </label>
+            </div>
+            @if (bonosExceden(detalle.total)) {
+              <div class="rp-alert rp-alert--error">Los bonos superan el total de la compra.</div>
+            }
           }
 
           <div class="retribucion-detalle__totals">

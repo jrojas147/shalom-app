@@ -267,6 +267,10 @@ export class RetribucionComponent implements OnInit {
     return this.bonos() > (Number(total) || 0) + 0.009;
   }
 
+  aplicaBonos(): boolean {
+    return this.proveedorSeleccionado()?.tipo !== 'EXTERNO';
+  }
+
   anticipoAplicable(total: number, conBonos = false): number {
     const proveedor = this.proveedorSeleccionado();
     if (!proveedor || proveedor.tipo !== 'INTERNO') {
@@ -285,6 +289,9 @@ export class RetribucionComponent implements OnInit {
   }
 
   private bonos(): number {
+    if (!this.aplicaBonos()) {
+      return 0;
+    }
     return Math.max(0, this.bonoAmbiental()) + Math.max(0, this.bonoTransporte());
   }
 
@@ -311,8 +318,8 @@ export class RetribucionComponent implements OnInit {
         const totalCompra = Number(compra.total) || 0;
         const anticipo = this.anticipoAplicable(totalCompra, true);
         const netoPago = this.netoAPagar(totalCompra, true);
-        const bonoAmbiental = this.bonoAmbiental();
-        const bonoTransporte = this.bonoTransporte();
+        const bonoAmbiental = this.aplicaBonos() ? this.bonoAmbiental() : 0;
+        const bonoTransporte = this.aplicaBonos() ? this.bonoTransporte() : 0;
 
         if (this.bonosExceden(totalCompra)) {
           this.errorDetalle.set('Los bonos superan el total de la compra.');
@@ -437,8 +444,8 @@ export class RetribucionComponent implements OnInit {
         medioCajaId: netoPago > 0 ? medioCajaId : null,
         fechaElaboracion: this.fechaElaboracion() || null,
         paymentTypeId: this.paymentTypeId(),
-        bonoAmbiental: this.bonoAmbiental(),
-        bonoTransporte: this.bonoTransporte(),
+        bonoAmbiental: this.aplicaBonos() ? this.bonoAmbiental() : 0,
+        bonoTransporte: this.aplicaBonos() ? this.bonoTransporte() : 0,
       })
       .subscribe({
       next: (respuesta) => {

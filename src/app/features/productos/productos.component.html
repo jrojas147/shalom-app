@@ -414,9 +414,10 @@
       <div class="productos-excel-result">
         <p>
           Se procesó el archivo:
-          <strong>{{ result.creados }}</strong> creado(s).
+          <strong>{{ result.creados }}</strong> creado(s),
+          <strong>{{ result.actualizados }}</strong> con precios actualizados.
           @if (result.omitidos) {
-            <strong>{{ result.omitidos }}</strong> no se crearon porque el id ya existe.
+            <strong>{{ result.omitidos }}</strong> omitido(s) por id repetido en el archivo.
           }
           @if (result.errores > result.omitidos) {
             <strong>{{ result.errores - result.omitidos }}</strong> error(es).
@@ -446,7 +447,9 @@
     <div class="productos-excel-help">
       <p>
         Descargue el Excel, edite las filas y vuelva a cargarlo.
-        Si el <strong>id_interno</strong> ya existe, no se crea y se informa en el resultado.
+        Si el <strong>id_interno</strong> ya existe, solo se actualizan
+        <strong>precio_compra</strong> y <strong>precio_venta</strong>.
+        Si uno de esos precios llega vacío, ese precio no se modifica.
         El id de la base de datos no va en el archivo.
         En <strong>unidad</strong> escriba SI para un producto por unidad, o NO para uno por kilogramo.
         El <strong>id_interno</strong> puede ser decimal, con punto o coma: 1.5 o 1,5.

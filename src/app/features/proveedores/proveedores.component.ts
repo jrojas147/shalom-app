@@ -1131,11 +1131,9 @@ export class ProveedoresComponent implements OnInit {
       sucursalIds: this.selectedSucursalIds(),
     };
 
-    this.verificarIdentificacionesSiigoYGuardar(
-      this.identificacionesSiigoInterno(request.documento),
-      'el proveedor',
-      () => this.persistirInterno(request)
-    );
+    // El documento puede existir en Siigo con otra sucursal (p. ej. "91 LEIDY...").
+    // El alta crea el de esta sucursal ("60 LEIDY...") y no reutiliza el anterior.
+    this.persistirInterno(request);
   }
 
   private persistirInterno(request: ProveedorInternoRequest): void {
@@ -1898,55 +1896,6 @@ export class ProveedoresComponent implements OnInit {
       proveedor.siigoId?.trim() ||
       proveedor.sucursalesAsociadas.some((sucursal) => !!sucursal.siigoId?.trim())
     );
-  }
-
-  private identificacionesSiigoInterno(documento: string): string[] {
-    const doc = documento.trim();
-    return doc ? [doc] : [];
-  }
-
-  private verificarIdentificacionesSiigoYGuardar(
-    identificaciones: string[],
-    recurso: string,
-    persistir: () => void
-  ): void {
-    const unicas = identificaciones.filter((id) => !!id.trim());
-    if (this.editingId() || !this.siigoActivo() || unicas.length === 0) {
-      persistir();
-      return;
-    }
-    this.saving.set(true);
-    this.error.set(null);
-    forkJoin(
-      unicas.map((id) => this.configuracionSiigoService.consultarIdentificacion(id))
-    ).subscribe({
-      next: (respuestas) => {
-        const choque = respuestas.find((res) => res.existe);
-        if (choque) {
-          this.saving.set(false);
-          const identificacion = choque.identificacion || unicas[0];
-          const nombre = choque.nombre?.trim() || identificacion;
-          const message =
-            `El documento "${identificacion}" ya existe en Siigo y corresponde a "${nombre}". No se puede crear ${recurso}.`;
-          this.error.set(message);
-          this.confirmDialog
-            .confirm({
-              title: 'El documento ya existe en Siigo',
-              message,
-              confirmLabel: 'Entendido',
-              cancelLabel: '',
-              confirmVariant: 'danger',
-            })
-            .subscribe();
-          return;
-        }
-        persistir();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.mostrarErrorGuardado(err);
-      },
-    });
   }
 
   private verificarDocumentoSiigoYGuardar(
