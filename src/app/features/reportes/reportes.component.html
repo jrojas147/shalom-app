@@ -91,7 +91,7 @@
           </label>
         }
 
-        @if (subreporte() === 'clientes' || subreporte() === 'proveedores') {
+        @if (subreporte() === 'clientes' || subreporte() === 'proveedores' || subreporte() === 'hijos-recicladores') {
           <label class="reportes__checkbox">
             <input
               type="checkbox"
@@ -379,6 +379,59 @@
                 } @empty {
                   <tr>
                     <td colspan="8" class="cell-empty">No hay proveedores registrados.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('hijos-recicladores') {
+            <table class="rp-table">
+              <thead>
+                <tr>
+                  <th>Reciclador</th>
+                  <th>Documento reciclador</th>
+                  <th>Hijo</th>
+                  <th>Documento hijo</th>
+                  <th>Sexo</th>
+                  <th>Fecha de nacimiento</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (hijo of hijosRecicladores() ?? []; track hijo.id) {
+                  <tr>
+                    <td>
+                      <span class="cell-primary">{{ hijo.recicladorNombre }}</span>
+                      @if (!hijo.recicladorActivo) {
+                        <span class="cell-sub">Reciclador inactivo</span>
+                      }
+                    </td>
+                    <td class="cell-mono">
+                      {{ hijo.recicladorTipoDocumento }} {{ hijo.recicladorDocumento }}
+                    </td>
+                    <td class="cell-primary">{{ hijo.nombre }}</td>
+                    <td class="cell-mono">{{ hijo.documento }}</td>
+                    <td class="cell-secondary">{{ sexoLabel(hijo.sexo) }}</td>
+                    <td class="cell-secondary">
+                      {{
+                        hijo.fechaNacimiento
+                          ? (hijo.fechaNacimiento | date: 'dd/MM/yyyy')
+                          : '—'
+                      }}
+                    </td>
+                    <td>
+                      <span
+                        class="rp-badge"
+                        [class.rp-badge--success]="hijo.activo"
+                        [class.rp-badge--neutral]="!hijo.activo"
+                      >
+                        {{ hijo.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="cell-empty">No hay hijos de recicladores registrados.</td>
                   </tr>
                 }
               </tbody>

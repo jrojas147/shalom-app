@@ -12,6 +12,7 @@ import {
   ReporteMovimientoCaja,
   ReporteProveedor,
   ReporteRangoFechas,
+  ReporteRecicladorHijo,
   ReporteStockBodega,
   ReporteVenta,
 } from '../models/reporte.model';
@@ -69,6 +70,19 @@ export class ReportesService {
   exportarProveedores(tipo: TipoProveedor | null, soloActivos: boolean): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/proveedores/excel`, {
       params: this.proveedoresParams(tipo, soloActivos),
+      responseType: 'blob',
+    });
+  }
+
+  getHijosRecicladores(soloActivos: boolean): Observable<ReporteRecicladorHijo[]> {
+    return this.http.get<ReporteRecicladorHijo[]>(`${this.baseUrl}/recicladores/hijos`, {
+      params: new HttpParams().set('soloActivos', soloActivos),
+    });
+  }
+
+  exportarHijosRecicladores(soloActivos: boolean): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/recicladores/hijos/excel`, {
+      params: new HttpParams().set('soloActivos', soloActivos),
       responseType: 'blob',
     });
   }

@@ -17,6 +17,7 @@ import {
   ReporteMovimientoCaja,
   ReporteProveedor,
   ReporteRangoFechas,
+  ReporteRecicladorHijo,
   ReporteStockBodega,
   ReporteVenta,
   reporteCajaEstadoLabel,
@@ -29,6 +30,7 @@ type GrupoReporte = 'compras' | 'ventas' | 'caja' | 'inventario';
 type SubreporteId =
   | 'compras'
   | 'proveedores'
+  | 'hijos-recicladores'
   | 'ventas'
   | 'clientes'
   | 'cajas'
@@ -59,7 +61,7 @@ const GRUPOS: GrupoInfo[] = [
   {
     id: 'compras',
     titulo: 'Compras',
-    descripcion: 'Compras y proveedores',
+    descripcion: 'Compras, proveedores e hijos',
     subreportes: [
       {
         id: 'compras',
@@ -70,6 +72,11 @@ const GRUPOS: GrupoInfo[] = [
         id: 'proveedores',
         titulo: 'Proveedores',
         descripcion: 'Proveedores registrados',
+      },
+      {
+        id: 'hijos-recicladores',
+        titulo: 'Hijos',
+        descripcion: 'Hijos de los recicladores internos',
       },
     ],
   },
@@ -168,6 +175,7 @@ export class ReportesComponent implements OnInit {
   readonly ventas = signal<ReporteVenta[] | null>(null);
   readonly clientes = signal<ReporteCliente[] | null>(null);
   readonly proveedores = signal<ReporteProveedor[] | null>(null);
+  readonly hijosRecicladores = signal<ReporteRecicladorHijo[] | null>(null);
   readonly cajas = signal<ReporteCaja[] | null>(null);
   readonly movimientos = signal<ReporteMovimientoCaja[] | null>(null);
   readonly gastos = signal<ReporteGasto[] | null>(null);
@@ -280,6 +288,7 @@ export class ReportesComponent implements OnInit {
     this.incluirInactivos.set(value);
     this.clientes.set(null);
     this.proveedores.set(null);
+    this.hijosRecicladores.set(null);
     this.cargar();
   }
 
@@ -312,6 +321,11 @@ export class ReportesComponent implements OnInit {
         this.suscribir(
           this.reportesService.getProveedores(this.tipoProveedor(), soloActivos),
           (data) => this.proveedores.set(data)
+        );
+        break;
+      case 'hijos-recicladores':
+        this.suscribir(this.reportesService.getHijosRecicladores(soloActivos), (data) =>
+          this.hijosRecicladores.set(data)
         );
         break;
       case 'cajas':
@@ -360,6 +374,10 @@ export class ReportesComponent implements OnInit {
       case 'proveedores':
         descarga$ = this.reportesService.exportarProveedores(this.tipoProveedor(), soloActivos);
         nombre = 'reporte-proveedores.xlsx';
+        break;
+      case 'hijos-recicladores':
+        descarga$ = this.reportesService.exportarHijosRecicladores(soloActivos);
+        nombre = 'reporte-hijos-recicladores.xlsx';
         break;
       case 'cajas':
         descarga$ = this.reportesService.exportarCajas(rango!);
@@ -428,6 +446,17 @@ export class ReportesComponent implements OnInit {
     return value?.trim() || '—';
   }
 
+  sexoLabel(sexo: string | null | undefined): string {
+    switch (sexo?.trim().toUpperCase()) {
+      case 'M':
+        return 'Masculino';
+      case 'F':
+        return 'Femenino';
+      default:
+        return this.texto(sexo);
+    }
+  }
+
   tipoMovimientoLabel(tipo: ReporteCajaMovimientoTipo): string {
     return tipo === 'INGRESO' ? 'Ingreso' : 'Egreso';
   }
@@ -470,6 +499,8 @@ export class ReportesComponent implements OnInit {
         return this.clientes();
       case 'proveedores':
         return this.proveedores();
+      case 'hijos-recicladores':
+        return this.hijosRecicladores();
       case 'cajas':
         return this.cajas();
       case 'movimientos':

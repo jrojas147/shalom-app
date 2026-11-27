@@ -81,6 +81,20 @@ export interface ReporteProveedor {
   createdAt: string;
 }
 
+export interface ReporteRecicladorHijo {
+  id: number;
+  recicladorId: number;
+  recicladorTipoDocumento: string | null;
+  recicladorDocumento: string | null;
+  recicladorNombre: string;
+  recicladorActivo: boolean;
+  documento: string;
+  sexo: string | null;
+  nombre: string;
+  fechaNacimiento: string | null;
+  activo: boolean;
+}
+
 export type ReporteCajaEstado = 'ABIERTA' | 'CERRADA';
 export type ReporteCajaMovimientoTipo = 'INGRESO' | 'EGRESO';
 export type ReporteCajaConcepto =
