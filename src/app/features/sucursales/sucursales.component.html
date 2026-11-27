@@ -437,6 +437,24 @@
             <span class="rp-hint err">El municipio es obligatorio</span>
           }
         </div>
+        @if (editingId()) {
+          <div class="rp-field">
+            <label>Fecha de alta</label>
+            <input
+              type="text"
+              [value]="formatFecha(fechaAltaEdicion() ?? undefined)"
+              readonly
+              tabindex="-1"
+            />
+          </div>
+        }
+        <div class="rp-field">
+          <label for="conjuntoActivo">Estado</label>
+          <label class="conjunto-estado-field__control" for="conjuntoActivo">
+            <input id="conjuntoActivo" type="checkbox" formControlName="activo" />
+            <span>Activo</span>
+          </label>
+        </div>
         <div class="rp-field rp-field--full">
           <label for="direccion">Dirección</label>
           <input id="direccion" type="text" formControlName="direccion" maxlength="255" />
@@ -465,24 +483,6 @@
               <option [value]="tipo.value">{{ tipo.label }}</option>
             }
           </select>
-        </div>
-        @if (editingId()) {
-          <div class="rp-field">
-            <label>Fecha de alta</label>
-            <input
-              type="text"
-              [value]="formatFecha(fechaAltaEdicion() ?? undefined)"
-              readonly
-              tabindex="-1"
-            />
-          </div>
-        }
-        <div class="rp-field conjunto-estado-field">
-          <span class="conjunto-estado-field__label">Estado</span>
-          <label class="conjunto-estado-field__control" for="conjuntoActivo">
-            <input id="conjuntoActivo" type="checkbox" formControlName="activo" />
-            Activo
-          </label>
         </div>
       </div>
       <div class="rp-form-actions">
