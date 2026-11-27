@@ -241,14 +241,67 @@
         <div class="rp-alert rp-alert--error">{{ error() }}</div>
       }
       <div class="rp-form-grid">
-        <div class="rp-field rp-field--full">
+        <div
+          class="rp-field rp-field--full"
+          [class.admin-picker-field--open]="administradorPickerAbierto()"
+        >
           <label for="administradorId">Administrador</label>
-          <select id="administradorId" formControlName="administradorId">
-            <option [ngValue]="null" disabled>Seleccione un administrador</option>
-            @for (admin of administradoresActivos(); track admin.id) {
-              <option [ngValue]="admin.id">{{ formatAdministradorLabel(admin) }}</option>
+          <div class="admin-picker">
+            <input
+              id="administradorId"
+              type="text"
+              role="combobox"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Buscar por nombre o documento..."
+              aria-autocomplete="list"
+              aria-controls="administrador-picker-list"
+              [attr.aria-expanded]="administradorPickerAbierto()"
+              [attr.aria-activedescendant]="administradorOpcionActivaId()"
+              [class.admin-picker__input--invalid]="
+                conjuntoForm.controls.administradorId.touched &&
+                conjuntoForm.controls.administradorId.invalid
+              "
+              [value]="textoAdministradorPicker()"
+              (focus)="abrirPickerAdministrador()"
+              (input)="onBusquedaAdministrador($any($event.target).value)"
+              (keydown)="onPickerAdministradorKeydown($event)"
+              (blur)="cerrarPickerAdministrador()"
+            />
+            @if (administradorPickerAbierto()) {
+              <ul
+                id="administrador-picker-list"
+                class="admin-picker__list"
+                role="listbox"
+                (mousedown)="$event.preventDefault()"
+              >
+                @for (admin of administradoresPicker(); track admin.id; let i = $index) {
+                  <li role="presentation">
+                    <button
+                      type="button"
+                      class="admin-picker__option"
+                      role="option"
+                      [id]="'administrador-opcion-' + admin.id"
+                      [class.is-active]="i === administradorResaltado()"
+                      [class.is-selected]="admin.id === conjuntoForm.controls.administradorId.value"
+                      [attr.aria-selected]="admin.id === conjuntoForm.controls.administradorId.value"
+                      (mouseenter)="administradorResaltado.set(i)"
+                      (click)="seleccionarAdministrador(admin)"
+                    >
+                      <span class="admin-picker__nombre">{{ admin.nombre }}</span>
+                      <span class="admin-picker__meta">
+                        {{ admin.tipoDocumento }} {{ admin.documento }}
+                      </span>
+                    </button>
+                  </li>
+                } @empty {
+                  <li class="admin-picker__empty">
+                    No hay administradores que coincidan con la búsqueda
+                  </li>
+                }
+              </ul>
             }
-          </select>
+          </div>
           @if (administradoresActivos().length === 0) {
             <span class="rp-hint">
               No hay administradores activos.

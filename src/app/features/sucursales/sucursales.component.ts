@@ -67,7 +67,6 @@ export class SucursalesComponent implements OnInit {
 
   readonly tiposDocumento = TIPOS_DOCUMENTO;
   readonly tiposCuenta = TIPOS_CUENTA;
-  readonly formatAdministradorLabel = formatAdministradorLabel;
 
   readonly tabActiva = signal<SucursalesTab>('conjuntos');
   readonly sucursales = signal<Sucursal[]>([]);
@@ -86,9 +85,22 @@ export class SucursalesComponent implements OnInit {
   private bancoPendienteEdicion?: string;
   private readonly idsSucursalOcupados = signal<Set<number>>(new Set());
 
+  readonly filtroAdministrador = signal('');
+  readonly administradorPickerAbierto = signal(false);
+  readonly administradorResaltado = signal(0);
+
   readonly administradoresActivos = computed(() =>
     this.administradores().filter((a) => a.activo)
   );
+
+  readonly administradoresPicker = computed(() => {
+    const q = this.filtroAdministrador().trim().toLowerCase();
+    const activos = this.administradoresActivos();
+    if (!q) {
+      return activos;
+    }
+    return activos.filter((admin) => this.matchesAdministradorSearch(admin, q));
+  });
 
   readonly conjuntoModalTitle = computed(() =>
     this.editingId() ? 'Editar conjunto' : 'Nuevo conjunto'
@@ -331,6 +343,7 @@ export class SucursalesComponent implements OnInit {
     this.fechaAltaEdicion.set(null);
     this.bancoPendienteEdicion = undefined;
     this.error.set(null);
+    this.cerrarPickerAdministrador();
   }
 
   saveConjunto(): void {
@@ -482,6 +495,86 @@ export class SucursalesComponent implements OnInit {
     this.conjuntoForm.controls.idSucursal.setValue(
       soloDigitos === '' ? null : Number(soloDigitos)
     );
+  }
+
+  textoAdministradorPicker(): string {
+    if (this.administradorPickerAbierto()) {
+      return this.filtroAdministrador();
+    }
+    return this.etiquetaAdministradorSeleccionado();
+  }
+
+  administradorOpcionActivaId(): string | null {
+    if (!this.administradorPickerAbierto()) {
+      return null;
+    }
+    const admin = this.administradoresPicker()[this.administradorResaltado()];
+    return admin ? `administrador-opcion-${admin.id}` : null;
+  }
+
+  abrirPickerAdministrador(): void {
+    this.filtroAdministrador.set('');
+    const id = this.conjuntoForm.controls.administradorId.value;
+    const index = this.administradoresActivos().findIndex((admin) => admin.id === id);
+    this.administradorResaltado.set(index >= 0 ? index : 0);
+    this.administradorPickerAbierto.set(true);
+    this.scrollOpcionAdministrador(this.administradorResaltado());
+  }
+
+  onBusquedaAdministrador(value: string): void {
+    this.filtroAdministrador.set(value);
+    this.administradorPickerAbierto.set(true);
+    this.administradorResaltado.set(0);
+    this.scrollOpcionAdministrador(0);
+  }
+
+  seleccionarAdministrador(admin: AdministradorConjunto): void {
+    this.conjuntoForm.controls.administradorId.setValue(admin.id);
+    this.conjuntoForm.controls.administradorId.markAsTouched();
+    this.filtroAdministrador.set('');
+    this.administradorPickerAbierto.set(false);
+    document.getElementById('administradorId')?.blur();
+  }
+
+  cerrarPickerAdministrador(): void {
+    this.administradorPickerAbierto.set(false);
+    this.filtroAdministrador.set('');
+    this.conjuntoForm.controls.administradorId.markAsTouched();
+  }
+
+  onPickerAdministradorKeydown(event: KeyboardEvent): void {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!this.administradorPickerAbierto()) {
+        this.abrirPickerAdministrador();
+        return;
+      }
+      const total = this.administradoresPicker().length;
+      if (total === 0) {
+        return;
+      }
+      const actual = this.administradorResaltado();
+      const siguiente =
+        event.key === 'ArrowDown' ? Math.min(actual + 1, total - 1) : Math.max(actual - 1, 0);
+      this.administradorResaltado.set(siguiente);
+      this.scrollOpcionAdministrador(siguiente);
+      return;
+    }
+
+    if (event.key === 'Enter' && this.administradorPickerAbierto()) {
+      event.preventDefault();
+      const admin = this.administradoresPicker()[this.administradorResaltado()];
+      if (admin) {
+        this.seleccionarAdministrador(admin);
+      }
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cerrarPickerAdministrador();
+      document.getElementById('administradorId')?.blur();
+    }
   }
 
   limitarNumApartamentos(event: Event): void {
@@ -636,6 +729,32 @@ export class SucursalesComponent implements OnInit {
       s.administrador?.documento.toLowerCase().includes(q) ||
       false
     );
+  }
+
+  private etiquetaAdministradorSeleccionado(): string {
+    const id = this.conjuntoForm.controls.administradorId.value;
+    if (id == null) {
+      return '';
+    }
+    const admin = this.administradores().find((item) => item.id === id);
+    return admin ? formatAdministradorLabel(admin) : '';
+  }
+
+  private scrollOpcionAdministrador(index: number): void {
+    queueMicrotask(() => {
+      const list = document.getElementById('administrador-picker-list');
+      const option = list?.querySelectorAll<HTMLElement>('[role="option"]')[index];
+      if (!list || !option) {
+        return;
+      }
+      const top = option.offsetTop;
+      const bottom = top + option.offsetHeight;
+      if (top < list.scrollTop) {
+        list.scrollTop = top;
+      } else if (bottom > list.scrollTop + list.clientHeight) {
+        list.scrollTop = bottom - list.clientHeight;
+      }
+    });
   }
 
   private matchesAdministradorSearch(a: AdministradorConjunto, q: string): boolean {
