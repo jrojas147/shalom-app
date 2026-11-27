@@ -82,6 +82,7 @@ export interface RegistrarPagoCompraPayload {
 export interface RegistrarCompraResponse {
   compraId: number;
   factura: string;
+  proveedorNombre?: string | null;
   mensaje: string;
   estado: CompraEstado;
   estadoPago: CompraEstadoPago;

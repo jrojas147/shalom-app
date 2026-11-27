@@ -29,6 +29,7 @@ export class CompraProveedorModalComponent implements OnInit {
   readonly seleccionActual = input<CompraProveedorSeleccion | null>(null);
   readonly titulo = input('Seleccionar proveedor');
   readonly proposito = input('la compra');
+  readonly asignacionExternaAleatoria = input(false);
 
   readonly closed = output<void>();
   readonly seleccionado = output<CompraProveedorSeleccion>();
@@ -132,6 +133,16 @@ export class CompraProveedorModalComponent implements OnInit {
       sucursalNombre: sucursal.nombre,
       sucursalNit: sucursal.nit,
       sucursalMunicipio: sucursal.municipio,
+    });
+  }
+
+  confirmarExternoAleatorio(): void {
+    this.seleccionado.emit({
+      tipo: 'EXTERNO',
+      proveedorId: 0,
+      nombre: 'Proveedor externo',
+      asignacionAleatoria: true,
+      aplicaFacturacionDian: true,
     });
   }
 

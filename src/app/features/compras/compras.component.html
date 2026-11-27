@@ -108,6 +108,11 @@
           <div class="detail-proveedor">
             <strong>{{ compraProveedorEtiqueta(proveedor) }}</strong>
             <span class="detail-proveedor__tipo">{{ compraProveedorTipoLabel(proveedor.tipo) }}</span>
+            @if (proveedor.asignacionAleatoria) {
+              <span class="detail-proveedor__saldo">
+                Se asigna al registrar entre los que aplican facturación DIAN
+              </span>
+            }
             @if (anticipoInicial() > 0) {
               <span class="detail-proveedor__saldo">
                 Anticipo {{ formatCurrency(anticipoInicial()) }}
@@ -285,6 +290,7 @@
 @if (showProveedorModal()) {
   <app-compra-proveedor-modal
     [seleccionActual]="proveedorSeleccionado()"
+    [asignacionExternaAleatoria]="true"
     (closed)="cerrarModalProveedor()"
     (seleccionado)="seleccionarProveedor($event)"
   />

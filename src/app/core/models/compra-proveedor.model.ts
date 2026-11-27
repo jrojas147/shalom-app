@@ -6,6 +6,7 @@ export interface CompraProveedorSeleccion {
   nombre: string;
   documento?: string;
   aplicaFacturacionDian?: boolean;
+  asignacionAleatoria?: boolean;
   sucursalId?: number;
   sucursalNombre?: string;
   sucursalNit?: string;

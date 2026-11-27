@@ -442,9 +442,12 @@ export class ComprasComponent implements OnInit {
           this.procesando.set(false);
           this.factura.set(res.factura);
           this.mensaje.set(res.mensaje);
+          const proveedorFactura = res.proveedorNombre
+            ? { ...proveedorSnapshot, nombre: res.proveedorNombre, asignacionAleatoria: false }
+            : proveedorSnapshot;
           this.imprimirFactura(
             res.factura,
-            proveedorSnapshot,
+            proveedorFactura,
             itemsSnapshot,
             totalSnapshot,
             pesoSnapshot,

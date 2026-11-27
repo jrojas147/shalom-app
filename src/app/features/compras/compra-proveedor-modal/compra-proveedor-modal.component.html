@@ -21,6 +21,8 @@
   <p class="proveedor-modal-desc">
     @if (esTabInterna()) {
       Seleccione el reciclador interno y la sucursal asociada.
+    } @else if (esTabExterna() && asignacionExternaAleatoria()) {
+      No se elige un proveedor. Al registrar la pre-compra se asigna uno al azar entre los activos con facturación DIAN.
     } @else if (esTabExterna()) {
       Seleccione el proveedor externo para {{ proposito() }}.
     } @else {
@@ -28,13 +30,15 @@
     }
   </p>
 
-  <input
-    type="search"
-    class="proveedor-modal-search"
-    placeholder="Buscar..."
-    [value]="busqueda()"
-    (input)="onBusqueda($any($event.target).value)"
-  />
+  @if (!(esTabExterna() && asignacionExternaAleatoria())) {
+    <input
+      type="search"
+      class="proveedor-modal-search"
+      placeholder="Buscar..."
+      [value]="busqueda()"
+      (input)="onBusqueda($any($event.target).value)"
+    />
+  }
 
   @if (loading()) {
     <p class="rp-loading">Cargando proveedores...</p>
@@ -106,6 +110,12 @@
           }
         </section>
       }
+    </div>
+  } @else if (esTabExterna() && asignacionExternaAleatoria()) {
+    <div class="proveedor-modal-actions">
+      <button type="button" class="rp-btn rp-btn--primary" (click)="confirmarExternoAleatorio()">
+        Usar proveedor externo
+      </button>
     </div>
   } @else if (esTabExterna()) {
     <ul class="proveedor-modal-list">
